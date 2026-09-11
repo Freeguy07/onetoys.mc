@@ -1,0 +1,28 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "orehall:recipe_enabled",
+      "recipe": "orehall:reliable_spyglass"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": {
+      "item": "minecraft:glass"
+    },
+    "X": {
+      "item": "minecraft:gold_ingot"
+    }
+  },
+  "pattern": [
+    " # ",
+    " X ",
+    " X "
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:spyglass"
+  },
+  "show_notification": true
+}
