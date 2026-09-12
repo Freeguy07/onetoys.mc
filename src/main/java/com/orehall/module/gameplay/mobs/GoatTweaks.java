@@ -10,6 +10,7 @@ public class GoatTweaks {
     private ModConfigSpec.BooleanValue dropMuttonConfig;
     private ModConfigSpec.BooleanValue milkingCooldownEnabledConfig;
     private ModConfigSpec.IntValue milkingCooldownTicksConfig;
+    private ModConfigSpec.BooleanValue feedingResetsCooldownConfig;
 
     public void buildConfig(ModConfigSpec.Builder builder) {
         builder.comment("Tweaks and adjustments to goats.")
@@ -36,6 +37,11 @@ public class GoatTweaks {
                 .translation("orehall.configuration.gameplay_tweaks.mob_tweaks.goat.milking_cooldown_ticks")
                 .defineInRange("milking_cooldown_ticks", 6000, 0, 72000);
 
+        feedingResetsCooldownConfig = builder
+                .comment("When enabled, feeding goats wheat clears their milking cooldown.")
+                .translation("orehall.configuration.gameplay_tweaks.mob_tweaks.goat.feeding_resets_cooldown")
+                .define("feeding_resets_cooldown", true);
+
         builder.pop();
     }
 
@@ -51,6 +57,10 @@ public class GoatTweaks {
         return isEnabled() && (milkingCooldownEnabledConfig == null || milkingCooldownEnabledConfig.get());
     }
 
+    public boolean isFeedingResetEnabled() {
+        return isMilkingCooldownEnabled() && (feedingResetsCooldownConfig == null || feedingResetsCooldownConfig.get());
+    }
+
     public int getMilkingCooldownTicks() {
         return milkingCooldownTicksConfig != null ? milkingCooldownTicksConfig.get() : 6000;
     }
@@ -61,5 +71,9 @@ public class GoatTweaks {
 
     public void handleMilking(PlayerInteractEvent.EntityInteract event, Goat goat) {
         MobMilkingHelper.handle(event, goat, isMilkingCooldownEnabled(), getMilkingCooldownTicks());
+    }
+
+    public void handleFeeding(PlayerInteractEvent.EntityInteract event, Goat goat) {
+        MobMilkingHelper.handleFeeding(event, goat, isFeedingResetEnabled());
     }
 }

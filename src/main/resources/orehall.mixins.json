@@ -6,7 +6,9 @@
   "refmap": "orehall.refmap.json",
   "mixins": [
     "NoiseChunkMixin",
-    "OreVeinifierMixin"
+    "OreVeinifierMixin",
+    "RespawnAnchorBlockMixin",
+    "DispenserBlockMixin"
   ],
   "client": [],
   "server": [],

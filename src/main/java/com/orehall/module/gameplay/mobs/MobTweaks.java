@@ -4,6 +4,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.MushroomCow;
 import net.minecraft.world.entity.animal.goat.Goat;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -54,7 +55,7 @@ public class MobTweaks {
         cowTweaks.onConstruct(modBus);
         mooshroomTweaks.onConstruct(modBus);
 
-        // Single consolidated interaction listener for all mob milking mechanics
+        // Single consolidated interaction listener for all mob milking and feeding mechanics
         NeoForge.EVENT_BUS.addListener(this::onEntityInteract);
     }
 
@@ -63,18 +64,34 @@ public class MobTweaks {
             return;
         }
 
-        // Fast path: ignore interactions with any item other than a bucket immediately
-        if (!event.getItemStack().is(Items.BUCKET)) {
+        ItemStack stack = event.getItemStack();
+        if (stack.isEmpty()) {
             return;
         }
 
         Entity target = event.getTarget();
+        boolean isBucket = stack.is(Items.BUCKET);
+
         if (target instanceof MushroomCow mooshroom) {
-            mooshroomTweaks.handleMilking(event, mooshroom);
+            if (isBucket) {
+                mooshroomTweaks.handleMilking(event, mooshroom);
+            } else if (stack.is(Items.BOWL)) {
+                mooshroomTweaks.handleStewMilking(event, mooshroom);
+            } else if (mooshroom.isFood(stack)) {
+                mooshroomTweaks.handleFeeding(event, mooshroom);
+            }
         } else if (target instanceof Cow cow) {
-            cowTweaks.handleMilking(event, cow);
+            if (isBucket) {
+                cowTweaks.handleMilking(event, cow);
+            } else if (cow.isFood(stack)) {
+                cowTweaks.handleFeeding(event, cow);
+            }
         } else if (target instanceof Goat goat) {
-            goatTweaks.handleMilking(event, goat);
+            if (isBucket) {
+                goatTweaks.handleMilking(event, goat);
+            } else if (goat.isFood(stack)) {
+                goatTweaks.handleFeeding(event, goat);
+            }
         }
     }
 }

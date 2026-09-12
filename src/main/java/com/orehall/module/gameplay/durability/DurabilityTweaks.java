@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,6 +19,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.Unbreakable;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
@@ -35,6 +35,8 @@ public class DurabilityTweaks {
 
     private ModConfigSpec.BooleanValue enabledConfig;
     private ModConfigSpec.BooleanValue autoSyncConfig;
+    private ModConfigSpec.ConfigValue<List<? extends String>> unbreakableItemsConfig;
+    private ModConfigSpec.BooleanValue showUnbreakableTooltipConfig;
 
     public void buildConfig(ModConfigSpec.Builder builder) {
         builder.comment("Sub-category allowing custom durability configuration for items.",
@@ -52,6 +54,17 @@ public class DurabilityTweaks {
                 .translation("orehall.configuration.gameplay_tweaks.durability_tweaks.auto_sync")
                 .define("auto_sync", true);
 
+        unbreakableItemsConfig = builder
+                .comment("List of item IDs, tags (starting with '#'), or wildcard patterns that will be made completely unbreakable.",
+                        "Examples: ['minecraft:elytra', '#c:tools/netherite', '*golden_*']")
+                .translation("orehall.configuration.gameplay_tweaks.durability_tweaks.unbreakable_items")
+                .defineListAllowEmpty("unbreakable_items", List.of(), () -> "", obj -> obj instanceof String);
+
+        showUnbreakableTooltipConfig = builder
+                .comment("When enabled, items made unbreakable display the 'Unbreakable' line in their tooltip.")
+                .translation("orehall.configuration.gameplay_tweaks.durability_tweaks.show_unbreakable_tooltip")
+                .define("show_unbreakable_tooltip", true);
+
         builder.pop();
     }
 
@@ -61,6 +74,14 @@ public class DurabilityTweaks {
 
     public boolean isAutoSyncEnabled() {
         return autoSyncConfig == null || autoSyncConfig.get();
+    }
+
+    public List<? extends String> getUnbreakableItems() {
+        return unbreakableItemsConfig != null ? unbreakableItemsConfig.get() : List.of();
+    }
+
+    public boolean shouldShowUnbreakableTooltip() {
+        return showUnbreakableTooltipConfig == null || showUnbreakableTooltipConfig.get();
     }
 
     public void apply(ModifyDefaultComponentsEvent event) {
@@ -85,10 +106,9 @@ public class DurabilityTweaks {
             generateInitialConfigFile(configPath, itemsByMod);
             Orehall.LOGGER.info("Generated initial durability configuration at '{}' with {} items across {} mods",
                     configPath, countTotalItems(itemsByMod), itemsByMod.size());
-            return;
         }
 
-        // 3. File exists: read user values, auto-sync new items if enabled, and apply
+        // 3. Read user values, auto-sync new items if enabled, and apply
         loadAndApplyDurabilities(event, configPath, itemsByMod);
     }
 
@@ -136,15 +156,18 @@ public class DurabilityTweaks {
         sb.append("# Orehall - Durability Configuration\n");
         sb.append("# Automatically generated and synchronized with all installed mods.\n");
         sb.append("# Any item whose value differs from default will have its durability adjusted.\n");
+        sb.append("# Set any item's durability to -1 to make it completely unbreakable.\n");
         sb.append("# Changes take effect upon restarting the game / server.\n");
         sb.append("# ==============================================================================\n\n");
 
         sb.append("# Optional wildcard / pattern / tag overrides (highest priority)\n");
         sb.append("# Format: \"target_pattern\" = durability\n");
+        sb.append("# Set durability to -1 to make matching items completely unbreakable.\n");
         sb.append("# Examples:\n");
         sb.append("# \"caverns_and_chasms:sanguine_*\" = 450\n");
         sb.append("# \"*copper_*\" = 200\n");
         sb.append("# \"#c:tools/silver\" = 160\n");
+        sb.append("# \"minecraft:elytra\" = -1\n");
         sb.append("[overrides]\n\n");
 
         for (Map.Entry<String, List<ItemDefault>> entry : itemsByMod.entrySet()) {
@@ -171,6 +194,17 @@ public class DurabilityTweaks {
 
             config.load();
 
+            // Read unbreakable items whitelist from orehall.toml
+            List<CustomDurabilityRule> whitelistRules = new ArrayList<>();
+            for (String entry : getUnbreakableItems()) {
+                if (entry != null && !entry.isBlank()) {
+                    CustomDurabilityRule rule = CustomDurabilityRule.parse(entry.trim() + "=-1");
+                    if (rule != null) {
+                        whitelistRules.add(rule);
+                    }
+                }
+            }
+
             // Read [overrides] table
             List<CustomDurabilityRule> overrideRules = new ArrayList<>();
             Object overridesObj = config.get("overrides");
@@ -178,7 +212,7 @@ public class DurabilityTweaks {
                 for (UnmodifiableConfig.Entry entry : overridesConfig.entrySet()) {
                     String pattern = entry.getKey();
                     Object val = entry.getValue();
-                    if (val instanceof Number num && num.intValue() > 0) {
+                    if (val instanceof Number num && (num.intValue() > 0 || num.intValue() == -1)) {
                         CustomDurabilityRule rule = CustomDurabilityRule.parse(pattern + "=" + num.intValue());
                         if (rule != null) {
                             overrideRules.add(rule);
@@ -186,6 +220,7 @@ public class DurabilityTweaks {
                     }
                 }
             }
+            overrideRules.addAll(whitelistRules);
 
             // Read all configured per-item durabilities
             Map<ResourceLocation, Integer> configuredDurabilities = new HashMap<>();
@@ -226,16 +261,13 @@ public class DurabilityTweaks {
             }
 
             // Single pass over BuiltInRegistries.ITEM to apply modified durabilities
+            boolean showTooltip = shouldShowUnbreakableTooltip();
             for (Item item : BuiltInRegistries.ITEM) {
-                int maxDamage = item.components().getOrDefault(DataComponents.MAX_DAMAGE, 0);
-                if (maxDamage <= 0) {
-                    continue;
-                }
-
                 ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
                 String path = id.getPath();
+                int maxDamage = item.components().getOrDefault(DataComponents.MAX_DAMAGE, 0);
 
-                // 1. Check [overrides] rules first (highest priority)
+                // 1. Check [overrides] and whitelist rules first (highest priority)
                 CustomDurabilityRule matchedRule = null;
                 for (CustomDurabilityRule rule : overrideRules) {
                     if (rule.matches(item, id, path)) {
@@ -244,11 +276,23 @@ public class DurabilityTweaks {
                 }
 
                 if (matchedRule != null) {
-                    matchedRule.apply(event, item, id);
-                } else {
-                    // 2. Apply configured value from durability.toml if changed from current max damage
-                    Integer configuredVal = configuredDurabilities.get(id);
-                    if (configuredVal != null && configuredVal > 0 && configuredVal != maxDamage) {
+                    if (matchedRule.durability() == -1 || maxDamage > 0) {
+                        matchedRule.apply(event, item, id, showTooltip);
+                    }
+                    continue;
+                }
+
+                if (maxDamage <= 0) {
+                    continue;
+                }
+
+                // 2. Apply configured value from durability.toml if changed from current max damage
+                Integer configuredVal = configuredDurabilities.get(id);
+                if (configuredVal != null) {
+                    if (configuredVal == -1) {
+                        event.modify(item, b -> b.set(DataComponents.UNBREAKABLE, new Unbreakable(showTooltip)));
+                        Orehall.LOGGER.info("Adjusting durability for '{}': marking UNBREAKABLE (-1)", id);
+                    } else if (configuredVal > 0 && configuredVal != maxDamage) {
                         final int targetVal = configuredVal;
                         event.modify(item, b -> b.set(DataComponents.MAX_DAMAGE, targetVal));
                         Orehall.LOGGER.info("Adjusting durability for '{}': {} -> {}", id, maxDamage, targetVal);
@@ -256,15 +300,20 @@ public class DurabilityTweaks {
                 }
             }
 
-            // 3. Handle exact [overrides] targeting non-damageable items (e.g. stick = 50)
+            // 3. Handle exact [overrides] targeting non-damageable items (e.g. stick = 50 or stick = -1)
             for (CustomDurabilityRule rule : overrideRules) {
                 if (rule instanceof CustomDurabilityRule.Exact exact) {
                     BuiltInRegistries.ITEM.getHolder(exact.targetId()).ifPresent(holder -> {
                         Item item = holder.value();
                         int max = item.components().getOrDefault(DataComponents.MAX_DAMAGE, 0);
                         if (max <= 0) {
-                            event.modify(item, b -> b.set(DataComponents.MAX_DAMAGE, exact.durability()));
-                            Orehall.LOGGER.info("Applied exact custom durability override to non-damageable item '{}': {}", exact.targetId(), exact.durability());
+                            if (exact.durability() == -1) {
+                                event.modify(item, b -> b.set(DataComponents.UNBREAKABLE, new Unbreakable(showTooltip)));
+                                Orehall.LOGGER.info("Applied exact unbreakable override to non-damageable item '{}'", exact.targetId());
+                            } else {
+                                event.modify(item, b -> b.set(DataComponents.MAX_DAMAGE, exact.durability()));
+                                Orehall.LOGGER.info("Applied exact custom durability override to non-damageable item '{}': {}", exact.targetId(), exact.durability());
+                            }
                         }
                     });
                 }

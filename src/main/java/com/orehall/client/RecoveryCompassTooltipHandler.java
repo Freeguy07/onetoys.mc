@@ -1,0 +1,63 @@
+package com.orehall.client;
+
+import java.util.List;
+import java.util.Optional;
+
+import com.orehall.module.gameplay.items.RecoveryCompassTweaks;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+
+/**
+ * Client-only tooltip handler for displaying death coordinates on recovery compasses.
+ */
+@OnlyIn(Dist.CLIENT)
+public class RecoveryCompassTooltipHandler {
+
+    public static void onItemTooltip(ItemTooltipEvent event) {
+        RecoveryCompassTweaks tweaks = RecoveryCompassTweaks.get();
+        if (tweaks == null || !tweaks.isTooltipEnabled()) {
+            return;
+        }
+
+        if (!event.getItemStack().is(Items.RECOVERY_COMPASS)) {
+            return;
+        }
+
+        Player player = event.getEntity();
+        if (player == null) {
+            return;
+        }
+
+        List<Component> tooltip = event.getToolTip();
+
+        if (Screen.hasShiftDown()) {
+            Optional<GlobalPos> deathLoc = player.getLastDeathLocation();
+            if (deathLoc.isPresent()) {
+                GlobalPos pos = deathLoc.get();
+                BlockPos blockPos = pos.pos();
+                Component dimName = RecoveryCompassTweaks.getDimensionName(pos.dimension());
+                tooltip.add(Component.translatable(
+                        "orehall.tooltip.recovery_compass.last_death",
+                        blockPos.getX(), blockPos.getY(), blockPos.getZ(), dimName
+                ).withStyle(ChatFormatting.GOLD));
+            } else {
+                tooltip.add(Component.translatable(
+                        "orehall.tooltip.recovery_compass.no_death"
+                ).withStyle(ChatFormatting.GRAY));
+            }
+        } else {
+            tooltip.add(Component.translatable(
+                    "orehall.tooltip.recovery_compass.hold_shift"
+            ).withStyle(ChatFormatting.DARK_GRAY));
+        }
+    }
+}

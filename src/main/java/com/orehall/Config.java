@@ -1,7 +1,6 @@
 package com.orehall;
 
 import com.orehall.module.ModuleManager;
-import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public class Config {

@@ -26,6 +26,14 @@ public class OrehallAttachments {
                             .build()
             );
 
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Long>> STEW_COOLDOWN =
+            ATTACHMENT_TYPES.register("stew_cooldown", () ->
+                    AttachmentType.builder(() -> 0L)
+                            .serialize(Codec.LONG)
+                            .sync(ByteBufCodecs.VAR_LONG)
+                            .build()
+            );
+
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<List<SavedRecoveryCompass>>> SAVED_RECOVERY_COMPASSES =
             ATTACHMENT_TYPES.register("saved_recovery_compasses", () ->
                     AttachmentType.<List<SavedRecoveryCompass>>builder(() -> new ArrayList<>())

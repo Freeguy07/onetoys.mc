@@ -8,6 +8,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.Unbreakable;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 
 /**
@@ -23,13 +24,22 @@ public sealed interface CustomDurabilityRule permits
 
     boolean matches(Item item, ResourceLocation id, String path);
 
-    default void apply(ModifyDefaultComponentsEvent event, Item item, ResourceLocation id) {
+    default void apply(ModifyDefaultComponentsEvent event, Item item, ResourceLocation id, boolean showInTooltip) {
         final int target = durability();
+        if (target == -1) {
+            event.modify(item, b -> b.set(DataComponents.UNBREAKABLE, new Unbreakable(showInTooltip)));
+            com.orehall.Orehall.LOGGER.info("Applied custom unbreakable override [{}] for '{}'", this, id);
+            return;
+        }
         int current = item.components().getOrDefault(DataComponents.MAX_DAMAGE, 0);
         if (current != target) {
             event.modify(item, b -> b.set(DataComponents.MAX_DAMAGE, target));
             com.orehall.Orehall.LOGGER.info("Applied custom durability override [{}] for '{}': {} -> {}", this, id, current, target);
         }
+    }
+
+    default void apply(ModifyDefaultComponentsEvent event, Item item, ResourceLocation id) {
+        apply(event, item, id, true);
     }
 
     record Exact(ResourceLocation targetId, int durability) implements CustomDurabilityRule {
@@ -92,7 +102,7 @@ public sealed interface CustomDurabilityRule permits
             com.orehall.Orehall.LOGGER.warn("Invalid durability value in custom override entry: {}", entry);
             return null;
         }
-        if (durability <= 0) {
+        if (durability <= 0 && durability != -1) {
             return null;
         }
 

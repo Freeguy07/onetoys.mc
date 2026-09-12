@@ -2,37 +2,57 @@ package com.orehall.module.gameplay.items;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.orehall.registry.OrehallAttachments;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 import com.orehall.module.ModuleManager;
 import com.orehall.module.gameplay.GameplayTweaksModule;
 
 public class RecoveryCompassTweaks {
+    private static RecoveryCompassTweaks instance;
+
     private final ItemTweaks itemTweaks;
     private ModConfigSpec.BooleanValue enabledConfig;
     private ModConfigSpec.BooleanValue persistOnDeathConfig;
+    private ModConfigSpec.BooleanValue deathCoordinatesTooltipConfig;
+    private ModConfigSpec.BooleanValue deathCoordinatesHotbarDisplayConfig;
 
     public RecoveryCompassTweaks(ItemTweaks itemTweaks) {
         this.itemTweaks = itemTweaks;
+        instance = this;
     }
 
     public RecoveryCompassTweaks() {
         this(null);
+    }
+
+    public static RecoveryCompassTweaks get() {
+        return instance;
     }
 
     public void buildConfig(ModConfigSpec.Builder builder) {
@@ -51,6 +71,16 @@ public class RecoveryCompassTweaks {
                 .translation("orehall.configuration.gameplay_tweaks.item_tweaks.recovery_compass.persist_on_death")
                 .define("persist_on_death", true);
 
+        deathCoordinatesTooltipConfig = builder
+                .comment("When enabled, holding Shift while hovering over a recovery compass displays the coordinates and dimension of your last death.")
+                .translation("orehall.configuration.gameplay_tweaks.item_tweaks.recovery_compass.death_coordinates_tooltip")
+                .define("death_coordinates_tooltip", true);
+
+        deathCoordinatesHotbarDisplayConfig = builder
+                .comment("When enabled, right-clicking with a recovery compass in hand displays your last death coordinates above the hotbar.")
+                .translation("orehall.configuration.gameplay_tweaks.item_tweaks.recovery_compass.death_coordinates_hotbar_display")
+                .define("death_coordinates_hotbar_display", true);
+
         builder.pop();
     }
 
@@ -58,14 +88,46 @@ public class RecoveryCompassTweaks {
         return enabledConfig == null || enabledConfig.get();
     }
 
-    public boolean isPersistOnDeathEnabled() {
-        if (itemTweaks != null && !itemTweaks.isEnabled()) {
-            return false;
-        }
+    public static boolean isTweakEnabled() {
         if (!ModuleManager.get().isModuleEnabled(GameplayTweaksModule.ID)) {
             return false;
         }
-        return isEnabled() && (persistOnDeathConfig == null || persistOnDeathConfig.get());
+        RecoveryCompassTweaks tweaks = instance;
+        if (tweaks == null) {
+            return false;
+        }
+        if (tweaks.itemTweaks != null && !tweaks.itemTweaks.isEnabled()) {
+            return false;
+        }
+        return tweaks.isEnabled();
+    }
+
+    public boolean isPersistOnDeathEnabled() {
+        return isTweakEnabled() && (persistOnDeathConfig == null || persistOnDeathConfig.get());
+    }
+
+    public boolean isTooltipEnabled() {
+        return isTweakEnabled() && (deathCoordinatesTooltipConfig == null || deathCoordinatesTooltipConfig.get());
+    }
+
+    public boolean isHotbarDisplayEnabled() {
+        return isTweakEnabled() && (deathCoordinatesHotbarDisplayConfig == null || deathCoordinatesHotbarDisplayConfig.get());
+    }
+
+    public static Component getDimensionName(ResourceKey<Level> dimension) {
+        if (dimension.equals(Level.OVERWORLD)) {
+            return Component.translatable("orehall.dimension.overworld");
+        } else if (dimension.equals(Level.NETHER)) {
+            return Component.translatable("orehall.dimension.the_nether");
+        } else if (dimension.equals(Level.END)) {
+            return Component.translatable("orehall.dimension.the_end");
+        } else {
+            String path = dimension.location().getPath();
+            String formatted = java.util.Arrays.stream(path.split("_"))
+                    .map(word -> word.isEmpty() ? "" : Character.toUpperCase(word.charAt(0)) + word.substring(1))
+                    .collect(java.util.stream.Collectors.joining(" "));
+            return Component.literal(formatted);
+        }
     }
 
     public void onConstruct(IEventBus modBus) {
@@ -75,6 +137,49 @@ public class RecoveryCompassTweaks {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, this::onLivingDeathPost);
         // Restore compasses to the cloned player upon respawning
         NeoForge.EVENT_BUS.addListener(this::onPlayerClone);
+        // Right-click actionbar display
+        NeoForge.EVENT_BUS.addListener(this::onRightClickItem);
+    }
+
+    public void onClientSetup(FMLClientSetupEvent event) {
+        NeoForge.EVENT_BUS.addListener(com.orehall.client.RecoveryCompassTooltipHandler::onItemTooltip);
+    }
+
+    private void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+        if (!isHotbarDisplayEnabled()) {
+            return;
+        }
+
+        ItemStack stack = event.getItemStack();
+        if (!stack.is(Items.RECOVERY_COMPASS)) {
+            return;
+        }
+
+        Player player = event.getEntity();
+        Level level = event.getLevel();
+
+        if (!level.isClientSide()) {
+            Optional<GlobalPos> deathLoc = player.getLastDeathLocation();
+            Component message;
+            if (deathLoc.isPresent()) {
+                GlobalPos pos = deathLoc.get();
+                BlockPos blockPos = pos.pos();
+                Component dimName = getDimensionName(pos.dimension());
+                message = Component.translatable(
+                        "orehall.actionbar.recovery_compass.last_death",
+                        blockPos.getX(), blockPos.getY(), blockPos.getZ(), dimName
+                );
+            } else {
+                message = Component.translatable("orehall.actionbar.recovery_compass.no_death");
+            }
+            player.displayClientMessage(message, true);
+            level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                    SoundEvents.UI_BUTTON_CLICK, SoundSource.PLAYERS, 0.4F, 1.5F);
+            player.getCooldowns().addCooldown(Items.RECOVERY_COMPASS, 10);
+        }
+
+        event.setCancellationResult(InteractionResult.sidedSuccess(level.isClientSide()));
+        event.setCanceled(true);
     }
 
     private void onLivingDeathPre(LivingDeathEvent event) {

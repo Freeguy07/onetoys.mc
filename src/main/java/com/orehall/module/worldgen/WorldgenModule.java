@@ -1,7 +1,6 @@
 package com.orehall.module.worldgen;
 
 import com.orehall.module.ModuleCategory;
-import com.orehall.module.ModuleManager;
 import com.orehall.module.OrehallModule;
 import net.neoforged.neoforge.common.ModConfigSpec;
 

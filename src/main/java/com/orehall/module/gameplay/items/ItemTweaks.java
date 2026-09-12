@@ -3,7 +3,7 @@ package com.orehall.module.gameplay.items;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
-public class ItemTweaks {
+public final class ItemTweaks {
     private final RecoveryCompassTweaks recoveryCompassTweaks = new RecoveryCompassTweaks(this);
     private ModConfigSpec.BooleanValue enabledConfig;
 
@@ -32,5 +32,9 @@ public class ItemTweaks {
 
     public void onConstruct(IEventBus modBus) {
         recoveryCompassTweaks.onConstruct(modBus);
+    }
+
+    public void onClientSetup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
+        recoveryCompassTweaks.onClientSetup(event);
     }
 }

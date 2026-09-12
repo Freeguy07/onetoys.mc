@@ -9,6 +9,7 @@ public class CowTweaks {
     private ModConfigSpec.BooleanValue enabledConfig;
     private ModConfigSpec.BooleanValue milkingCooldownEnabledConfig;
     private ModConfigSpec.IntValue milkingCooldownTicksConfig;
+    private ModConfigSpec.BooleanValue feedingResetsCooldownConfig;
 
     public void buildConfig(ModConfigSpec.Builder builder) {
         builder.comment("Tweaks and adjustments to cows.")
@@ -30,6 +31,11 @@ public class CowTweaks {
                 .translation("orehall.configuration.gameplay_tweaks.mob_tweaks.cow.milking_cooldown_ticks")
                 .defineInRange("milking_cooldown_ticks", 1200, 0, 72000);
 
+        feedingResetsCooldownConfig = builder
+                .comment("When enabled, feeding cows wheat clears their milking cooldown.")
+                .translation("orehall.configuration.gameplay_tweaks.mob_tweaks.cow.feeding_resets_cooldown")
+                .define("feeding_resets_cooldown", true);
+
         builder.pop();
     }
 
@@ -39,6 +45,10 @@ public class CowTweaks {
 
     public boolean isMilkingCooldownEnabled() {
         return isEnabled() && (milkingCooldownEnabledConfig == null || milkingCooldownEnabledConfig.get());
+    }
+
+    public boolean isFeedingResetEnabled() {
+        return isMilkingCooldownEnabled() && (feedingResetsCooldownConfig == null || feedingResetsCooldownConfig.get());
     }
 
     public int getMilkingCooldownTicks() {
@@ -51,5 +61,9 @@ public class CowTweaks {
 
     public void handleMilking(PlayerInteractEvent.EntityInteract event, Cow cow) {
         MobMilkingHelper.handle(event, cow, isMilkingCooldownEnabled(), getMilkingCooldownTicks());
+    }
+
+    public void handleFeeding(PlayerInteractEvent.EntityInteract event, Cow cow) {
+        MobMilkingHelper.handleFeeding(event, cow, isFeedingResetEnabled());
     }
 }

@@ -1,6 +1,5 @@
 package com.orehall.module.recipetweaks;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,7 +29,8 @@ public class RecipeTweaksModule extends OrehallModule {
             "reliable_recovery_compass", "recovery_compass",
             "reliable_shears", "shears",
             "reliable_spyglass", "spyglass",
-            "reliable_lever", "lever"
+            "reliable_lever", "lever",
+            "reliable_respawn_anchor", "respawn_anchor"
     );
 
     // List of utility recipes

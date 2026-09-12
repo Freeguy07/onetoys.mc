@@ -42,7 +42,7 @@ public class VanillaRecipeDisablerListener implements PreparableReloadListener {
             Set<ResourceLocation> recipesToRemove = new HashSet<>();
             List<RecipeHolder<?>> recipesToAdd = new ArrayList<>();
 
-            // 1. Static replacement recipes (reliable_*)
+            // 1. Static replacement recipes (reliable_*) from RecipeTweaksModule
             Map<ResourceLocation, ResourceLocation> activeReplacements = module.getActiveReplacements();
             for (Map.Entry<ResourceLocation, ResourceLocation> entry : activeReplacements.entrySet()) {
                 ResourceLocation vanillaId = entry.getKey();
