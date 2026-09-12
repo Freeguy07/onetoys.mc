@@ -98,10 +98,10 @@ public class RecipeTweaksModule extends OrehallModule {
                 .translation("orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.rules")
                 .defineListAllowEmpty("rules",
                         List.of(
-                                "id=buttons_require_redstone; enabled=true; target=*_button; input_count=1; pattern=#/R; keys=R:minecraft:redstone; output=1; exclude=minecraft:redstone",
-                                "id=pressure_plates_require_redstone; enabled=true; target=*_pressure_plate; input_count=2; pattern=###/.R.; keys=R:minecraft:redstone; output=3; exclude=minecraft:redstone",
+                                "id=buttons_require_redstone; enabled=true; target=*_button; input_count=1; pattern=#/R; keys=R:minecraft:redstone; output=4; exclude=minecraft:redstone",
+                                "id=pressure_plates_require_redstone; enabled=true; target=*_pressure_plate; input_count=2; pattern=###/.R.; keys=R:minecraft:redstone; output=2; exclude=minecraft:redstone",
                                 "id=cheap_doors; enabled=true; target=*_door; input_count=6; pattern=##/##/##; output=4",
-                                "id=cheap_trapdoors; enabled=true; target=*_trapdoor; input_count=6; pattern=###/###; output=4",
+                                "id=cheap_trapdoors; enabled=true; target=*_trapdoor; input_count=6; pattern=###/###; output=8",
                                 "id=cheap_fences; enabled=true; target=*_fence; input_count=6; pattern=#S#/#S#; keys=S:minecraft:stick; output=4; exclude=minecraft:nether_brick",
                                 "id=cheap_fence_gates; enabled=true; target=*_fence_gate; input_count=6; pattern=S#S/S#S; keys=S:minecraft:stick; output=2",
                                 "id=cheap_signs; enabled=true; target=*_sign; input_count=7; pattern=#/S; keys=S:minecraft:stick; output=2; exclude=minecraft:chain",
