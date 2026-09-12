@@ -1,155 +1,56 @@
 package com.orehall.module.gameplay.durability;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.electronwill.nightconfig.core.UnmodifiableConfig;
+import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+import com.electronwill.nightconfig.core.io.WritingMode;
+import com.orehall.Orehall;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 
 public class DurabilityTweaks {
-    private final Map<String, DurabilityGroup> toolGroups = new LinkedHashMap<>();
-    private final Map<String, DurabilityGroup> armorGroups = new LinkedHashMap<>();
-    private final Map<String, DurabilityGroup> miscGroups = new LinkedHashMap<>();
-    private final Map<String, DurabilityGroup> groups = new LinkedHashMap<>();
-    private ModConfigSpec.ConfigValue<List<? extends String>> customDurabilityConfig;
+
+    public record ItemDefault(String path, int defaultDurability) implements Comparable<ItemDefault> {
+        @Override
+        public int compareTo(ItemDefault o) {
+            return this.path.compareTo(o.path);
+        }
+    }
+
     private ModConfigSpec.BooleanValue enabledConfig;
-
-    public DurabilityTweaks() {
-        initGroups();
-        discoverAndCategorizeItems();
-    }
-
-    private void initGroups() {
-        // Tool Tiers
-        addToolGroup(new DurabilityGroup("wood_tools", "Wood Tools", true, 59));
-        addToolGroup(new DurabilityGroup("stone_tools", "Stone Tools", true, 131));
-        addToolGroup(new DurabilityGroup("iron_tools", "Iron Tools", true, 250));
-        addToolGroup(new DurabilityGroup("golden_tools", "Golden Tools", true, 32));
-        addToolGroup(new DurabilityGroup("diamond_tools", "Diamond Tools", true, 1561));
-        addToolGroup(new DurabilityGroup("netherite_tools", "Netherite Tools", true, 2031));
-
-        // Armor Tiers
-        addArmorGroup(new DurabilityGroup("leather_armor", "Leather Armor", true, 65));
-        addArmorGroup(new DurabilityGroup("chainmail_armor", "Chainmail Armor", true, 200));
-        addArmorGroup(new DurabilityGroup("iron_armor", "Iron Armor", true, 200));
-        addArmorGroup(new DurabilityGroup("golden_armor", "Golden Armor", true, 90));
-        addArmorGroup(new DurabilityGroup("diamond_armor", "Diamond Armor", true, 450));
-        addArmorGroup(new DurabilityGroup("netherite_armor", "Netherite Armor", true, 550));
-
-        // Miscellaneous
-        addMiscGroup(new DurabilityGroup("misc", "Miscellaneous Equipment", false, 0));
-    }
-
-    private void addToolGroup(DurabilityGroup group) {
-        toolGroups.put(group.getId(), group);
-        groups.put(group.getId(), group);
-    }
-
-    private void addArmorGroup(DurabilityGroup group) {
-        armorGroups.put(group.getId(), group);
-        groups.put(group.getId(), group);
-    }
-
-    private void addMiscGroup(DurabilityGroup group) {
-        miscGroups.put(group.getId(), group);
-        groups.put(group.getId(), group);
-    }
-
-    private void discoverAndCategorizeItems() {
-        for (Item item : BuiltInRegistries.ITEM) {
-            int maxDamage = item.components().getOrDefault(DataComponents.MAX_DAMAGE, 0);
-            if (maxDamage > 0) {
-                String path = BuiltInRegistries.ITEM.getKey(item).getPath();
-                String targetGroupId = categorizeItem(path);
-                DurabilityGroup group = groups.get(targetGroupId);
-                if (group != null) {
-                    group.addItem(item, maxDamage);
-                }
-            }
-        }
-    }
-
-    private String categorizeItem(String path) {
-        boolean isTool = path.endsWith("_sword") || path.endsWith("_pickaxe") || path.endsWith("_axe")
-                || path.endsWith("_shovel") || path.endsWith("_hoe");
-        boolean isArmor = path.endsWith("_helmet") || path.endsWith("_chestplate") || path.endsWith("_leggings")
-                || path.endsWith("_boots");
-
-        if (isTool) {
-            if (path.startsWith("wooden_")) return "wood_tools";
-            if (path.startsWith("stone_")) return "stone_tools";
-            if (path.startsWith("iron_")) return "iron_tools";
-            if (path.startsWith("golden_")) return "golden_tools";
-            if (path.startsWith("diamond_")) return "diamond_tools";
-            if (path.startsWith("netherite_")) return "netherite_tools";
-        }
-
-        if (isArmor) {
-            if (path.startsWith("leather_")) return "leather_armor";
-            if (path.startsWith("chainmail_")) return "chainmail_armor";
-            if (path.startsWith("iron_")) return "iron_armor";
-            if (path.startsWith("golden_")) return "golden_armor";
-            if (path.startsWith("diamond_")) return "diamond_armor";
-            if (path.startsWith("netherite_")) return "netherite_armor";
-        }
-
-        return "misc";
-    }
+    private ModConfigSpec.BooleanValue autoSyncConfig;
 
     public void buildConfig(ModConfigSpec.Builder builder) {
-        builder.comment("Sub-category allowing custom durability configuration for items.")
+        builder.comment("Sub-category allowing custom durability configuration for items.",
+                        "Item durability values are automatically cataloged and configured in 'config/orehall/durability.toml'.")
                 .translation("orehall.configuration.gameplay_tweaks.durability_tweaks")
                 .push("durability_tweaks");
 
         enabledConfig = builder
-                .comment("Enable the durability tweaks feature.")
+                .comment("Enable custom durability adjustments defined in 'config/orehall/durability.toml'.")
                 .translation("orehall.configuration.gameplay_tweaks.durability_tweaks.enabled")
                 .define("enabled", true);
 
-        // Tool tiers subcategory
-        builder.comment("Durability settings for tool tiers.")
-                .translation("orehall.configuration.gameplay_tweaks.durability_tweaks.tools")
-                .push("tools");
-        for (DurabilityGroup group : toolGroups.values()) {
-            if (group.hasItems()) {
-                group.buildConfig(builder, "orehall.configuration.gameplay_tweaks.durability_tweaks.tools." + group.getId());
-            }
-        }
-        builder.pop();
-
-        // Armor tiers subcategory
-        builder.comment("Durability settings for armor tiers.")
-                .translation("orehall.configuration.gameplay_tweaks.durability_tweaks.armor")
-                .push("armor");
-        for (DurabilityGroup group : armorGroups.values()) {
-            if (group.hasItems()) {
-                group.buildConfig(builder, "orehall.configuration.gameplay_tweaks.durability_tweaks.armor." + group.getId());
-            }
-        }
-        builder.pop();
-
-        // Miscellaneous equipment
-        for (DurabilityGroup group : miscGroups.values()) {
-            if (group.hasItems()) {
-                group.buildConfig(builder, "orehall.configuration.gameplay_tweaks.durability_tweaks." + group.getId());
-            }
-        }
-
-        builder.comment("Custom durability entries for modded or non-vanilla items.",
-                        "Format: \"namespace:item_path=value\", e.g. \"minecraft:stick=50\" or \"mymod:custom_sword=1200\"")
-                .translation("orehall.configuration.gameplay_tweaks.durability_tweaks.custom_overrides")
-                .push("custom_overrides");
-        customDurabilityConfig = builder
-                .comment("List of custom item durability definitions.")
-                .translation("orehall.configuration.gameplay_tweaks.durability_tweaks.custom_overrides.custom_item_durability")
-                .defineListAllowEmpty("custom_item_durability", new ArrayList<>(), () -> "", obj -> obj instanceof String str && str.contains("="));
-        builder.pop();
+        autoSyncConfig = builder
+                .comment("Automatically discover and append newly installed mod items to 'config/orehall/durability.toml'.")
+                .translation("orehall.configuration.gameplay_tweaks.durability_tweaks.auto_sync")
+                .define("auto_sync", true);
 
         builder.pop();
     }
@@ -158,36 +59,219 @@ public class DurabilityTweaks {
         return enabledConfig == null || enabledConfig.get();
     }
 
+    public boolean isAutoSyncEnabled() {
+        return autoSyncConfig == null || autoSyncConfig.get();
+    }
+
     public void apply(ModifyDefaultComponentsEvent event) {
         if (!isEnabled()) {
             return;
         }
 
-        // Apply group and individual settings
-        for (DurabilityGroup group : groups.values()) {
-            group.apply(event);
+        Path configPath = FMLPaths.CONFIGDIR.get().resolve("orehall").resolve("durability.toml");
+
+        try {
+            Files.createDirectories(configPath.getParent());
+        } catch (IOException e) {
+            Orehall.LOGGER.error("Failed to create directory for durability configuration: {}", configPath.getParent(), e);
+            return;
         }
 
-        // Apply custom overrides
-        if (customDurabilityConfig != null) {
-            for (String entry : customDurabilityConfig.get()) {
-                String[] parts = entry.split("=");
-                if (parts.length == 2) {
-                    try {
-                        ResourceLocation itemId = ResourceLocation.parse(parts[0].trim());
-                        int customDurability = Integer.parseInt(parts[1].trim());
+        // 1. Discover all damageable items in BuiltInRegistries.ITEM grouped by mod namespace
+        Map<String, List<ItemDefault>> itemsByMod = discoverDamageableItems();
 
-                        if (customDurability > 0) {
-                            BuiltInRegistries.ITEM.getOptional(itemId).ifPresent(item -> {
-                                event.modify(item, b -> b.set(DataComponents.MAX_DAMAGE, customDurability));
-                                com.orehall.Orehall.LOGGER.info("Applied custom durability override for '{}': {}", itemId, customDurability);
-                            });
+        // 2. If the file does not exist, generate initial formatted TOML file
+        if (!Files.exists(configPath)) {
+            generateInitialConfigFile(configPath, itemsByMod);
+            Orehall.LOGGER.info("Generated initial durability configuration at '{}' with {} items across {} mods",
+                    configPath, countTotalItems(itemsByMod), itemsByMod.size());
+            return;
+        }
+
+        // 3. File exists: read user values, auto-sync new items if enabled, and apply
+        loadAndApplyDurabilities(event, configPath, itemsByMod);
+    }
+
+    private Map<String, List<ItemDefault>> discoverDamageableItems() {
+        Map<String, List<ItemDefault>> rawMap = new HashMap<>();
+
+        for (Item item : BuiltInRegistries.ITEM) {
+            int maxDamage = item.components().getOrDefault(DataComponents.MAX_DAMAGE, 0);
+            if (maxDamage > 0) {
+                ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+                rawMap.computeIfAbsent(id.getNamespace(), k -> new ArrayList<>())
+                        .add(new ItemDefault(id.getPath(), maxDamage));
+            }
+        }
+
+        for (List<ItemDefault> list : rawMap.values()) {
+            list.sort(null);
+        }
+
+        Map<String, List<ItemDefault>> sortedMap = new LinkedHashMap<>();
+        if (rawMap.containsKey("minecraft")) {
+            sortedMap.put("minecraft", rawMap.get("minecraft"));
+        }
+        List<String> otherMods = new ArrayList<>(rawMap.keySet());
+        otherMods.remove("minecraft");
+        otherMods.sort(null);
+        for (String mod : otherMods) {
+            sortedMap.put(mod, rawMap.get(mod));
+        }
+
+        return sortedMap;
+    }
+
+    private int countTotalItems(Map<String, List<ItemDefault>> itemsByMod) {
+        int count = 0;
+        for (List<ItemDefault> list : itemsByMod.values()) {
+            count += list.size();
+        }
+        return count;
+    }
+
+    private void generateInitialConfigFile(Path path, Map<String, List<ItemDefault>> itemsByMod) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("# ==============================================================================\n");
+        sb.append("# Orehall - Durability Configuration\n");
+        sb.append("# Automatically generated and synchronized with all installed mods.\n");
+        sb.append("# Any item whose value differs from default will have its durability adjusted.\n");
+        sb.append("# Changes take effect upon restarting the game / server.\n");
+        sb.append("# ==============================================================================\n\n");
+
+        sb.append("# Optional wildcard / pattern / tag overrides (highest priority)\n");
+        sb.append("# Format: \"target_pattern\" = durability\n");
+        sb.append("# Examples:\n");
+        sb.append("# \"caverns_and_chasms:sanguine_*\" = 450\n");
+        sb.append("# \"*copper_*\" = 200\n");
+        sb.append("# \"#c:tools/silver\" = 160\n");
+        sb.append("[overrides]\n\n");
+
+        for (Map.Entry<String, List<ItemDefault>> entry : itemsByMod.entrySet()) {
+            String modid = entry.getKey();
+            sb.append("[").append(modid).append("]\n");
+            for (ItemDefault item : entry.getValue()) {
+                sb.append("    ").append(item.path()).append(" = ").append(item.defaultDurability()).append("\n");
+            }
+            sb.append("\n");
+        }
+
+        try {
+            Files.writeString(path, sb.toString(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            Orehall.LOGGER.error("Failed to write initial durability configuration to '{}'", path, e);
+        }
+    }
+
+    private void loadAndApplyDurabilities(ModifyDefaultComponentsEvent event, Path configPath, Map<String, List<ItemDefault>> itemsByMod) {
+        try (CommentedFileConfig config = CommentedFileConfig.builder(configPath)
+                .sync()
+                .writingMode(WritingMode.REPLACE)
+                .build()) {
+
+            config.load();
+
+            // Read [overrides] table
+            List<CustomDurabilityRule> overrideRules = new ArrayList<>();
+            Object overridesObj = config.get("overrides");
+            if (overridesObj instanceof UnmodifiableConfig overridesConfig) {
+                for (UnmodifiableConfig.Entry entry : overridesConfig.entrySet()) {
+                    String pattern = entry.getKey();
+                    Object val = entry.getValue();
+                    if (val instanceof Number num && num.intValue() > 0) {
+                        CustomDurabilityRule rule = CustomDurabilityRule.parse(pattern + "=" + num.intValue());
+                        if (rule != null) {
+                            overrideRules.add(rule);
                         }
-                    } catch (Exception e) {
-                        com.orehall.Orehall.LOGGER.warn("Failed to parse custom durability entry: {}", entry, e);
                     }
                 }
             }
+
+            // Read all configured per-item durabilities
+            Map<ResourceLocation, Integer> configuredDurabilities = new HashMap<>();
+            for (UnmodifiableConfig.Entry modEntry : config.entrySet()) {
+                String modid = modEntry.getKey();
+                if ("overrides".equals(modid)) {
+                    continue;
+                }
+                if (modEntry.getValue() instanceof UnmodifiableConfig modTable) {
+                    for (UnmodifiableConfig.Entry itemEntry : modTable.entrySet()) {
+                        String itemPath = itemEntry.getKey();
+                        if (itemEntry.getValue() instanceof Number num) {
+                            configuredDurabilities.put(ResourceLocation.fromNamespaceAndPath(modid, itemPath), num.intValue());
+                        }
+                    }
+                }
+            }
+
+            // Auto-sync newly installed mod items if enabled
+            if (isAutoSyncEnabled()) {
+                boolean modified = false;
+                int newCount = 0;
+                for (Map.Entry<String, List<ItemDefault>> entry : itemsByMod.entrySet()) {
+                    String modid = entry.getKey();
+                    for (ItemDefault item : entry.getValue()) {
+                        List<String> keyPath = List.of(modid, item.path());
+                        if (!config.contains(keyPath)) {
+                            config.set(keyPath, item.defaultDurability());
+                            modified = true;
+                            newCount++;
+                        }
+                    }
+                }
+                if (modified) {
+                    config.save();
+                    Orehall.LOGGER.info("Synchronized {} new mod items into '{}'", newCount, configPath.getFileName());
+                }
+            }
+
+            // Single pass over BuiltInRegistries.ITEM to apply modified durabilities
+            for (Item item : BuiltInRegistries.ITEM) {
+                int maxDamage = item.components().getOrDefault(DataComponents.MAX_DAMAGE, 0);
+                if (maxDamage <= 0) {
+                    continue;
+                }
+
+                ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+                String path = id.getPath();
+
+                // 1. Check [overrides] rules first (highest priority)
+                CustomDurabilityRule matchedRule = null;
+                for (CustomDurabilityRule rule : overrideRules) {
+                    if (rule.matches(item, id, path)) {
+                        matchedRule = rule;
+                    }
+                }
+
+                if (matchedRule != null) {
+                    matchedRule.apply(event, item, id);
+                } else {
+                    // 2. Apply configured value from durability.toml if changed from current max damage
+                    Integer configuredVal = configuredDurabilities.get(id);
+                    if (configuredVal != null && configuredVal > 0 && configuredVal != maxDamage) {
+                        final int targetVal = configuredVal;
+                        event.modify(item, b -> b.set(DataComponents.MAX_DAMAGE, targetVal));
+                        Orehall.LOGGER.info("Adjusting durability for '{}': {} -> {}", id, maxDamage, targetVal);
+                    }
+                }
+            }
+
+            // 3. Handle exact [overrides] targeting non-damageable items (e.g. stick = 50)
+            for (CustomDurabilityRule rule : overrideRules) {
+                if (rule instanceof CustomDurabilityRule.Exact exact) {
+                    BuiltInRegistries.ITEM.getHolder(exact.targetId()).ifPresent(holder -> {
+                        Item item = holder.value();
+                        int max = item.components().getOrDefault(DataComponents.MAX_DAMAGE, 0);
+                        if (max <= 0) {
+                            event.modify(item, b -> b.set(DataComponents.MAX_DAMAGE, exact.durability()));
+                            Orehall.LOGGER.info("Applied exact custom durability override to non-damageable item '{}': {}", exact.targetId(), exact.durability());
+                        }
+                    });
+                }
+            }
+
+        } catch (Exception e) {
+            Orehall.LOGGER.error("Failed to load or apply durability configuration from '{}'", configPath, e);
         }
     }
 }

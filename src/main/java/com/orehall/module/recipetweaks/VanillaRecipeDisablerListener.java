@@ -10,8 +10,7 @@ import java.util.concurrent.Executor;
 
 import com.orehall.Orehall;
 import com.orehall.module.ModuleManager;
-import com.orehall.module.recipetweaks.dynamic.ButtonRecipeReplacer;
-import com.orehall.module.recipetweaks.dynamic.PressurePlateRecipeReplacer;
+import com.orehall.module.recipetweaks.dynamic.CustomRecipeReplacer;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.ReloadableServerResources;
@@ -55,26 +54,18 @@ public class VanillaRecipeDisablerListener implements PreparableReloadListener {
                 }
             }
 
-            // 2. Automatic dynamic replacements (Buttons Require Redstone)
-            if (module.isButtonsRequireRedstoneEnabled()) {
-                int outputCount = module.getButtonsRequireRedstoneOutputCount();
-                ButtonRecipeReplacer.ReplacementResult buttonResult =
-                        ButtonRecipeReplacer.process(currentRecipes, outputCount, serverResources.getRegistryLookup());
-                recipesToRemove.addAll(buttonResult.recipesToRemove);
-                recipesToAdd.addAll(buttonResult.recipesToAdd);
-                Orehall.LOGGER.info("Automatic Recipe Replacer: Replaced {} button recipe(s) with redstone crafting (yields {} buttons).",
-                        buttonResult.recipesToRemove.size(), outputCount);
-            }
-
-            // 3. Automatic dynamic replacements (Pressure Plates Require Redstone)
-            if (module.isPressurePlatesRequireRedstoneEnabled()) {
-                int outputCount = module.getPressurePlatesRequireRedstoneOutputCount();
-                PressurePlateRecipeReplacer.ReplacementResult plateResult =
-                        PressurePlateRecipeReplacer.process(currentRecipes, outputCount, serverResources.getRegistryLookup());
-                recipesToRemove.addAll(plateResult.recipesToRemove);
-                recipesToAdd.addAll(plateResult.recipesToAdd);
-                Orehall.LOGGER.info("Automatic Recipe Replacer: Replaced {} pressure plate recipe(s) with redstone crafting (yields {} pressure plates).",
-                        plateResult.recipesToRemove.size(), outputCount);
+            // 2. Dynamic Replacements (Automatic Serialized Recipe Replacement System)
+            if (module.isAutomaticSerializedRecipeReplacementSystemEnabled()) {
+                List<String> rawRules = module.getAutomaticSerializedRecipeReplacementRules();
+                if (!rawRules.isEmpty()) {
+                    CustomRecipeReplacer.ReplacementResult customResult =
+                            CustomRecipeReplacer.process(currentRecipes, recipesToRemove, rawRules,
+                                    serverResources.getRegistryLookup(), serverResources.getConditionContext());
+                    recipesToRemove.addAll(customResult.recipesToRemove);
+                    recipesToAdd.addAll(customResult.recipesToAdd);
+                    Orehall.LOGGER.info("Automatic Serialized Recipe Replacement System: Replaced {} recipe(s) across {} rule(s).",
+                            customResult.recipesToRemove.size(), rawRules.size());
+                }
             }
 
             if (recipesToRemove.isEmpty() && recipesToAdd.isEmpty()) {

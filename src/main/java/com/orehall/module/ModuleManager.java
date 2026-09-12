@@ -39,7 +39,7 @@ public class ModuleManager {
     }
 
     public List<OrehallModule> getModules() {
-        return Collections.unmodifiableList(new ArrayList<>(modules.values()));
+        return List.copyOf(modules.values());
     }
 
     @SuppressWarnings("unchecked")
@@ -63,26 +63,20 @@ public class ModuleManager {
         return module != null && module.isEnabled();
     }
 
-    public void buildConfig(ModConfigSpec.Builder builder, net.neoforged.fml.config.ModConfig.Type type) {
-        for (OrehallModule module : modules.values()) {
-            if (module.getConfigType() == type) {
-                builder.comment(module.getDescription())
-                        .translation("orehall.configuration." + module.getId())
-                        .push(module.getId());
-                ModConfigSpec.BooleanValue enabledVal = builder
-                        .comment(module.getDescription(), "Default: " + module.isEnabledByDefault())
-                        .translation("orehall.configuration." + module.getId() + ".enabled")
-                        .define("enabled", module.isEnabledByDefault());
-                module.setEnabledConfig(enabledVal);
-
-                module.buildConfig(builder);
-                builder.pop();
-            }
-        }
-    }
-
     public void buildConfig(ModConfigSpec.Builder builder) {
-        buildConfig(builder, net.neoforged.fml.config.ModConfig.Type.COMMON);
+        for (OrehallModule module : modules.values()) {
+            builder.comment(module.getDescription())
+                    .translation("orehall.configuration." + module.getId())
+                    .push(module.getId());
+            ModConfigSpec.BooleanValue enabledVal = builder
+                    .comment(module.getDescription(), "Default: " + module.isEnabledByDefault())
+                    .translation("orehall.configuration." + module.getId() + ".enabled")
+                    .define("enabled", module.isEnabledByDefault());
+            module.setEnabledConfig(enabledVal);
+
+            module.buildConfig(builder);
+            builder.pop();
+        }
     }
 
     public void onConstruct(IEventBus modBus) {

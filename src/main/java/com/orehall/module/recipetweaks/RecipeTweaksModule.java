@@ -1,7 +1,9 @@
 package com.orehall.module.recipetweaks;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.orehall.module.ModuleCategory;
@@ -20,11 +22,8 @@ public class RecipeTweaksModule extends OrehallModule {
     private final Map<String, ModConfigSpec.BooleanValue> replacementConfigs = new LinkedHashMap<>();
     private final Map<String, ModConfigSpec.BooleanValue> utilityConfigs = new LinkedHashMap<>();
 
-    private ModConfigSpec.BooleanValue buttonsRequireRedstoneEnabled;
-    private ModConfigSpec.IntValue buttonsRequireRedstoneOutputCount;
-
-    private ModConfigSpec.BooleanValue pressurePlatesRequireRedstoneEnabled;
-    private ModConfigSpec.IntValue pressurePlatesRequireRedstoneOutputCount;
+    private ModConfigSpec.BooleanValue automaticSerializedRecipeReplacementSystemEnabled;
+    private ModConfigSpec.ConfigValue<List<? extends String>> automaticSerializedRecipeReplacementRules;
 
     // Map of replacement recipe path -> vanilla recipe target path
     private static final Map<String, String> REPLACEMENT_TARGETS = Map.of(
@@ -83,63 +82,52 @@ public class RecipeTweaksModule extends OrehallModule {
         }
         builder.pop();
 
-        builder.comment("Experimental recipes and dynamic crafting mechanics.")
-                .translation("orehall.configuration.recipe_tweaks.experimental")
-                .push("experimental");
+        builder.comment("Automatic serialized recipe replacement system.")
+                .translation("orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system")
+                .push("automatic_serialized_recipe_replacement_system");
 
-        builder.comment("Automatic recipe replacement system.")
-                .translation("orehall.configuration.recipe_tweaks.experimental.automatic_recipe_replacement_system")
-                .push("automatic_recipe_replacement_system");
-
-        builder.comment("Buttons require redstone to craft and yield multiple buttons.")
-                .translation("orehall.configuration.recipe_tweaks.experimental.automatic_recipe_replacement_system.buttons_require_redstone")
-                .push("buttons_require_redstone");
-
-        buttonsRequireRedstoneEnabled = builder
-                .comment("When enabled, replaces all 1-ingredient button recipes with a 2-ingredient recipe (block on top, redstone on bottom).")
-                .translation("orehall.configuration.recipe_tweaks.experimental.automatic_recipe_replacement_system.buttons_require_redstone.enabled")
+        automaticSerializedRecipeReplacementSystemEnabled = builder
+                .comment("Master switch to enable or disable the entire automatic serialized recipe replacement system.")
+                .translation("orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.enabled")
                 .define("enabled", true);
 
-        buttonsRequireRedstoneOutputCount = builder
-                .comment("Number of buttons crafted per recipe.")
-                .translation("orehall.configuration.recipe_tweaks.experimental.automatic_recipe_replacement_system.buttons_require_redstone.output_count")
-                .defineInRange("output_count", 4, 1, 64);
+        automaticSerializedRecipeReplacementRules = builder
+                .comment("List of automatic recipe replacement rules using the key-value DSL.",
+                        "Default entries configure button, pressure plate, door, trapdoor, fence, fence gate, sign, hanging sign, and chain recipes.",
+                        "Syntax: \"id=<name>; enabled=<true|false>; target=<#tag|item|*wildcard>; input_count=<inputs>; pattern=<rows_with_slash>; keys=<key:item>; output=<count|2x>; exclude=<item|tag>\"")
+                .translation("orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.rules")
+                .defineListAllowEmpty("rules",
+                        List.of(
+                                "id=buttons_require_redstone; enabled=true; target=*_button; input_count=1; pattern=#/R; keys=R:minecraft:redstone; output=1; exclude=minecraft:redstone",
+                                "id=pressure_plates_require_redstone; enabled=true; target=*_pressure_plate; input_count=2; pattern=###/.R.; keys=R:minecraft:redstone; output=3; exclude=minecraft:redstone",
+                                "id=cheap_doors; enabled=true; target=*_door; input_count=6; pattern=##/##/##; output=4",
+                                "id=cheap_trapdoors; enabled=true; target=*_trapdoor; input_count=6; pattern=###/###; output=4",
+                                "id=cheap_fences; enabled=true; target=*_fence; input_count=6; pattern=#S#/#S#; keys=S:minecraft:stick; output=4; exclude=minecraft:nether_brick",
+                                "id=cheap_fence_gates; enabled=true; target=*_fence_gate; input_count=6; pattern=S#S/S#S; keys=S:minecraft:stick; output=2",
+                                "id=cheap_signs; enabled=true; target=*_sign; input_count=7; pattern=#/S; keys=S:minecraft:stick; output=2; exclude=minecraft:chain",
+                                "id=cheap_hanging_signs; enabled=true; target=*_hanging_sign; input_count=8; pattern=C/#; keys=C:minecraft:chain; output=2",
+                                "id=cheap_chains; enabled=true; target=*chain; input_count=3; pattern=#/#/#; output=2"
+                        ),
+                        () -> "",
+                        obj -> obj instanceof String str && str.contains("target=")
+                );
 
-        builder.pop(); // buttons_require_redstone
-
-        builder.comment("Pressure plates require redstone to craft and yield multiple pressure plates.")
-                .translation("orehall.configuration.recipe_tweaks.experimental.automatic_recipe_replacement_system.pressure_plates_require_redstone")
-                .push("pressure_plates_require_redstone");
-
-        pressurePlatesRequireRedstoneEnabled = builder
-                .comment("When enabled, replaces all 2-ingredient pressure plate recipes with a shaped recipe (3 blocks on top, redstone in middle bottom).")
-                .translation("orehall.configuration.recipe_tweaks.experimental.automatic_recipe_replacement_system.pressure_plates_require_redstone.enabled")
-                .define("enabled", true);
-
-        pressurePlatesRequireRedstoneOutputCount = builder
-                .comment("Number of pressure plates crafted per recipe.")
-                .translation("orehall.configuration.recipe_tweaks.experimental.automatic_recipe_replacement_system.pressure_plates_require_redstone.output_count")
-                .defineInRange("output_count", 2, 1, 64);
-
-        builder.pop(); // pressure_plates_require_redstone
-        builder.pop(); // automatic_recipe_replacement_system
-        builder.pop(); // experimental
+        builder.pop(); // automatic_serialized_recipe_replacement_system
     }
 
-    public boolean isButtonsRequireRedstoneEnabled() {
-        return isEnabled() && buttonsRequireRedstoneEnabled != null && buttonsRequireRedstoneEnabled.get();
+    public boolean isAutomaticSerializedRecipeReplacementSystemEnabled() {
+        return isEnabled() && automaticSerializedRecipeReplacementSystemEnabled != null && automaticSerializedRecipeReplacementSystemEnabled.get();
     }
 
-    public int getButtonsRequireRedstoneOutputCount() {
-        return buttonsRequireRedstoneOutputCount != null ? buttonsRequireRedstoneOutputCount.get() : 4;
-    }
-
-    public boolean isPressurePlatesRequireRedstoneEnabled() {
-        return isEnabled() && pressurePlatesRequireRedstoneEnabled != null && pressurePlatesRequireRedstoneEnabled.get();
-    }
-
-    public int getPressurePlatesRequireRedstoneOutputCount() {
-        return pressurePlatesRequireRedstoneOutputCount != null ? pressurePlatesRequireRedstoneOutputCount.get() : 2;
+    public List<String> getAutomaticSerializedRecipeReplacementRules() {
+        if (automaticSerializedRecipeReplacementRules == null) {
+            return List.of();
+        }
+        List<? extends String> raw = automaticSerializedRecipeReplacementRules.get();
+        return raw.stream()
+                .filter(s -> s != null && !s.isBlank())
+                .map(String::trim)
+                .toList();
     }
 
     /**

@@ -31,9 +31,8 @@ public class Orehall {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
 
-        // Register our mod's ModConfigSpecs
-        modContainer.registerConfig(ModConfig.Type.COMMON, Config.COMMON_SPEC);
-        modContainer.registerConfig(ModConfig.Type.STARTUP, Config.STARTUP_SPEC);
+        // Register unified mod configuration
+        modContainer.registerConfig(ModConfig.Type.STARTUP, Config.SPEC, "orehall.toml");
     }
 
     private void commonSetup(FMLCommonSetupEvent event) {

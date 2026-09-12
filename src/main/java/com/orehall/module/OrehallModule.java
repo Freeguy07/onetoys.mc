@@ -53,10 +53,6 @@ public abstract class OrehallModule {
         this.enabledConfig = enabledConfig;
     }
 
-    public net.neoforged.fml.config.ModConfig.Type getConfigType() {
-        return net.neoforged.fml.config.ModConfig.Type.COMMON;
-    }
-
     public void buildConfig(ModConfigSpec.Builder builder) {
         // Optional child config options for modules
     }
