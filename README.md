@@ -1,5 +1,9 @@
 # Orehall
 
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-2b8a3e?logo=minecraft&logoColor=white)](https://www.minecraft.net/)
+[![NeoForge](https://img.shields.io/badge/NeoForge-21.1.250+-ea580c)](https://neoforged.net/)
+[![Java](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)](https://openjdk.org/)
+
 A modular Vanilla+ enhancement mod for Minecraft 1.21.1 built on NeoForge, focused on balanced gameplay tweaks, quality-of-life mechanics, and modpack-friendly recipe and durability customization.
 
 ## What is this?
@@ -20,6 +24,9 @@ Orehall provides a collection of independent, toggleable gameplay adjustments an
   - **Redstone-Activated Components**: Buttons and pressure plates require redstone to craft (yielding 4 buttons and 2 pressure plates respectively).
   - **Cheaper Construction**: More sensible recipe yields for doors (yielding 4), trapdoors (yielding 8), fences (yielding 4), fence gates (yielding 2), signs (yielding 2), hanging signs (yielding 2), and chains (yielding 2).
   - Fully extensible via simple key-value rules supporting wildcards, tags, and pattern overrides.
+
+### World Generation
+- **Giant Ore Veins Disabler**: Configurable disabler for vanilla Minecraft's sprawling giant copper and iron ore veins (and their associated granite and tuff deposits), featuring independent toggles for copper and iron veins while keeping standard ore deposits completely intact.
 
 ## Installation
 1. Ensure you have **Minecraft 1.21.1** installed with **NeoForge** (21.1.250 or newer).

@@ -35,7 +35,7 @@
   "orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.enabled": "Enable Automatic Serialized Recipe Replacement System",
   "orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.enabled.tooltip": "Master switch to enable or disable the entire automatic serialized recipe replacement system.",
   "orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.rules": "Automatic Replacement Rules",
-  "orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.rules.tooltip": "List of dynamic recipe replacement rules using the key-value DSL. Default entries configure buttons and pressure plates to require redstone.",
+  "orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.rules.tooltip": "List of dynamic recipe replacement rules using the key-value DSL. Default entries configure buttons, pressure plates, doors, trapdoors, fences, fence gates, signs, hanging signs, and chains.",
 
   "orehall.configuration.gameplay_tweaks": "Gameplay Tweaks",
   "orehall.configuration.gameplay_tweaks.tooltip": "Tweaks and adjustments to core gameplay mechanics.",
@@ -136,5 +136,31 @@
   "orehall.configuration.persist_on_death": "Persist on Death",
   "orehall.configuration.persist_on_death.tooltip": "When enabled, recovery compasses persist through death, avoiding drops and gravestone storage.",
   "orehall.configuration.rules": "Automatic Replacement Rules",
-  "orehall.configuration.rules.tooltip": "List of dynamic recipe replacement rules using the key-value DSL. Default entries configure buttons and pressure plates to require redstone."
+  "orehall.configuration.rules.tooltip": "List of dynamic recipe replacement rules using the key-value DSL. Default entries configure buttons and pressure plates to require redstone.",
+
+  "orehall.configuration.worldgen": "World Generation",
+  "orehall.configuration.worldgen.tooltip": "Tweaks and adjustments to world generation.",
+  "orehall.configuration.worldgen.enabled": "Enable World Generation Module",
+  "orehall.configuration.worldgen.enabled.tooltip": "Master switch to enable or disable all features in the World Generation module.",
+  "orehall.configuration.worldgen.giant_ore_veins_disabler": "Giant Ore Veins Disabler",
+  "orehall.configuration.worldgen.giant_ore_veins_disabler.tooltip": "Disabler for vanilla giant copper and iron ore veins.",
+  "orehall.configuration.worldgen.giant_ore_veins_disabler.enabled": "Enable Giant Ore Veins Disabler",
+  "orehall.configuration.worldgen.giant_ore_veins_disabler.enabled.tooltip": "Master switch to enable or disable the giant ore veins disabler.",
+  "orehall.configuration.worldgen.giant_ore_veins_disabler.disable_copper_veins": "Disable Giant Copper Ore Veins",
+  "orehall.configuration.worldgen.giant_ore_veins_disabler.disable_copper_veins.tooltip": "When enabled, giant copper ore veins and their surrounding granite deposits will not generate. Standard ore blobs are unaffected.",
+  "orehall.configuration.worldgen.giant_ore_veins_disabler.disable_iron_veins": "Disable Giant Iron Ore Veins",
+  "orehall.configuration.worldgen.giant_ore_veins_disabler.disable_iron_veins.tooltip": "When enabled, giant iron ore veins and their surrounding tuff deposits will not generate. Standard ore blobs are unaffected.",
+
+  "orehall.configuration.giant_ore_veins_disabler": "Giant Ore Veins Disabler",
+  "orehall.configuration.giant_ore_veins_disabler.tooltip": "Disabler for vanilla giant copper and iron ore veins.",
+  "orehall.configuration.giant_ore_veins_disabler.enabled": "Enable Giant Ore Veins Disabler",
+  "orehall.configuration.giant_ore_veins_disabler.enabled.tooltip": "Master switch to enable or disable the giant ore veins disabler.",
+  "orehall.configuration.giant_ore_veins_disabler.disable_copper_veins": "Disable Giant Copper Ore Veins",
+  "orehall.configuration.giant_ore_veins_disabler.disable_copper_veins.tooltip": "When enabled, giant copper ore veins and their surrounding granite deposits will not generate.",
+  "orehall.configuration.giant_ore_veins_disabler.disable_iron_veins": "Disable Giant Iron Ore Veins",
+  "orehall.configuration.giant_ore_veins_disabler.disable_iron_veins.tooltip": "When enabled, giant iron ore veins and their surrounding tuff deposits will not generate.",
+  "orehall.configuration.disable_copper_veins": "Disable Giant Copper Ore Veins",
+  "orehall.configuration.disable_copper_veins.tooltip": "When enabled, giant copper ore veins and their surrounding granite deposits will not generate.",
+  "orehall.configuration.disable_iron_veins": "Disable Giant Iron Ore Veins",
+  "orehall.configuration.disable_iron_veins.tooltip": "When enabled, giant iron ore veins and their surrounding tuff deposits will not generate."
 }

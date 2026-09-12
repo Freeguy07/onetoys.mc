@@ -82,6 +82,7 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     protected Element createSection(String key, UnmodifiableConfig subconfig, UnmodifiableConfig subsection) {
         if (subconfig.isEmpty()) return null;
 

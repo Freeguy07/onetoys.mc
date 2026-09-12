@@ -6,7 +6,7 @@ public enum ModuleCategory {
     BUILDING("building", "Building"),
     TWEAKS("tweaks", "Tweaks"),
     TOOLS("tools", "Tools"),
-    WORLD("world", "World");
+    WORLDGEN("worldgen", "World Generation");
 
     private final String id;
     private final String displayName;

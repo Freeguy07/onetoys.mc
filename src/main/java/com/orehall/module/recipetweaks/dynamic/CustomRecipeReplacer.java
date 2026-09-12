@@ -335,7 +335,7 @@ public class CustomRecipeReplacer {
                 try {
                     Collection<Holder<Item>> holders = context.getTag(tag);
                     if (holders != null && !holders.isEmpty()) {
-                        Holder<Item> itemHolder = item.builtInRegistryHolder();
+                        Holder<Item> itemHolder = BuiltInRegistries.ITEM.wrapAsHolder(item);
                         if (holders.contains(itemHolder)) {
                             return true;
                         }

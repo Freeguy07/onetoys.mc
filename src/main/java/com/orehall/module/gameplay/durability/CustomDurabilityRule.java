@@ -3,6 +3,7 @@ package com.orehall.module.gameplay.durability;
 import java.util.regex.Pattern;
 
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -62,7 +63,7 @@ public sealed interface CustomDurabilityRule permits
         @Override
         public boolean matches(Item item, ResourceLocation id, String path) {
             try {
-                return item.builtInRegistryHolder().is(tagKey);
+                return BuiltInRegistries.ITEM.wrapAsHolder(item).is(tagKey);
             } catch (Exception ignored) {
                 return false;
             }
