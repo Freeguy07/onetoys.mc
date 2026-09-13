@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "orehall:chrome_ore",
+    "orehall:raw_chrome_block",
+    "orehall:chrome_block"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "orehall:copper_nugget",
+    "orehall:diamond_shard",
+    "orehall:emerald_shard",
+    "orehall:coal_lump",
+    "orehall:chrome_nugget"
+  ]
+}

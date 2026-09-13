@@ -1,5 +1,8 @@
 package com.orehall.client.gui;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +12,9 @@ import java.util.function.Supplier;
 
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import com.electronwill.nightconfig.core.UnmodifiableConfig.Entry;
+import com.orehall.Orehall;
+import com.orehall.registry.OrehallBlocks;
+import com.orehall.registry.OrehallItems;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -27,6 +33,7 @@ import net.minecraft.world.item.Items;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen.ConfigurationSectionScreen;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -156,8 +163,11 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
             case "sleeping_tweaks" -> new ItemStack(Items.RED_BED);
             case "respawn_anchor_required" -> new ItemStack(Items.RESPAWN_ANCHOR);
 
-            case "worldgen" -> new ItemStack(Items.GRASS_BLOCK);
-            case "giant_ore_veins_disabler" -> new ItemStack(Items.RAW_COPPER);
+            case "worldgen", "worldgen_tweaks" -> new ItemStack(Items.GRASS_BLOCK);
+            case "ore_tweaks" -> new ItemStack(Items.DIAMOND_ORE);
+
+            case "content" -> new ItemStack(OrehallBlocks.CHROME_ORE.get());
+            case "chrome_tweaks" -> new ItemStack(OrehallItems.CHROME_INGOT.get());
 
             default -> ItemStack.EMPTY;
         };
@@ -437,6 +447,46 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
             }
         }
 
+        // Dedicated external configuration file button (durability.toml, recipes.toml)
+        String effectiveSection = getEffectiveSectionKey();
+        Path openFilePath = null;
+        Component openFileLabel = null;
+        Component openFileTooltip = null;
+
+        if ("durability_tweaks".equals(effectiveSection)) {
+            openFilePath = FMLPaths.CONFIGDIR.get().resolve("orehall").resolve("durability.toml");
+            openFileLabel = Component.translatable("orehall.configuration.gameplay_tweaks.durability_tweaks.open_file");
+            openFileTooltip = Component.translatable("orehall.configuration.gameplay_tweaks.durability_tweaks.open_file.tooltip");
+        } else if ("automatic_serialized_recipe_replacement_system".equals(effectiveSection)) {
+            openFilePath = FMLPaths.CONFIGDIR.get().resolve("orehall").resolve("recipes.toml");
+            openFileLabel = Component.translatable("orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.open_file");
+            openFileTooltip = Component.translatable("orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.open_file.tooltip");
+        }
+
+        boolean openBtnMatches = false;
+        if (openFilePath != null) {
+            openBtnMatches = searchQuery.isEmpty()
+                    || openFileLabel.getString().toLowerCase().contains(searchQuery)
+                    || openFilePath.getFileName().toString().toLowerCase().contains(searchQuery)
+                    || "open".contains(searchQuery)
+                    || "toml".contains(searchQuery)
+                    || "config".contains(searchQuery);
+
+            if (openBtnMatches) {
+                Path targetPath = openFilePath;
+                ConfigFileButton openBtn = new ConfigFileButton(
+                        ConfigurationScreen.BIG_BUTTON_WIDTH,
+                        Button.DEFAULT_HEIGHT,
+                        openFileLabel,
+                        Tooltip.create(openFileTooltip),
+                        () -> openInExternalEditor(targetPath)
+                );
+                openBtn.active = isSectionEnabled;
+                dependentWidgets.add(openBtn);
+                list.addSmall(openBtn, null);
+            }
+        }
+
         final List<ConfigItem> items = new ArrayList<>();
         for (final Entry entry : context.entries()) {
             final String key = entry.getKey();
@@ -534,7 +584,7 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
             }
         }
 
-        if (matchedCount == 0 && !masterMatches && !searchQuery.isEmpty()) {
+        if (matchedCount == 0 && !masterMatches && !openBtnMatches && !searchQuery.isEmpty()) {
             StringWidget noResultsWidget = new StringWidget(
                     ConfigurationScreen.BIG_BUTTON_WIDTH,
                     Button.DEFAULT_HEIGHT,
@@ -624,5 +674,63 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
 
         @Override
         protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {}
+    }
+
+    public static void openInExternalEditor(Path path) {
+        try {
+            if (!Files.exists(path)) {
+                Files.createDirectories(path.getParent());
+                if (path.getFileName().toString().equals("recipes.toml")) {
+                    com.orehall.module.recipetweaks.RecipeTweaksModule module =
+                            com.orehall.module.ModuleManager.get().getModule(com.orehall.module.recipetweaks.RecipeTweaksModule.class).orElse(null);
+                    if (module != null) {
+                        module.getAutomaticSerializedRecipeReplacementRules();
+                    }
+                } else if (path.getFileName().toString().equals("durability.toml")) {
+                    Files.writeString(path, "# Orehall - Durability Configuration\n[overrides]\n", StandardCharsets.UTF_8);
+                } else {
+                    Files.writeString(path, "", StandardCharsets.UTF_8);
+                }
+            }
+
+            if (Files.exists(path)) {
+                net.minecraft.Util.getPlatform().openFile(path.toFile());
+            } else {
+                net.minecraft.Util.getPlatform().openPath(path.getParent());
+            }
+        } catch (Exception e) {
+            Orehall.LOGGER.error("Failed to open configuration file '{}' in external editor: {}", path, e.getMessage());
+            try {
+                net.minecraft.Util.getPlatform().openPath(path.getParent());
+            } catch (Exception ignored) {}
+        }
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    public static class ConfigFileButton extends Button {
+        private final ItemStack icon = new ItemStack(Items.WRITABLE_BOOK);
+
+        public ConfigFileButton(int width, int height, Component message, Tooltip tooltip, Runnable onPress) {
+            super(0, 0, width, height, message, btn -> onPress.run(), DEFAULT_NARRATION);
+            setTooltip(tooltip);
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+            super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
+            if (!icon.isEmpty()) {
+                int iconX = getX() + 6;
+                int iconY = getY() + (height - 16) / 2;
+                guiGraphics.renderFakeItem(icon, iconX, iconY);
+            }
+        }
+
+        @Override
+        public void renderString(GuiGraphics guiGraphics, Font font, int color) {
+            int iconPadding = 26;
+            int minX = getX() + iconPadding;
+            int maxX = getX() + width - 6;
+            renderScrollingString(guiGraphics, font, getMessage(), (minX + maxX) / 2, minX, getY(), maxX, getY() + height, color);
+        }
     }
 }

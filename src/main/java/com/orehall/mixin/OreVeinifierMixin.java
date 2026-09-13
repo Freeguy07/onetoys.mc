@@ -1,7 +1,7 @@
 package com.orehall.mixin;
 
 import com.orehall.module.worldgen.GiantOreVeinsDisabler;
-import com.orehall.module.worldgen.WorldgenModule;
+import com.orehall.module.worldgen.WorldgenTweaksModule;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.NoiseChunk;
 import net.minecraft.world.level.levelgen.OreVeinifier;
@@ -31,7 +31,7 @@ public abstract class OreVeinifierMixin {
             return;
         }
 
-        GiantOreVeinsDisabler disabler = WorldgenModule.getDisabler();
+        GiantOreVeinsDisabler disabler = WorldgenTweaksModule.getDisabler();
         if (disabler == null || !disabler.isEnabled()) {
             return;
         }

@@ -25,7 +25,8 @@ public class ModuleManager {
         if (modules.isEmpty()) {
             register(new com.orehall.module.recipetweaks.RecipeTweaksModule());
             register(new com.orehall.module.gameplay.GameplayTweaksModule());
-            register(new com.orehall.module.worldgen.WorldgenModule());
+            register(new com.orehall.module.worldgen.WorldgenTweaksModule());
+            register(new com.orehall.module.content.ContentModule());
         }
     }
 

@@ -34,7 +34,10 @@ public class VanillaRecipeDisablerListener implements PreparableReloadListener {
         return stage.wait(null).thenRunAsync(() -> {
             RecipeManager recipeManager = serverResources.getRecipeManager();
             RecipeTweaksModule module = ModuleManager.get().getModule(RecipeTweaksModule.class).orElse(null);
-            if (module == null || !module.isEnabled()) {
+            boolean recipeTweaksActive = module != null && module.isEnabled();
+            boolean disableCharcoalActive = com.orehall.module.gameplay.GameplayTweaksModule.isDisableCharcoal();
+
+            if (!recipeTweaksActive && !disableCharcoalActive) {
                 return;
             }
 
@@ -42,29 +45,56 @@ public class VanillaRecipeDisablerListener implements PreparableReloadListener {
             Set<ResourceLocation> recipesToRemove = new HashSet<>();
             List<RecipeHolder<?>> recipesToAdd = new ArrayList<>();
 
-            // 1. Static replacement recipes (reliable_*) from RecipeTweaksModule
-            Map<ResourceLocation, ResourceLocation> activeReplacements = module.getActiveReplacements();
-            for (Map.Entry<ResourceLocation, ResourceLocation> entry : activeReplacements.entrySet()) {
-                ResourceLocation vanillaId = entry.getKey();
-                ResourceLocation replacementId = entry.getValue();
-                // Confirm replacement recipe is actually loaded
-                if (recipeManager.byKey(replacementId).isPresent()) {
-                    recipesToRemove.add(vanillaId);
-                    Orehall.LOGGER.info("Disabling vanilla recipe '{}' in favor of '{}'", vanillaId, replacementId);
+            if (recipeTweaksActive) {
+                // 1. Static replacement recipes (reliable_*) from RecipeTweaksModule
+                Map<ResourceLocation, ResourceLocation> activeReplacements = module.getActiveReplacements();
+                for (Map.Entry<ResourceLocation, ResourceLocation> entry : activeReplacements.entrySet()) {
+                    ResourceLocation vanillaId = entry.getKey();
+                    ResourceLocation replacementId = entry.getValue();
+                    // Confirm replacement recipe is actually loaded
+                    if (recipeManager.byKey(replacementId).isPresent()) {
+                        recipesToRemove.add(vanillaId);
+                        Orehall.LOGGER.info("Disabling vanilla recipe '{}' in favor of '{}'", vanillaId, replacementId);
+                    }
+                }
+
+                // 2. Dynamic Replacements (Automatic Serialized Recipe Replacement System)
+                if (module.isAutomaticSerializedRecipeReplacementSystemEnabled()) {
+                    List<String> rawRules = module.getAutomaticSerializedRecipeReplacementRules();
+                    if (!rawRules.isEmpty()) {
+                        CustomRecipeReplacer.ReplacementResult customResult =
+                                CustomRecipeReplacer.process(currentRecipes, recipesToRemove, rawRules,
+                                        serverResources.getRegistryLookup(), serverResources.getConditionContext());
+                        recipesToRemove.addAll(customResult.recipesToRemove);
+                        recipesToAdd.addAll(customResult.recipesToAdd);
+                        Orehall.LOGGER.info("Automatic Serialized Recipe Replacement System: Replaced {} recipe(s) across {} rule(s).",
+                                customResult.recipesToRemove.size(), rawRules.size());
+                    }
                 }
             }
 
-            // 2. Dynamic Replacements (Automatic Serialized Recipe Replacement System)
-            if (module.isAutomaticSerializedRecipeReplacementSystemEnabled()) {
-                List<String> rawRules = module.getAutomaticSerializedRecipeReplacementRules();
-                if (!rawRules.isEmpty()) {
-                    CustomRecipeReplacer.ReplacementResult customResult =
-                            CustomRecipeReplacer.process(currentRecipes, recipesToRemove, rawRules,
-                                    serverResources.getRegistryLookup(), serverResources.getConditionContext());
-                    recipesToRemove.addAll(customResult.recipesToRemove);
-                    recipesToAdd.addAll(customResult.recipesToAdd);
-                    Orehall.LOGGER.info("Automatic Serialized Recipe Replacement System: Replaced {} recipe(s) across {} rule(s).",
-                            customResult.recipesToRemove.size(), rawRules.size());
+            // 3. Charcoal Disabler from Item Tweaks
+            if (disableCharcoalActive) {
+                int charcoalRecipesCount = 0;
+                for (RecipeHolder<?> holder : currentRecipes) {
+                    if (holder.id().equals(ResourceLocation.withDefaultNamespace("charcoal"))) {
+                        if (recipesToRemove.add(holder.id())) {
+                            charcoalRecipesCount++;
+                        }
+                    } else {
+                        try {
+                            net.minecraft.world.item.ItemStack result = holder.value().getResultItem(serverResources.getRegistryLookup());
+                            if (result.is(net.minecraft.world.item.Items.CHARCOAL)) {
+                                if (recipesToRemove.add(holder.id())) {
+                                    charcoalRecipesCount++;
+                                }
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+                if (charcoalRecipesCount > 0) {
+                    Orehall.LOGGER.info("Item Tweaks: Disabled {} charcoal producing recipe(s).", charcoalRecipesCount);
                 }
             }
 

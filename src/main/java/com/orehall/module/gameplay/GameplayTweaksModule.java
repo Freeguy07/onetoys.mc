@@ -14,6 +14,8 @@ import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 public class GameplayTweaksModule extends OrehallModule {
     public static final String ID = "gameplay_tweaks";
 
+    private static GameplayTweaksModule instance;
+
     private final DurabilityTweaks durabilityTweaks = new DurabilityTweaks();
     private final MobTweaks mobTweaks = new MobTweaks();
     private final ItemTweaks itemTweaks = new ItemTweaks();
@@ -21,6 +23,7 @@ public class GameplayTweaksModule extends OrehallModule {
 
     public GameplayTweaksModule() {
         super(ID, "Gameplay Tweaks", "Tweaks and adjustments to core gameplay mechanics.", ModuleCategory.GAMEPLAY, true);
+        instance = this;
     }
 
     @Override
@@ -47,16 +50,12 @@ public class GameplayTweaksModule extends OrehallModule {
 
     @Override
     public void onCommonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
-        if (isEnabled()) {
-            sleepingTweaks.onCommonSetup(event);
-        }
+        sleepingTweaks.onCommonSetup(event);
     }
 
     @Override
     public void onClientSetup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
-        if (isEnabled()) {
-            itemTweaks.onClientSetup(event);
-        }
+        itemTweaks.onClientSetup(event);
     }
 
     public DurabilityTweaks getDurabilityTweaks() {
@@ -73,5 +72,17 @@ public class GameplayTweaksModule extends OrehallModule {
 
     public SleepingTweaks getSleepingTweaks() {
         return sleepingTweaks;
+    }
+
+    public static boolean isDisableCharcoal() {
+        GameplayTweaksModule mod = instance;
+        if (mod == null) {
+            mod = com.orehall.module.ModuleManager.get().getModule(GameplayTweaksModule.class).orElse(null);
+        }
+        if (mod == null || !mod.isEnabled()) {
+            return false;
+        }
+        ItemTweaks itemTweaks = mod.getItemTweaks();
+        return itemTweaks != null && itemTweaks.isDisableCharcoal();
     }
 }

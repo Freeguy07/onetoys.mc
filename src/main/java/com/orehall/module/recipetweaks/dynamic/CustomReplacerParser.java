@@ -26,8 +26,11 @@ public class CustomReplacerParser {
         String id = "custom_" + index;
         boolean enabled = true;
         String target = null;
+        String hasIngredient = null;
+        String recipeId = null;
         Integer inputCount = null;
         String exclude = null;
+        String swapRaw = null;
         String patternRaw = null;
         String ingredientsRaw = null;
         String keysRaw = null;
@@ -54,6 +57,8 @@ public class CustomReplacerParser {
                 case "id", "name" -> id = value;
                 case "enabled", "enable" -> enabled = Boolean.parseBoolean(value);
                 case "target" -> target = value;
+                case "has_ingredient", "has_input", "contains", "requires" -> hasIngredient = value;
+                case "recipe_id", "recipe", "recipe_filter" -> recipeId = value;
                 case "input_count", "input", "inputs", "count" -> {
                     try {
                         inputCount = Integer.parseInt(value);
@@ -63,6 +68,7 @@ public class CustomReplacerParser {
                     }
                 }
                 case "exclude" -> exclude = value;
+                case "swap", "replace" -> swapRaw = value;
                 case "pattern", "shape" -> patternRaw = value;
                 case "ingredients", "shapeless" -> ingredientsRaw = value;
                 case "keys", "key" -> keysRaw = value;
@@ -72,16 +78,71 @@ public class CustomReplacerParser {
             }
         }
 
-        if (target == null || target.isBlank()) {
-            Orehall.LOGGER.warn("Custom Recipe Replacer: Missing required 'target' directive in rule: '{}'", rawRule);
+        // Validate selectors: at least one of target, hasIngredient, or recipeId must be specified
+        boolean hasSelector = (target != null && !target.isBlank())
+                || (hasIngredient != null && !hasIngredient.isBlank())
+                || (recipeId != null && !recipeId.isBlank());
+
+        if (!hasSelector) {
+            Orehall.LOGGER.warn("Custom Recipe Replacer: Rule '{}' must define at least one selector ('target', 'has_ingredient', or 'recipe_id') in rule: '{}'", id, rawRule);
             return Optional.empty();
         }
 
+        // Parse swap directive (<from> -> <to>)
+        String swapFrom = null;
+        String swapTo = null;
+        if (swapRaw != null && !swapRaw.isBlank()) {
+            String sTrimmed = swapRaw.trim();
+            int arrow = sTrimmed.indexOf("->");
+            if (arrow != -1) {
+                swapFrom = sTrimmed.substring(0, arrow).trim();
+                swapTo = sTrimmed.substring(arrow + 2).trim();
+            } else {
+                int sep = sTrimmed.indexOf('=');
+                if (sep == -1) {
+                    sep = sTrimmed.indexOf(':');
+                }
+                if (sep != -1) {
+                    swapFrom = sTrimmed.substring(0, sep).trim();
+                    swapTo = sTrimmed.substring(sep + 1).trim();
+                }
+            }
+            if (swapFrom == null || swapFrom.isBlank() || swapTo == null || swapTo.isBlank()) {
+                Orehall.LOGGER.warn("Custom Recipe Replacer: Invalid swap syntax '{}' in rule: '{}'. Expected 'from -> to'", swapRaw, rawRule);
+                return Optional.empty();
+            }
+        }
+
+        boolean isSwap = swapFrom != null && swapTo != null;
         boolean isShaped = patternRaw != null && !patternRaw.isBlank();
         boolean isShapeless = ingredientsRaw != null && !ingredientsRaw.isBlank();
 
-        if (!isShaped && !isShapeless) {
-            Orehall.LOGGER.warn("Custom Recipe Replacer: Rule must define either 'pattern' (shaped) or 'ingredients' (shapeless) in rule: '{}'", rawRule);
+        // Parse output specification (e.g. "2" or "2x")
+        Integer outputFixed = null;
+        Integer outputMultiplier = null;
+        if (outputRaw != null && !outputRaw.isBlank()) {
+            String oTrimmed = outputRaw.trim();
+            if (oTrimmed.endsWith("x") || oTrimmed.endsWith("X")) {
+                try {
+                    outputMultiplier = Integer.parseInt(oTrimmed.substring(0, oTrimmed.length() - 1).trim());
+                } catch (NumberFormatException e) {
+                    Orehall.LOGGER.warn("Custom Recipe Replacer: Invalid output multiplier '{}' in rule: '{}'", outputRaw, rawRule);
+                    return Optional.empty();
+                }
+            } else {
+                try {
+                    outputFixed = Integer.parseInt(oTrimmed);
+                } catch (NumberFormatException e) {
+                    Orehall.LOGGER.warn("Custom Recipe Replacer: Invalid output count '{}' in rule: '{}'", outputRaw, rawRule);
+                    return Optional.empty();
+                }
+            }
+        }
+
+        boolean isOutputOnly = !isSwap && !isShaped && !isShapeless && (outputFixed != null || outputMultiplier != null);
+
+        if (!isSwap && !isShaped && !isShapeless && !isOutputOnly) {
+            Orehall.LOGGER.warn("Custom Recipe Replacer: Rule '{}' must define an action ('swap', 'pattern', 'ingredients', or 'output') in rule: '{}'", id, rawRule);
             return Optional.empty();
         }
 
@@ -136,8 +197,8 @@ public class CustomReplacerParser {
                     keys.put(symbol, itemOrTag);
                 }
             }
-        } else {
-            // Parse shapeless ingredients (e.g. "#,minecraft:redstone")
+        } else if (isShapeless) {
+            // Parse shapeless ingredients (e.g. "#,minecraft:redstone" or "1,2,minecraft:stick")
             String[] ingredientTokens = ingredientsRaw.split(",");
             for (String token : ingredientTokens) {
                 String t = token.trim();
@@ -151,35 +212,18 @@ public class CustomReplacerParser {
             }
         }
 
-        // Parse output
-        Integer outputFixed = null;
-        Integer outputMultiplier = null;
-        if (outputRaw != null && !outputRaw.isBlank()) {
-            String oTrimmed = outputRaw.trim();
-            if (oTrimmed.endsWith("x") || oTrimmed.endsWith("X")) {
-                try {
-                    outputMultiplier = Integer.parseInt(oTrimmed.substring(0, oTrimmed.length() - 1).trim());
-                } catch (NumberFormatException e) {
-                    Orehall.LOGGER.warn("Custom Recipe Replacer: Invalid output multiplier '{}' in rule: '{}'", outputRaw, rawRule);
-                    return Optional.empty();
-                }
-            } else {
-                try {
-                    outputFixed = Integer.parseInt(oTrimmed);
-                } catch (NumberFormatException e) {
-                    Orehall.LOGGER.warn("Custom Recipe Replacer: Invalid output count '{}' in rule: '{}'", outputRaw, rawRule);
-                    return Optional.empty();
-                }
-            }
-        }
-
         return Optional.of(new CustomReplacerRule(
                 id,
                 enabled,
                 target,
+                hasIngredient,
+                recipeId,
                 inputCount,
                 exclude,
+                swapFrom,
+                swapTo,
                 isShaped,
+                isShapeless,
                 patternRows,
                 shapelessIngredients,
                 keys,

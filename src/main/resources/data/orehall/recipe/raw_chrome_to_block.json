@@ -1,0 +1,24 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "orehall:ore_tweak_enabled",
+      "tweak": "chrome"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "#": {
+      "item": "orehall:raw_chrome"
+    }
+  },
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "result": {
+    "count": 1,
+    "id": "orehall:raw_chrome_block"
+  }
+}

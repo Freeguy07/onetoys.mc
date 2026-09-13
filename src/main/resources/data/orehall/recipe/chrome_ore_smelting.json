@@ -1,0 +1,19 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "orehall:ore_tweak_enabled",
+      "tweak": "chrome"
+    }
+  ],
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 0.7,
+  "group": "chrome_ingot",
+  "ingredient": {
+    "item": "orehall:chrome_ore"
+  },
+  "result": {
+    "id": "orehall:chrome_ingot"
+  }
+}

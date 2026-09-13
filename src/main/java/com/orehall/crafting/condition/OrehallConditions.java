@@ -25,6 +25,9 @@ public class OrehallConditions {
     public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<GoatDropsCondition>> GOAT_DROPS_ENABLED =
             CONDITION_CODECS.register("goat_drops_enabled", () -> GoatDropsCondition.CODEC);
 
+    public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<OreTweakEnabledCondition>> ORE_TWEAK_ENABLED =
+            CONDITION_CODECS.register("ore_tweak_enabled", () -> OreTweakEnabledCondition.CODEC);
+
     public static final DeferredHolder<LootItemConditionType, LootItemConditionType> GOAT_DROPS_TYPE =
             LOOT_CONDITION_TYPES.register("goat_drops_enabled", () -> new LootItemConditionType(GoatDropsCondition.CODEC));
 

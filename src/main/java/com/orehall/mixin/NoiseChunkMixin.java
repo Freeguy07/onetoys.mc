@@ -1,7 +1,7 @@
 package com.orehall.mixin;
 
 import com.orehall.module.worldgen.GiantOreVeinsDisabler;
-import com.orehall.module.worldgen.WorldgenModule;
+import com.orehall.module.worldgen.WorldgenTweaksModule;
 import net.minecraft.world.level.levelgen.NoiseChunk;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,7 +23,7 @@ public abstract class NoiseChunkMixin {
             return false;
         }
 
-        GiantOreVeinsDisabler disabler = WorldgenModule.getDisabler();
+        GiantOreVeinsDisabler disabler = WorldgenTweaksModule.getDisabler();
         return disabler == null || !disabler.isBothDisabled();
     }
 }

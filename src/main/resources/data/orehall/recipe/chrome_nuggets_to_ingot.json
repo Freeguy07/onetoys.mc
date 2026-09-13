@@ -1,0 +1,24 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "orehall:ore_tweak_enabled",
+      "tweak": "chrome"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "orehall:chrome_nugget"
+    }
+  },
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "result": {
+    "count": 1,
+    "id": "orehall:chrome_ingot"
+  }
+}
