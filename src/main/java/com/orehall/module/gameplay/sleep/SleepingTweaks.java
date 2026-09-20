@@ -10,6 +10,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerSetSpawnEvent;
@@ -44,7 +45,7 @@ public class SleepingTweaks {
         return respawnAnchorTweaks;
     }
 
-    public void onCommonSetup(net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent event) {
+    public void onCommonSetup(FMLCommonSetupEvent event) {
         respawnAnchorTweaks.onCommonSetup(event);
     }
 

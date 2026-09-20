@@ -1,0 +1,23 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:cod",
+    "minecraft:salmon",
+    "minecraft:pufferfish",
+    "minecraft:tropical_fish",
+    "minecraft:squid",
+    "minecraft:glow_squid",
+    "minecraft:dolphin",
+    "minecraft:axolotl",
+    "minecraft:tadpole",
+    "minecraft:guardian",
+    "minecraft:elder_guardian",
+    "minecraft:drowned",
+    "minecraft:blaze",
+    "minecraft:magma_cube",
+    "minecraft:strider",
+    "minecraft:ghast",
+    "minecraft:wither_skeleton",
+    "minecraft:enderman"
+  ]
+}

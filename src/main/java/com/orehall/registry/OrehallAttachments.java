@@ -42,6 +42,29 @@ public class OrehallAttachments {
                             .build()
             );
 
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Long>> WET_UNTIL =
+            ATTACHMENT_TYPES.register("wet_until", () ->
+                    AttachmentType.builder(() -> 0L)
+                            .serialize(Codec.LONG)
+                            .build()
+            );
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> IS_WET =
+            ATTACHMENT_TYPES.register("is_wet", () ->
+                    AttachmentType.builder(() -> false)
+                            .serialize(Codec.BOOL)
+                            .sync(ByteBufCodecs.BOOL)
+                            .build()
+            );
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> RECOVERY_COMPASS_OVERLAY =
+            ATTACHMENT_TYPES.register("recovery_compass_overlay", () ->
+                    AttachmentType.builder(() -> false)
+                            .serialize(Codec.BOOL)
+                            .sync(ByteBufCodecs.BOOL)
+                            .build()
+            );
+
     public static void register(IEventBus modBus) {
         ATTACHMENT_TYPES.register(modBus);
     }

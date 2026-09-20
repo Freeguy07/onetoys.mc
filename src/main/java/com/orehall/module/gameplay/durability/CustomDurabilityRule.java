@@ -2,6 +2,8 @@ package com.orehall.module.gameplay.durability;
 
 import java.util.regex.Pattern;
 
+import com.orehall.Orehall;
+
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -27,14 +29,14 @@ public sealed interface CustomDurabilityRule permits
     default void apply(ModifyDefaultComponentsEvent event, Item item, ResourceLocation id, boolean showInTooltip) {
         final int target = durability();
         if (target == -1) {
-            event.modify(item, b -> b.set(DataComponents.UNBREAKABLE, new Unbreakable(showInTooltip)));
-            com.orehall.Orehall.LOGGER.info("Applied custom unbreakable override [{}] for '{}'", this, id);
+            event.modify(item, b -> b.set(DataComponents.UNBREAKABLE, new Unbreakable(showInTooltip)).remove(DataComponents.MAX_DAMAGE));
+            Orehall.LOGGER.info("Applied custom unbreakable override [{}] for '{}'", this, id);
             return;
         }
         int current = item.components().getOrDefault(DataComponents.MAX_DAMAGE, 0);
         if (current != target) {
             event.modify(item, b -> b.set(DataComponents.MAX_DAMAGE, target));
-            com.orehall.Orehall.LOGGER.info("Applied custom durability override [{}] for '{}': {} -> {}", this, id, current, target);
+            Orehall.LOGGER.info("Applied custom durability override [{}] for '{}': {} -> {}", this, id, current, target);
         }
     }
 
@@ -99,7 +101,7 @@ public sealed interface CustomDurabilityRule permits
         try {
             durability = Integer.parseInt(parts[1].trim());
         } catch (NumberFormatException e) {
-            com.orehall.Orehall.LOGGER.warn("Invalid durability value in custom override entry: {}", entry);
+            Orehall.LOGGER.warn("Invalid durability value in custom override entry: {}", entry);
             return null;
         }
         if (durability <= 0 && durability != -1) {
@@ -113,7 +115,7 @@ public sealed interface CustomDurabilityRule permits
                 TagKey<Item> tagKey = TagKey.create(Registries.ITEM, tagLoc);
                 return new Tag(pattern, tagKey, durability);
             }
-            com.orehall.Orehall.LOGGER.warn("Invalid tag location in custom durability override: {}", pattern);
+            Orehall.LOGGER.warn("Invalid tag location in custom durability override: {}", pattern);
             return null;
         }
 
@@ -130,7 +132,7 @@ public sealed interface CustomDurabilityRule permits
             Pattern regex = globToRegex(pattern);
             return new Wildcard(pattern, regex, pattern.contains(":"), durability);
         } catch (Exception e) {
-            com.orehall.Orehall.LOGGER.warn("Failed to compile wildcard pattern in custom durability override '{}': {}", pattern, e.getMessage());
+            Orehall.LOGGER.warn("Failed to compile wildcard pattern in custom durability override '{}': {}", pattern, e.getMessage());
             return null;
         }
     }

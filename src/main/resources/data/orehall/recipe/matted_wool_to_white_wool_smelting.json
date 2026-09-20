@@ -1,0 +1,19 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "orehall:ore_tweak_enabled",
+      "tweak": "matted_wool"
+    }
+  ],
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 0.1,
+  "ingredient": {
+    "item": "orehall:matted_wool"
+  },
+  "result": {
+    "count": 1,
+    "id": "minecraft:white_wool"
+  }
+}

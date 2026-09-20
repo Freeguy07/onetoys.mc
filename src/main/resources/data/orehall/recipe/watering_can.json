@@ -1,0 +1,30 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "orehall:recipe_enabled",
+      "recipe": "orehall:watering_can"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "N": {
+      "item": "orehall:tungsten_nugget"
+    },
+    "P": {
+      "tag": "minecraft:planks"
+    },
+    "I": {
+      "item": "orehall:tungsten_ingot"
+    }
+  },
+  "pattern": [
+    "NPN",
+    "I I",
+    " I "
+  ],
+  "result": {
+    "count": 1,
+    "id": "orehall:watering_can"
+  }
+}

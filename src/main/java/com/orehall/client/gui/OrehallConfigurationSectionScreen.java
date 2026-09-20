@@ -13,8 +13,13 @@ import java.util.function.Supplier;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import com.electronwill.nightconfig.core.UnmodifiableConfig.Entry;
 import com.orehall.Orehall;
+import com.orehall.module.ModuleManager;
+import com.orehall.module.gameplay.GameplayTweaksModule;
+import com.orehall.module.gameplay.stack.StackTweaks;
 import com.orehall.registry.OrehallBlocks;
 import com.orehall.registry.OrehallItems;
+
+import net.minecraft.Util;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -150,7 +155,6 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
             case "recipe_tweaks" -> new ItemStack(Items.CRAFTING_TABLE);
             case "replacement_recipes" -> new ItemStack(Items.ANVIL);
             case "utility" -> new ItemStack(Items.CHEST);
-            case "automatic_serialized_recipe_replacement_system" -> new ItemStack(Items.REDSTONE);
 
             case "gameplay_tweaks" -> new ItemStack(Items.GOLDEN_APPLE);
             case "durability_tweaks" -> new ItemStack(Items.DIAMOND_PICKAXE);
@@ -160,14 +164,19 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
             case "mooshroom" -> new ItemStack(Items.MUSHROOM_STEW);
             case "item_tweaks" -> new ItemStack(Items.COMPASS);
             case "recovery_compass" -> new ItemStack(Items.RECOVERY_COMPASS);
+            case "stopwatch" -> new ItemStack(OrehallItems.STOPWATCH.get());
             case "sleeping_tweaks" -> new ItemStack(Items.RED_BED);
             case "respawn_anchor_required" -> new ItemStack(Items.RESPAWN_ANCHOR);
+            case "stack_tweaks" -> new ItemStack(Items.BUNDLE);
+            case "wetness", "wet", "wet_tweaks" -> new ItemStack(Items.WATER_BUCKET);
 
             case "worldgen", "worldgen_tweaks" -> new ItemStack(Items.GRASS_BLOCK);
             case "ore_tweaks" -> new ItemStack(Items.DIAMOND_ORE);
+            case "giant_ore_veins_disabler" -> new ItemStack(Items.RAW_COPPER);
 
-            case "content" -> new ItemStack(OrehallBlocks.CHROME_ORE.get());
-            case "chrome_tweaks" -> new ItemStack(OrehallItems.CHROME_INGOT.get());
+            case "content" -> new ItemStack(OrehallBlocks.TUNGSTEN_ORE.get());
+            case "tungsten_tweaks" -> new ItemStack(OrehallItems.TUNGSTEN_INGOT.get());
+            case "nuggets_and_shards" -> new ItemStack(OrehallItems.COPPER_NUGGET.get());
 
             default -> ItemStack.EMPTY;
         };
@@ -217,12 +226,8 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
     protected Element createSection(String key, UnmodifiableConfig subconfig, UnmodifiableConfig subsection) {
         if (subconfig.isEmpty()) return null;
 
-        String buttonTextKey = getTranslationKey(key) + ".button";
-        Component buttonText = I18n.exists(buttonTextKey)
-                ? Component.translatable(buttonTextKey)
-                : Component.translatable("neoforge.configuration.uitext.sectiontext");
-
-        Component buttonLabel = Component.translatable("neoforge.configuration.uitext.section", buttonText);
+        Component buttonLabel = Component.translatable("neoforge.configuration.uitext.section",
+                Component.translatable("neoforge.configuration.uitext.sectiontext"));
         Component sectionTitle = Component.translatable(getTranslationKey(key));
 
         return new Element(
@@ -330,7 +335,7 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
     private boolean isNonDefaultRecursive(Set<? extends Entry> entries) {
         for (Entry entry : entries) {
             Object rawValue = entry.getRawValue();
-            if (rawValue instanceof ModConfigSpec.ConfigValue<?> cv) {
+            if (rawValue instanceof ConfigValue<?> cv) {
                 if (isNonDefault(cv)) {
                     return true;
                 }
@@ -366,7 +371,7 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
     private void collectResetSteps(Set<? extends Entry> entries, List<ConfigurationScreen.UndoManager.Step<?>> steps) {
         for (Entry entry : entries) {
             Object rawValue = entry.getRawValue();
-            if (rawValue instanceof ModConfigSpec.ConfigValue cv) {
+            if (rawValue instanceof ConfigValue cv) {
                 if (isNonDefault(cv)) {
                     ValueSpec spec = cv.getSpec();
                     Object defaultVal = spec != null ? spec.correct(null) : cv.getDefault();
@@ -447,7 +452,7 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
             }
         }
 
-        // Dedicated external configuration file button (durability.toml, recipes.toml)
+        // Dedicated external configuration file button (durability.toml, stacks.toml)
         String effectiveSection = getEffectiveSectionKey();
         Path openFilePath = null;
         Component openFileLabel = null;
@@ -457,10 +462,10 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
             openFilePath = FMLPaths.CONFIGDIR.get().resolve("orehall").resolve("durability.toml");
             openFileLabel = Component.translatable("orehall.configuration.gameplay_tweaks.durability_tweaks.open_file");
             openFileTooltip = Component.translatable("orehall.configuration.gameplay_tweaks.durability_tweaks.open_file.tooltip");
-        } else if ("automatic_serialized_recipe_replacement_system".equals(effectiveSection)) {
-            openFilePath = FMLPaths.CONFIGDIR.get().resolve("orehall").resolve("recipes.toml");
-            openFileLabel = Component.translatable("orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.open_file");
-            openFileTooltip = Component.translatable("orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.open_file.tooltip");
+        } else if ("stack_tweaks".equals(effectiveSection)) {
+            openFilePath = FMLPaths.CONFIGDIR.get().resolve("orehall").resolve("stacks.toml");
+            openFileLabel = Component.translatable("orehall.configuration.gameplay_tweaks.stack_tweaks.open_file");
+            openFileTooltip = Component.translatable("orehall.configuration.gameplay_tweaks.stack_tweaks.open_file.tooltip");
         }
 
         boolean openBtnMatches = false;
@@ -680,28 +685,29 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
         try {
             if (!Files.exists(path)) {
                 Files.createDirectories(path.getParent());
-                if (path.getFileName().toString().equals("recipes.toml")) {
-                    com.orehall.module.recipetweaks.RecipeTweaksModule module =
-                            com.orehall.module.ModuleManager.get().getModule(com.orehall.module.recipetweaks.RecipeTweaksModule.class).orElse(null);
-                    if (module != null) {
-                        module.getAutomaticSerializedRecipeReplacementRules();
-                    }
-                } else if (path.getFileName().toString().equals("durability.toml")) {
+                if (path.getFileName().toString().equals("durability.toml")) {
                     Files.writeString(path, "# Orehall - Durability Configuration\n[overrides]\n", StandardCharsets.UTF_8);
+                } else if (path.getFileName().toString().equals("stacks.toml")) {
+                    GameplayTweaksModule module = ModuleManager.get().getModule(GameplayTweaksModule.class).orElse(null);
+                    if (module != null) {
+                        module.getStackTweaks().ensureConfigFile();
+                    } else {
+                        Files.writeString(path, StackTweaks.DEFAULT_CONFIG_TEMPLATE, StandardCharsets.UTF_8);
+                    }
                 } else {
                     Files.writeString(path, "", StandardCharsets.UTF_8);
                 }
             }
 
             if (Files.exists(path)) {
-                net.minecraft.Util.getPlatform().openFile(path.toFile());
+                Util.getPlatform().openFile(path.toFile());
             } else {
-                net.minecraft.Util.getPlatform().openPath(path.getParent());
+                Util.getPlatform().openPath(path.getParent());
             }
         } catch (Exception e) {
             Orehall.LOGGER.error("Failed to open configuration file '{}' in external editor: {}", path, e.getMessage());
             try {
-                net.minecraft.Util.getPlatform().openPath(path.getParent());
+                Util.getPlatform().openPath(path.getParent());
             } catch (Exception ignored) {}
         }
     }

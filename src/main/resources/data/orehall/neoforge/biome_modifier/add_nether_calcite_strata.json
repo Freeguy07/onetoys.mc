@@ -1,0 +1,12 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "orehall:ore_tweak_enabled",
+      "tweak": "calcite_stripes"
+    }
+  ],
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_nether",
+  "features": "orehall:calcite_strata",
+  "step": "local_modifications"
+}

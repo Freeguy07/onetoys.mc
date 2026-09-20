@@ -8,9 +8,18 @@
     "NoiseChunkMixin",
     "OreVeinifierMixin",
     "RespawnAnchorBlockMixin",
-    "DispenserBlockMixin"
+    "DispenserBlockMixin",
+    "SpiderMixin",
+    "CreeperMixin",
+    "SheepMixin",
+    "TagLoaderMixin",
+    "HolderSetNamedAccessor",
+    "HolderReferenceAccessor"
   ],
-  "client": [],
+  "client": [
+    "client.LivingEntityRendererMixin",
+    "client.RenderLayerMixin"
+  ],
   "server": [],
   "injectors": {
     "defaultRequire": 1

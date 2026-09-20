@@ -21,16 +21,20 @@ public class OrehallCreativeModeTabs {
                     .icon(() -> new ItemStack(OrehallBlocks.NETHER_LAPIS_ORE.get()))
                     .displayItems((parameters, output) -> {
                         output.accept(OrehallBlocks.NETHER_LAPIS_ORE.get());
-                        output.accept(OrehallBlocks.CHROME_ORE.get());
-                        output.accept(OrehallBlocks.RAW_CHROME_BLOCK.get());
-                        output.accept(OrehallBlocks.CHROME_BLOCK.get());
-                        output.accept(OrehallItems.RAW_CHROME.get());
-                        output.accept(OrehallItems.CHROME_INGOT.get());
-                        output.accept(OrehallItems.CHROME_NUGGET.get());
+                        output.accept(OrehallBlocks.TUNGSTEN_ORE.get());
+                        output.accept(OrehallBlocks.RAW_TUNGSTEN_BLOCK.get());
+                        output.accept(OrehallBlocks.TUNGSTEN_BLOCK.get());
+                        output.accept(OrehallItems.RAW_TUNGSTEN.get());
+                        output.accept(OrehallItems.TUNGSTEN_INGOT.get());
+                        output.accept(OrehallItems.TUNGSTEN_NUGGET.get());
+                        output.accept(OrehallItems.DUMBBELL.get());
+                        output.accept(OrehallItems.WATERING_CAN.get());
                         output.accept(OrehallItems.COPPER_NUGGET.get());
                         output.accept(OrehallItems.DIAMOND_SHARD.get());
                         output.accept(OrehallItems.EMERALD_SHARD.get());
                         output.accept(OrehallItems.COAL_LUMP.get());
+                        output.accept(OrehallItems.MATTED_WOOL.get());
+                        output.accept(OrehallItems.STOPWATCH.get());
                     })
                     .build()
     );

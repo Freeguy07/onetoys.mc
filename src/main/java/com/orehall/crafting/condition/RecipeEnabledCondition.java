@@ -17,9 +17,18 @@ public record RecipeEnabledCondition(ResourceLocation recipe) implements ICondit
 
     @Override
     public boolean test(IContext context) {
-        return ModuleManager.get().getModule(RecipeTweaksModule.class)
-                .map(module -> module.isRecipeEnabled(recipe.getPath()))
-                .orElse(false);
+        String path = recipe.getPath();
+        if ("stopwatch".equals(path)) {
+            return com.orehall.module.gameplay.GameplayTweaksModule.isStopwatchEnabled();
+        }
+        if ("dumbbell".equals(path)) {
+            return com.orehall.module.content.ContentModule.isDumbbellEnabled();
+        }
+        if ("watering_can".equals(path)) {
+            return com.orehall.module.content.ContentModule.isWateringCanEnabled();
+        }
+        RecipeTweaksModule module = RecipeTweaksModule.get();
+        return module != null && module.isRecipeEnabled(path);
     }
 
     @Override

@@ -49,13 +49,4 @@ public class WorldgenTweaksModule extends OrehallModule {
         OreTweaks ore = mod.getOreTweaks();
         return ore != null && ore.isNetherLockedLapisEnabled();
     }
-
-    public static boolean isNetherLapisMeltingParticlesEnabled() {
-        WorldgenTweaksModule mod = instance;
-        if (mod == null || !mod.isEnabled()) {
-            return false;
-        }
-        OreTweaks ore = mod.getOreTweaks();
-        return ore != null && ore.isNetherLapisMeltingParticlesEnabled();
-    }
 }

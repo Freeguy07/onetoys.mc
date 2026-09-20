@@ -1,0 +1,40 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "minecraft:item/compass_00"
+  },
+  "overrides": [
+    { "predicate": { "orehall:frame": 0 }, "model": "orehall:item/stopwatch_00" },
+    { "predicate": { "orehall:frame": 1 }, "model": "orehall:item/stopwatch_01" },
+    { "predicate": { "orehall:frame": 2 }, "model": "orehall:item/stopwatch_02" },
+    { "predicate": { "orehall:frame": 3 }, "model": "orehall:item/stopwatch_03" },
+    { "predicate": { "orehall:frame": 4 }, "model": "orehall:item/stopwatch_04" },
+    { "predicate": { "orehall:frame": 5 }, "model": "orehall:item/stopwatch_05" },
+    { "predicate": { "orehall:frame": 6 }, "model": "orehall:item/stopwatch_06" },
+    { "predicate": { "orehall:frame": 7 }, "model": "orehall:item/stopwatch_07" },
+    { "predicate": { "orehall:frame": 8 }, "model": "orehall:item/stopwatch_08" },
+    { "predicate": { "orehall:frame": 9 }, "model": "orehall:item/stopwatch_09" },
+    { "predicate": { "orehall:frame": 10 }, "model": "orehall:item/stopwatch_10" },
+    { "predicate": { "orehall:frame": 11 }, "model": "orehall:item/stopwatch_11" },
+    { "predicate": { "orehall:frame": 12 }, "model": "orehall:item/stopwatch_12" },
+    { "predicate": { "orehall:frame": 13 }, "model": "orehall:item/stopwatch_13" },
+    { "predicate": { "orehall:frame": 14 }, "model": "orehall:item/stopwatch_14" },
+    { "predicate": { "orehall:frame": 15 }, "model": "orehall:item/stopwatch_15" },
+    { "predicate": { "orehall:frame": 16 }, "model": "orehall:item/stopwatch_16" },
+    { "predicate": { "orehall:frame": 17 }, "model": "orehall:item/stopwatch_17" },
+    { "predicate": { "orehall:frame": 18 }, "model": "orehall:item/stopwatch_18" },
+    { "predicate": { "orehall:frame": 19 }, "model": "orehall:item/stopwatch_19" },
+    { "predicate": { "orehall:frame": 20 }, "model": "orehall:item/stopwatch_20" },
+    { "predicate": { "orehall:frame": 21 }, "model": "orehall:item/stopwatch_21" },
+    { "predicate": { "orehall:frame": 22 }, "model": "orehall:item/stopwatch_22" },
+    { "predicate": { "orehall:frame": 23 }, "model": "orehall:item/stopwatch_23" },
+    { "predicate": { "orehall:frame": 24 }, "model": "orehall:item/stopwatch_24" },
+    { "predicate": { "orehall:frame": 25 }, "model": "orehall:item/stopwatch_25" },
+    { "predicate": { "orehall:frame": 26 }, "model": "orehall:item/stopwatch_26" },
+    { "predicate": { "orehall:frame": 27 }, "model": "orehall:item/stopwatch_27" },
+    { "predicate": { "orehall:frame": 28 }, "model": "orehall:item/stopwatch_28" },
+    { "predicate": { "orehall:frame": 29 }, "model": "orehall:item/stopwatch_29" },
+    { "predicate": { "orehall:frame": 30 }, "model": "orehall:item/stopwatch_30" },
+    { "predicate": { "orehall:frame": 31 }, "model": "orehall:item/stopwatch_31" }
+  ]
+}

@@ -1,34 +1,48 @@
 package com.orehall.module.recipetweaks;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.orehall.Orehall;
+import com.orehall.mixin.HolderReferenceAccessor;
+import com.orehall.mixin.HolderSetNamedAccessor;
 import com.orehall.module.ModuleCategory;
+import com.orehall.module.ModuleManager;
 import com.orehall.module.OrehallModule;
 
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.TagsUpdatedEvent;
 
 public class RecipeTweaksModule extends OrehallModule {
     public static final String ID = "recipe_tweaks";
 
+    private static final ResourceKey<Item> FLINT_KEY =
+            ResourceKey.create(Registries.ITEM, ResourceLocation.withDefaultNamespace("flint"));
+
+    private ModConfigSpec.BooleanValue flintInStoneToolMaterialsConfig;
     private final Map<String, ModConfigSpec.BooleanValue> replacementConfigs = new LinkedHashMap<>();
     private final Map<String, ModConfigSpec.BooleanValue> utilityConfigs = new LinkedHashMap<>();
-
-    private ModConfigSpec.BooleanValue automaticSerializedRecipeReplacementSystemEnabled;
 
     // Map of replacement recipe path -> vanilla recipe target path
     private static final Map<String, String> REPLACEMENT_TARGETS = Map.of(
@@ -45,21 +59,54 @@ public class RecipeTweaksModule extends OrehallModule {
             "bell"
     };
 
+    private static RecipeTweaksModule instance;
+
     public RecipeTweaksModule() {
         super(ID, "Recipe Tweaks", "Various tweaks, replacements, and utility recipes.", ModuleCategory.RECIPE_TWEAKS, true);
+        instance = this;
+    }
+
+    public static RecipeTweaksModule get() {
+        return instance;
     }
 
     @Override
     public void onConstruct(IEventBus modBus) {
         NeoForge.EVENT_BUS.addListener(this::onAddReloadListener);
+        NeoForge.EVENT_BUS.addListener(this::onTagsUpdated);
+        modBus.addListener(this::onModConfigEvent);
     }
 
     private void onAddReloadListener(AddReloadListenerEvent event) {
         event.addListener(new VanillaRecipeDisablerListener(event.getServerResources()));
     }
 
+    private void onTagsUpdated(TagsUpdatedEvent event) {
+        if (isEnabled()) {
+            updateRuntimeFlintTag(isFlintInStoneToolMaterialsActive());
+        }
+    }
+
+    private void onModConfigEvent(ModConfigEvent event) {
+        if (event.getConfig().getModId().equals(Orehall.MODID)) {
+            updateRuntimeFlintTag(isFlintInStoneToolMaterialsActive());
+        }
+    }
+
+    @Override
+    public void onCommonSetup(FMLCommonSetupEvent event) {
+        if (isEnabled()) {
+            event.enqueueWork(() -> updateRuntimeFlintTag(isFlintInStoneToolMaterialsActive()));
+        }
+    }
+
     @Override
     public void buildConfig(ModConfigSpec.Builder builder) {
+        flintInStoneToolMaterialsConfig = builder
+                .comment("When enabled, adds flint to the stone tool materials tag (#minecraft:stone_tool_materials), allowing stone tools to be crafted with flint.")
+                .translation("orehall.configuration.recipe_tweaks.flint_in_stone_tool_materials")
+                .define("flint_in_stone_tool_materials", true);
+
         builder.comment("Recipes that replace vanilla crafting recipes when enabled.")
                 .translation("orehall.configuration.recipe_tweaks.replacement_recipes")
                 .push("replacement_recipes");
@@ -87,127 +134,65 @@ public class RecipeTweaksModule extends OrehallModule {
             utilityConfigs.put(utilityName, configValue);
         }
         builder.pop();
-
-        builder.comment("Dynamic recipe replacement system.",
-                        "Enables in-place ingredient substitutions ('swap'), multi-ingredient reconstructions, and output tweaks.",
-                        "Replacement rules are configured in 'config/orehall/recipes.toml'.",
-                        "WARNING: Be aware that the replacement system is experimental and can make mistakes.")
-                .translation("orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system")
-                .push("automatic_serialized_recipe_replacement_system");
-
-        automaticSerializedRecipeReplacementSystemEnabled = builder
-                .comment("Master switch to enable or disable the entire dynamic recipe replacement system.",
-                        "Detailed replacement rules and developer documentation are located in 'config/orehall/recipes.toml'.",
-                        "WARNING: Be aware that the replacement system is experimental and can make mistakes.")
-                .translation("orehall.configuration.recipe_tweaks.automatic_serialized_recipe_replacement_system.enabled")
-                .define("enabled", true);
-
-        builder.pop(); // automatic_serialized_recipe_replacement_system
     }
 
-    public boolean isAutomaticSerializedRecipeReplacementSystemEnabled() {
-        return isEnabled() && automaticSerializedRecipeReplacementSystemEnabled != null && automaticSerializedRecipeReplacementSystemEnabled.get();
+    /**
+     * Checks whether flint is configured to be added into stone tool materials.
+     */
+    public boolean isFlintInStoneToolMaterialsEnabled() {
+        return flintInStoneToolMaterialsConfig == null || flintInStoneToolMaterialsConfig.get();
     }
 
-    public List<String> getAutomaticSerializedRecipeReplacementRules() {
-        Path configPath = FMLPaths.CONFIGDIR.get().resolve("orehall").resolve("recipes.toml");
-        ensureRecipesConfigFile(configPath);
+    /**
+     * Helper to check if both the Recipe Tweaks module and the flint stone tools toggle are active.
+     */
+    public static boolean isFlintInStoneToolMaterialsActive() {
+        return ModuleManager.get().getModule(RecipeTweaksModule.class)
+                .map(m -> m.isEnabled() && m.isFlintInStoneToolMaterialsEnabled())
+                .orElse(false);
+    }
 
-        List<String> rules = new ArrayList<>();
-        try (CommentedFileConfig fileConfig = CommentedFileConfig.builder(configPath).sync().build()) {
-            fileConfig.load();
-            Object rawObj = fileConfig.get("rules");
-            if (rawObj instanceof List<?> list) {
-                for (Object item : list) {
-                    if (item instanceof String s && !s.isBlank()) {
-                        rules.add(s.trim());
-                    }
-                }
+    /**
+     * Dynamically updates the in-memory #minecraft:stone_tool_materials tag in BuiltInRegistries.ITEM.
+     * Fires tag rebinding invalidation callbacks so recipe ingredient caches update immediately.
+     */
+    @SuppressWarnings("unchecked")
+    public static synchronized void updateRuntimeFlintTag(boolean enabled) {
+        try {
+            Optional<HolderSet.Named<Item>> tagOpt = BuiltInRegistries.ITEM.getTag(ItemTags.STONE_TOOL_MATERIALS);
+            if (tagOpt.isEmpty()) {
+                return;
+            }
+
+            HolderSet.Named<Item> namedSet = tagOpt.get();
+            Holder.Reference<Item> flintHolder = BuiltInRegistries.ITEM.getHolderOrThrow(FLINT_KEY);
+
+            boolean containsFlint = flintHolder.is(ItemTags.STONE_TOOL_MATERIALS);
+            if (enabled == containsFlint) {
+                return;
+            }
+
+            List<Holder<Item>> currentContents = new ArrayList<>(namedSet.stream().toList());
+
+            if (enabled) {
+                currentContents.add(flintHolder);
+                ((HolderSetNamedAccessor<Item>) (Object) namedSet).orehall$bind(currentContents);
+
+                Set<TagKey<Item>> tags = flintHolder.tags().collect(Collectors.toCollection(HashSet::new));
+                tags.add(ItemTags.STONE_TOOL_MATERIALS);
+                ((HolderReferenceAccessor<Item>) (Object) flintHolder).orehall$bindTags(tags);
+                Orehall.LOGGER.debug("Dynamic Tag: Added flint to stone_tool_materials tag.");
+            } else {
+                currentContents.remove(flintHolder);
+                ((HolderSetNamedAccessor<Item>) (Object) namedSet).orehall$bind(currentContents);
+
+                Set<TagKey<Item>> tags = flintHolder.tags().collect(Collectors.toCollection(HashSet::new));
+                tags.remove(ItemTags.STONE_TOOL_MATERIALS);
+                ((HolderReferenceAccessor<Item>) (Object) flintHolder).orehall$bindTags(tags);
+                Orehall.LOGGER.debug("Dynamic Tag: Removed flint from stone_tool_materials tag.");
             }
         } catch (Exception e) {
-            Orehall.LOGGER.error("Failed to load recipe replacement rules from '{}': {}", configPath, e.getMessage());
-        }
-        return rules;
-    }
-
-    private void ensureRecipesConfigFile(Path configPath) {
-        if (Files.exists(configPath)) {
-            return;
-        }
-        try {
-            Files.createDirectories(configPath.getParent());
-            String template = """
-# ================================================================================
-# Orehall - Dynamic Recipe Replacement Configuration
-# ================================================================================
-# Scans all server recipes during datapack reload, identifies matching targets,
-# and safely replaces them in-place with zero file collisions.
-#
-# NOTE: Be aware that the replacement system is experimental and can make mistakes.
-#
-# --- SELECTORS (At least ONE is required) ---
-#   * target=<item|#tag|*wildcard>      : Match recipes producing this output item/tag/wildcard.
-#                                         Supports comma-separated lists (e.g. "target=#c:ingots,minecraft:iron_sword").
-#   * has_ingredient=<item|#tag|*wild>  : Match recipes that consume this ingredient anywhere in their grid.
-#   * recipe_id=<wildcard|regex>        : Match recipe by its ResourceLocation ID or path (e.g. "minecraft:*_door").
-#   * input_count=<number>              : Optional constraint: only match recipes with exactly N non-empty slots.
-#   * exclude=<item|#tag|*wildcard>     : Optional exclusion: skips recipe if it consumes or outputs this item/tag.
-#
-# --- ACTION MODES (Choose ONE) ---
-#   [MODE 1: IN-PLACE INGREDIENT SUBSTITUTION ('swap')]
-#     Surgically swaps an ingredient while preserving the original shape, air slots, and other ingredients.
-#     Syntax: swap=<source_ingredient> -> <replacement_ingredient>
-#     Example: swap=minecraft:slime_ball -> minecraft:honey_bottle
-#
-#   [MODE 2: SHAPED PATTERN RECONSTRUCTION ('pattern')]
-#     Rebuilds the recipe into a custom shaped grid (1-3 rows separated by '/').
-#     Air slots can be '.' or '_' (e.g. "###/.R.").
-#     Dynamic Ingredient Captures (extracted automatically from source recipe):
-#       '#' or '1' = First distinct material from source recipe (e.g. primary metal/wood).
-#       '2'        = Second distinct material from source recipe (e.g. handle/secondary metal).
-#       '3', '4'   = Third / Fourth distinct materials from source recipe.
-#     Static Key Mappings:
-#       keys=<char:item|#tag>,... (e.g. "keys=S:minecraft:stick,R:minecraft:redstone").
-#
-#   [MODE 3: SHAPELESS RECONSTRUCTION ('ingredients')]
-#     Rebuilds the recipe into a shapeless craft.
-#     Syntax: ingredients=<token1>,<token2>,...
-#     Tokens can be dynamic ('#', '1', '2', '3') or static ('minecraft:redstone', '#c:rods').
-#
-#   [MODE 4: OUTPUT-ONLY TWEAK ('output')]
-#     Leaves recipe shape and ingredients completely unchanged, adjusting only the output count.
-#
-# --- MODIFIERS & FLAGS ---
-#   * id=<name>                         : Unique rule identifier for logs and recipe IDs (default: auto).
-#   * enabled=<true|false>              : Enable or disable this rule independently (default: true).
-#   * output=<count|multiplier>         : Fixed yield (e.g. "output=4") or multiplier (e.g. "output=2x").
-#   * group=<string>                    : Optional recipe book group identifier.
-#
-# --- PRACTICAL EXAMPLES ---
-#   1. In-place single ingredient swap (Sticky Pistons accept Honey):
-#      "id=honey_sticky_piston; target=minecraft:sticky_piston; swap=minecraft:slime_ball -> minecraft:honey_bottle"
-#   2. In-place material tier swap with output scaling (Copper Hoppers yielding 2):
-#      "id=copper_hoppers; target=minecraft:hopper; swap=#c:ingots/iron -> #c:ingots/copper; output=2"
-#   3. Input-triggered global swap (Replace slimeballs in ALL crafting recipes with honeycomb):
-#      "id=honeycomb_substitute; has_ingredient=minecraft:slime_ball; swap=minecraft:slime_ball -> minecraft:honeycomb"
-#   4. Dynamic multi-ingredient tool pattern (Cheaper Swords using 1 blade + 1 stick across ALL materials):
-#      "id=compact_swords; target=*_sword; pattern=1/2; output=1"
-#   5. Shaped pattern with static key (Cheaper pickaxes: 2 ingots/planks over 2 sticks):
-#      "id=cheap_pickaxes; target=*_pickaxe; pattern=##/S./S.; keys=S:#c:rods/wooden; output=1"
-#   6. Recipe ID targeted output boost (4 doors for all door recipes):
-#      "id=cheap_doors; recipe_id=*_door; output=4"
-#   7. Exclusion constraint (Cheaper fences except nether brick):
-#      "id=cheap_fences; target=*_fence; pattern=#S#/#S#; keys=S:minecraft:stick; output=4; exclude=minecraft:nether_brick"
-# ================================================================================
-
-rules = [
-    # Add your dynamic recipe replacement rules here
-]
-""";
-            Files.writeString(configPath, template, StandardCharsets.UTF_8);
-            Orehall.LOGGER.info("Generated dynamic recipe replacement configuration at '{}'", configPath);
-        } catch (IOException e) {
-            Orehall.LOGGER.error("Failed to create recipe replacement configuration at '{}'", configPath, e);
+            Orehall.LOGGER.debug("Could not update runtime flint tag: {}", e.getMessage());
         }
     }
 
@@ -218,6 +203,9 @@ rules = [
     public boolean isRecipeEnabled(String recipePath) {
         if (!isEnabled()) {
             return false;
+        }
+        if ("flint_in_stone_tool_materials".equals(recipePath)) {
+            return isFlintInStoneToolMaterialsEnabled();
         }
         ModConfigSpec.BooleanValue config = replacementConfigs.get(recipePath);
         if (config != null) {

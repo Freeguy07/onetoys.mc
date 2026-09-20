@@ -5,6 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.orehall.module.content.ContentModule;
+import com.orehall.module.gameplay.GameplayTweaksModule;
+import com.orehall.module.recipetweaks.RecipeTweaksModule;
+import com.orehall.module.worldgen.WorldgenTweaksModule;
+
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -23,10 +28,10 @@ public class ModuleManager {
 
     public void init() {
         if (modules.isEmpty()) {
-            register(new com.orehall.module.recipetweaks.RecipeTweaksModule());
-            register(new com.orehall.module.gameplay.GameplayTweaksModule());
-            register(new com.orehall.module.worldgen.WorldgenTweaksModule());
-            register(new com.orehall.module.content.ContentModule());
+            register(new RecipeTweaksModule());
+            register(new GameplayTweaksModule());
+            register(new WorldgenTweaksModule());
+            register(new ContentModule());
         }
     }
 

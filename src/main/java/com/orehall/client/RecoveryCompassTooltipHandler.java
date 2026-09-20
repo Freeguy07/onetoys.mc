@@ -21,14 +21,16 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
  */
 @OnlyIn(Dist.CLIENT)
 public class RecoveryCompassTooltipHandler {
+    private static final Component NO_DEATH = Component.translatable("orehall.tooltip.recovery_compass.no_death").withStyle(ChatFormatting.GRAY);
+    private static final Component HOLD_SHIFT = Component.translatable("orehall.tooltip.recovery_compass.hold_shift").withStyle(ChatFormatting.DARK_GRAY);
 
     public static void onItemTooltip(ItemTooltipEvent event) {
-        RecoveryCompassTweaks tweaks = RecoveryCompassTweaks.get();
-        if (tweaks == null || !tweaks.isTooltipEnabled()) {
+        if (!event.getItemStack().is(Items.RECOVERY_COMPASS)) {
             return;
         }
 
-        if (!event.getItemStack().is(Items.RECOVERY_COMPASS)) {
+        RecoveryCompassTweaks tweaks = RecoveryCompassTweaks.get();
+        if (tweaks == null || !tweaks.isTooltipEnabled()) {
             return;
         }
 
@@ -50,14 +52,10 @@ public class RecoveryCompassTooltipHandler {
                         blockPos.getX(), blockPos.getY(), blockPos.getZ(), dimName
                 ).withStyle(ChatFormatting.GOLD));
             } else {
-                tooltip.add(Component.translatable(
-                        "orehall.tooltip.recovery_compass.no_death"
-                ).withStyle(ChatFormatting.GRAY));
+                tooltip.add(NO_DEATH);
             }
         } else {
-            tooltip.add(Component.translatable(
-                    "orehall.tooltip.recovery_compass.hold_shift"
-            ).withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(HOLD_SHIFT);
         }
     }
 }

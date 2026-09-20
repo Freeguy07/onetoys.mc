@@ -3,6 +3,8 @@ package com.orehall.crafting.condition;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.orehall.module.content.ContentModule;
+import com.orehall.module.gameplay.GameplayTweaksModule;
 import com.orehall.module.worldgen.WorldgenTweaksModule;
 
 import net.neoforged.neoforge.common.conditions.ICondition;
@@ -19,11 +21,23 @@ public record OreTweakEnabledCondition(String tweak) implements ICondition {
         if ("nether_locked_lapis".equals(tweak) || "nether_lapis_ore".equals(tweak)) {
             return WorldgenTweaksModule.isNetherLockedLapisEnabled();
         }
-        if ("chrome_ore".equals(tweak)) {
-            return com.orehall.module.content.ContentModule.isChromeOreGenerationEnabled();
+        if ("tungsten_ore".equals(tweak)) {
+            return ContentModule.isTungstenOreGenerationEnabled();
         }
-        if ("chrome".equals(tweak)) {
-            return com.orehall.module.content.ContentModule.isChromeTweaksEnabled();
+        if ("calcite_stripes".equals(tweak)) {
+            return ContentModule.isCalciteStripesEnabled();
+        }
+        if ("tungsten".equals(tweak)) {
+            return ContentModule.isTungstenTweaksEnabled();
+        }
+        if ("nuggets_and_shards".equals(tweak) || "content".equals(tweak)) {
+            return ContentModule.isNuggetsAndShardsEnabled();
+        }
+        if ("wetness".equals(tweak)) {
+            return GameplayTweaksModule.isWetnessEnabled();
+        }
+        if ("matted_wool".equals(tweak)) {
+            return GameplayTweaksModule.isMattedWoolFromWetSheepEnabled();
         }
         return false;
     }

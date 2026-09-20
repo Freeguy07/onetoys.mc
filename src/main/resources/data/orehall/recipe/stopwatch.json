@@ -1,0 +1,28 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "orehall:recipe_enabled",
+      "recipe": "orehall:stopwatch"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "T": {
+      "item": "orehall:tungsten_ingot"
+    }
+  },
+  "pattern": [
+    "TTT",
+    "TRT",
+    "TTT"
+  ],
+  "result": {
+    "count": 1,
+    "id": "orehall:stopwatch"
+  },
+  "show_notification": true
+}

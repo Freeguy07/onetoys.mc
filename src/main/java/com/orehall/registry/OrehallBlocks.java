@@ -30,8 +30,8 @@ public class OrehallBlocks {
             )
     );
 
-    public static final DeferredBlock<Block> CHROME_ORE = BLOCKS.register(
-            "chrome_ore",
+    public static final DeferredBlock<Block> TUNGSTEN_ORE = BLOCKS.register(
+            "tungsten_ore",
             () -> new DropExperienceBlock(
                     UniformInt.of(0, 1),
                     BlockBehaviour.Properties.of()
@@ -43,8 +43,8 @@ public class OrehallBlocks {
             )
     );
 
-    public static final DeferredBlock<Block> RAW_CHROME_BLOCK = BLOCKS.register(
-            "raw_chrome_block",
+    public static final DeferredBlock<Block> RAW_TUNGSTEN_BLOCK = BLOCKS.register(
+            "raw_tungsten_block",
             () -> new Block(
                     BlockBehaviour.Properties.of()
                             .mapColor(MapColor.COLOR_BLACK)
@@ -55,8 +55,8 @@ public class OrehallBlocks {
             )
     );
 
-    public static final DeferredBlock<Block> CHROME_BLOCK = BLOCKS.register(
-            "chrome_block",
+    public static final DeferredBlock<Block> TUNGSTEN_BLOCK = BLOCKS.register(
+            "tungsten_block",
             () -> new Block(
                     BlockBehaviour.Properties.of()
                             .mapColor(MapColor.METAL)
@@ -64,6 +64,22 @@ public class OrehallBlocks {
                             .requiresCorrectToolForDrops()
                             .strength(5.0F, 6.0F)
                             .sound(SoundType.NETHERITE_BLOCK)
+            )
+    );
+
+    public static final DeferredBlock<Block> DUMBBELL = BLOCKS.register(
+            "dumbbell",
+            () -> new com.orehall.block.DumbbellBlock(
+                    BlockBehaviour.Properties.of()
+                            .noOcclusion()
+                            .isSuffocating((state, level, pos) -> false)
+                            .isViewBlocking((state, level, pos) -> false)
+                            .isRedstoneConductor((state, level, pos) -> false)
+                            .mapColor(MapColor.METAL)
+                            .instrument(NoteBlockInstrument.IRON_XYLOPHONE)
+                            .requiresCorrectToolForDrops()
+                            .strength(5.0F, 1200.0F)
+                            .sound(SoundType.ANVIL)
             )
     );
 

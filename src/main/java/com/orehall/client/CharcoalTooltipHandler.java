@@ -14,10 +14,11 @@ import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
  */
 @OnlyIn(Dist.CLIENT)
 public class CharcoalTooltipHandler {
+    private static final Component DISABLED_TOOLTIP = Component.translatable("orehall.tooltip.charcoal_disabled").withStyle(ChatFormatting.RED);
 
     public static void onItemTooltip(ItemTooltipEvent event) {
         if (event.getItemStack().is(Items.CHARCOAL) && GameplayTweaksModule.isDisableCharcoal()) {
-            event.getToolTip().add(Component.translatable("orehall.tooltip.charcoal_disabled").withStyle(ChatFormatting.RED));
+            event.getToolTip().add(DISABLED_TOOLTIP);
         }
     }
 }

@@ -1,10 +1,16 @@
 package com.orehall.module.gameplay.items;
 
+import com.orehall.client.CharcoalTooltipHandler;
+import com.orehall.client.StopwatchTooltipHandler;
+
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.neoforge.common.NeoForge;
 
 public final class ItemTweaks {
     private final RecoveryCompassTweaks recoveryCompassTweaks = new RecoveryCompassTweaks(this);
+    private final StopwatchTweaks stopwatchTweaks = new StopwatchTweaks(this);
     private ModConfigSpec.BooleanValue enabledConfig;
     private ModConfigSpec.BooleanValue disableCharcoalConfig;
 
@@ -24,6 +30,7 @@ public final class ItemTweaks {
                 .define("disable_charcoal", true);
 
         recoveryCompassTweaks.buildConfig(builder);
+        stopwatchTweaks.buildConfig(builder);
 
         builder.pop();
     }
@@ -40,12 +47,25 @@ public final class ItemTweaks {
         return recoveryCompassTweaks;
     }
 
+    public StopwatchTweaks getStopwatchTweaks() {
+        return stopwatchTweaks;
+    }
+
+    public boolean isStopwatchEnabled() {
+        return isEnabled() && stopwatchTweaks.isEnabled();
+    }
+
+    public boolean isStopwatchHotbarDisplayEnabled() {
+        return isStopwatchEnabled() && stopwatchTweaks.isHotbarDisplayEnabled();
+    }
+
     public void onConstruct(IEventBus modBus) {
         recoveryCompassTweaks.onConstruct(modBus);
     }
 
-    public void onClientSetup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
+    public void onClientSetup(FMLClientSetupEvent event) {
         recoveryCompassTweaks.onClientSetup(event);
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.orehall.client.CharcoalTooltipHandler::onItemTooltip);
+        NeoForge.EVENT_BUS.addListener(CharcoalTooltipHandler::onItemTooltip);
+        NeoForge.EVENT_BUS.addListener(StopwatchTooltipHandler::onItemTooltip);
     }
 }

@@ -1,6 +1,5 @@
 package com.orehall.block;
 
-import com.orehall.module.worldgen.WorldgenTweaksModule;
 import com.orehall.registry.OrehallParticles;
 
 import net.minecraft.core.BlockPos;
@@ -20,10 +19,6 @@ public class NetherLapisOreBlock extends DropExperienceBlock {
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         super.animateTick(state, level, pos, random);
-
-        if (!WorldgenTweaksModule.isNetherLapisMeltingParticlesEnabled()) {
-            return;
-        }
 
         // Only simulate melting away if the block is in a hot dimension
         if (!level.dimensionType().ultraWarm()) {

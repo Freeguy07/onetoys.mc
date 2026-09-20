@@ -18,7 +18,11 @@ import com.orehall.Orehall;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.TieredItem;
+import net.minecraft.world.item.Tiers;
 import net.minecraft.world.item.component.Unbreakable;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.ModConfigSpec;
@@ -119,8 +123,9 @@ public class DurabilityTweaks {
             int maxDamage = item.components().getOrDefault(DataComponents.MAX_DAMAGE, 0);
             if (maxDamage > 0) {
                 ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+                int defaultDurability = calculateDefaultDurability(item, id, id.getPath(), maxDamage);
                 rawMap.computeIfAbsent(id.getNamespace(), k -> new ArrayList<>())
-                        .add(new ItemDefault(id.getPath(), maxDamage));
+                        .add(new ItemDefault(id.getPath(), defaultDurability));
             }
         }
 
@@ -155,6 +160,9 @@ public class DurabilityTweaks {
         sb.append("# ==============================================================================\n");
         sb.append("# Orehall - Durability Configuration\n");
         sb.append("# Automatically generated and synchronized with all installed mods.\n");
+        sb.append("# Values default to Orehall's balanced stack-based tiers (multiples of 64):\n");
+        sb.append("#   Tools: Wood (64), Stone (128), Gold (288), Iron (576), Diamond (2304), Netherite (3456)\n");
+        sb.append("#   Armor: Leather (64), Gold (128), Chain (192), Iron (256), Diamond (512), Netherite (768)\n");
         sb.append("# Any item whose value differs from default will have its durability adjusted.\n");
         sb.append("# Set any item's durability to -1 to make it completely unbreakable.\n");
         sb.append("# Changes take effect upon restarting the game / server.\n");
@@ -286,7 +294,7 @@ public class DurabilityTweaks {
                     continue;
                 }
 
-                // 2. Apply configured value from durability.toml if changed from current max damage
+                // 2. Apply configured value from durability.toml
                 Integer configuredVal = configuredDurabilities.get(id);
                 if (configuredVal != null) {
                     if (configuredVal == -1) {
@@ -322,5 +330,83 @@ public class DurabilityTweaks {
         } catch (Exception e) {
             Orehall.LOGGER.error("Failed to load or apply durability configuration from '{}'", configPath, e);
         }
+    }
+
+    /**
+     * Calculates default balanced stack-based durability for an item:
+     * Tools & Weapons:
+     *   Wood: 64 (1 stack), Stone: 128 (2 stacks), Gold: 288 (4.5 stacks),
+     *   Iron: 576 (9 stacks), Diamond: 2304 (36 stacks), Netherite: 3456 (54 stacks).
+     * Armor (balanced stack tiers to avoid god-tier immortality):
+     *   Leather / Wolf: 64 (1 stack), Gold: 128 (2 stacks), Chainmail: 192 (3 stacks),
+     *   Iron / Turtle: 256 (4 stacks), Diamond: 512 (8 stacks), Netherite: 768 (12 stacks).
+     * Extended to other materials, weapons, utility tools, and fallback rounding for modded items.
+     */
+    public int calculateDefaultDurability(Item item, ResourceLocation id, String path, int currentMaxDamage) {
+        if (currentMaxDamage <= 0) {
+            return 0;
+        }
+
+        String lowerPath = path.toLowerCase();
+        boolean isArmor = item instanceof ArmorItem
+                || lowerPath.contains("helmet") || lowerPath.contains("chestplate")
+                || lowerPath.contains("leggings") || lowerPath.contains("boots")
+                || lowerPath.contains("armor");
+
+        // 1. Check Armor Items (balanced stack tiers)
+        if (isArmor) {
+            if (item instanceof ArmorItem armor) {
+                String mat = armor.getMaterial().unwrapKey().map(k -> k.location().getPath().toLowerCase()).orElse("");
+                if (mat.equals("leather") || mat.equals("armadillo")) return 64;
+                if (mat.equals("gold") || mat.equals("golden")) return 128;
+                if (mat.equals("chainmail") || mat.equals("chain") || mat.equals("silver")) return 192;
+                if (mat.equals("iron") || mat.equals("copper") || mat.equals("bronze") || mat.equals("turtle")) return 256;
+                if (mat.equals("diamond") || mat.equals("steel") || mat.equals("platinum")) return 512;
+                if (mat.equals("netherite")) return 768;
+            }
+
+            // Path heuristics for modded or non-ArmorItem armors
+            if (lowerPath.contains("netherite")) return 768;
+            if (lowerPath.contains("diamond") || lowerPath.contains("platinum") || lowerPath.contains("steel")) return 512;
+            if (lowerPath.contains("iron") || lowerPath.contains("bronze") || lowerPath.contains("copper") || lowerPath.contains("turtle")) return 256;
+            if (lowerPath.contains("chainmail") || lowerPath.contains("chain_") || lowerPath.contains("silver")) return 192;
+            if (lowerPath.contains("golden") || lowerPath.contains("gold_") || lowerPath.contains("_gold")) return 128;
+            if (lowerPath.contains("leather") || lowerPath.contains("wolf_armor") || lowerPath.contains("armadillo")) return 64;
+        }
+
+        // 2. Check TieredItem (swords, pickaxes, axes, shovels, hoes)
+        if (item instanceof TieredItem tiered) {
+            Tier tier = tiered.getTier();
+            if (tier == Tiers.WOOD) return 64;
+            if (tier == Tiers.STONE) return 128;
+            if (tier == Tiers.GOLD) return 288;
+            if (tier == Tiers.IRON) return 576;
+            if (tier == Tiers.DIAMOND) return 2304;
+            if (tier == Tiers.NETHERITE) return 3456;
+        }
+
+        // 3. Specific weapons and utility tools (checked before material keywords so "flint_and_steel" is not matched as "steel")
+        if (lowerPath.contains("flint_and_steel")) return 64;
+        if (lowerPath.contains("fishing_rod")) return 288;
+        if (lowerPath.contains("trident") || lowerPath.contains("mace")) return 2304;
+        if (lowerPath.contains("crossbow") || lowerPath.contains("shield") || lowerPath.contains("elytra")) return 576;
+        if (lowerPath.endsWith("bow") || lowerPath.contains("bow_")) return 384;
+        if (lowerPath.contains("shears")) return 256;
+        if (lowerPath.contains("brush")
+                || lowerPath.contains("carrot_on_a_stick") || lowerPath.contains("warped_fungus_on_a_stick")) return 64;
+
+        // 4. Check path for tool/weapon material keywords (modded tools or non-standard class hierarchies)
+        if (lowerPath.contains("netherite")) return 3456;
+        if (lowerPath.contains("diamond") || lowerPath.contains("platinum")) return 2304;
+        if (lowerPath.contains("steel")) return 1152;
+        if (lowerPath.contains("iron") || lowerPath.contains("bronze")) return 576;
+        if (lowerPath.contains("silver") || lowerPath.contains("golden") || lowerPath.contains("gold_") || lowerPath.contains("_gold") || lowerPath.contains("chainmail") || lowerPath.contains("chain_")) return 288;
+        if (lowerPath.contains("copper")) return 256;
+        if (lowerPath.contains("stone")) return 128;
+        if (lowerPath.contains("wooden") || lowerPath.contains("wood_") || lowerPath.contains("_wood")) return 64;
+
+        // 5. Fallback for any other damageable items: round to nearest stack multiple (min 1 stack = 64)
+        int stacks = Math.max(1, Math.round(currentMaxDamage / 64.0f));
+        return stacks * 64;
     }
 }

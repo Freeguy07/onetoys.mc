@@ -1,0 +1,33 @@
+{
+  "type": "orehall:calcite_strata",
+  "config": {
+    "horizontal_radius": 15,
+    "vertical_radius": 9,
+    "discard_chance_on_air_exposure": 0.1,
+    "max_tilt_degrees": 25,
+    "layers": [
+      {
+        "Name": "minecraft:calcite"
+      },
+      {
+        "Name": "minecraft:calcite"
+      },
+      {
+        "Name": "minecraft:gravel"
+      },
+      {
+        "Name": "minecraft:calcite"
+      },
+      {
+        "Name": "minecraft:calcite"
+      },
+      {
+        "Name": "minecraft:tuff"
+      }
+    ],
+    "target": {
+      "predicate_type": "minecraft:block_match",
+      "block": "minecraft:netherrack"
+    }
+  }
+}

@@ -10,13 +10,15 @@ import java.util.concurrent.Executor;
 
 import com.orehall.Orehall;
 import com.orehall.module.ModuleManager;
-import com.orehall.module.recipetweaks.dynamic.CustomRecipeReplacer;
+import com.orehall.module.gameplay.GameplayTweaksModule;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.ReloadableServerResources;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 
@@ -35,7 +37,7 @@ public class VanillaRecipeDisablerListener implements PreparableReloadListener {
             RecipeManager recipeManager = serverResources.getRecipeManager();
             RecipeTweaksModule module = ModuleManager.get().getModule(RecipeTweaksModule.class).orElse(null);
             boolean recipeTweaksActive = module != null && module.isEnabled();
-            boolean disableCharcoalActive = com.orehall.module.gameplay.GameplayTweaksModule.isDisableCharcoal();
+            boolean disableCharcoalActive = GameplayTweaksModule.isDisableCharcoal();
 
             if (!recipeTweaksActive && !disableCharcoalActive) {
                 return;
@@ -43,7 +45,6 @@ public class VanillaRecipeDisablerListener implements PreparableReloadListener {
 
             List<RecipeHolder<?>> currentRecipes = List.copyOf(recipeManager.getRecipes());
             Set<ResourceLocation> recipesToRemove = new HashSet<>();
-            List<RecipeHolder<?>> recipesToAdd = new ArrayList<>();
 
             if (recipeTweaksActive) {
                 // 1. Static replacement recipes (reliable_*) from RecipeTweaksModule
@@ -57,23 +58,9 @@ public class VanillaRecipeDisablerListener implements PreparableReloadListener {
                         Orehall.LOGGER.info("Disabling vanilla recipe '{}' in favor of '{}'", vanillaId, replacementId);
                     }
                 }
-
-                // 2. Dynamic Replacements (Automatic Serialized Recipe Replacement System)
-                if (module.isAutomaticSerializedRecipeReplacementSystemEnabled()) {
-                    List<String> rawRules = module.getAutomaticSerializedRecipeReplacementRules();
-                    if (!rawRules.isEmpty()) {
-                        CustomRecipeReplacer.ReplacementResult customResult =
-                                CustomRecipeReplacer.process(currentRecipes, recipesToRemove, rawRules,
-                                        serverResources.getRegistryLookup(), serverResources.getConditionContext());
-                        recipesToRemove.addAll(customResult.recipesToRemove);
-                        recipesToAdd.addAll(customResult.recipesToAdd);
-                        Orehall.LOGGER.info("Automatic Serialized Recipe Replacement System: Replaced {} recipe(s) across {} rule(s).",
-                                customResult.recipesToRemove.size(), rawRules.size());
-                    }
-                }
             }
 
-            // 3. Charcoal Disabler from Item Tweaks
+            // 2. Charcoal Disabler from Item Tweaks
             if (disableCharcoalActive) {
                 int charcoalRecipesCount = 0;
                 for (RecipeHolder<?> holder : currentRecipes) {
@@ -83,8 +70,8 @@ public class VanillaRecipeDisablerListener implements PreparableReloadListener {
                         }
                     } else {
                         try {
-                            net.minecraft.world.item.ItemStack result = holder.value().getResultItem(serverResources.getRegistryLookup());
-                            if (result.is(net.minecraft.world.item.Items.CHARCOAL)) {
+                            ItemStack result = holder.value().getResultItem(serverResources.getRegistryLookup());
+                            if (result.is(Items.CHARCOAL)) {
                                 if (recipesToRemove.add(holder.id())) {
                                     charcoalRecipesCount++;
                                 }
@@ -98,22 +85,21 @@ public class VanillaRecipeDisablerListener implements PreparableReloadListener {
                 }
             }
 
-            if (recipesToRemove.isEmpty() && recipesToAdd.isEmpty()) {
+            if (recipesToRemove.isEmpty()) {
                 return;
             }
 
-            // Filter out disabled recipes and append dynamically generated recipes in one single atomic operation
-            List<RecipeHolder<?>> updatedRecipes = new ArrayList<>(currentRecipes.size() - recipesToRemove.size() + recipesToAdd.size());
+            // Filter out disabled recipes in one single atomic operation
+            List<RecipeHolder<?>> updatedRecipes = new ArrayList<>(currentRecipes.size() - recipesToRemove.size());
             for (RecipeHolder<?> holder : currentRecipes) {
                 if (!recipesToRemove.contains(holder.id())) {
                     updatedRecipes.add(holder);
                 }
             }
-            updatedRecipes.addAll(recipesToAdd);
 
             recipeManager.replaceRecipes(updatedRecipes);
-            Orehall.LOGGER.info("Recipe Tweaks: RecipeManager updated with {} recipes ({} removed, {} added).",
-                    updatedRecipes.size(), recipesToRemove.size(), recipesToAdd.size());
+            Orehall.LOGGER.info("Recipe Tweaks: RecipeManager updated with {} recipes ({} removed).",
+                    updatedRecipes.size(), recipesToRemove.size());
         }, gameExecutor);
     }
 }

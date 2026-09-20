@@ -1,9 +1,14 @@
 package com.orehall.module.gameplay.items;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import com.orehall.client.RecoveryCompassTooltipHandler;
+import com.orehall.module.ModuleManager;
+import com.orehall.module.gameplay.GameplayTweaksModule;
 import com.orehall.registry.OrehallAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -29,9 +34,6 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-
-import com.orehall.module.ModuleManager;
-import com.orehall.module.gameplay.GameplayTweaksModule;
 
 public class RecoveryCompassTweaks {
     private static RecoveryCompassTweaks instance;
@@ -123,9 +125,9 @@ public class RecoveryCompassTweaks {
             return Component.translatable("orehall.dimension.the_end");
         } else {
             String path = dimension.location().getPath();
-            String formatted = java.util.Arrays.stream(path.split("_"))
+            String formatted = Arrays.stream(path.split("_"))
                     .map(word -> word.isEmpty() ? "" : Character.toUpperCase(word.charAt(0)) + word.substring(1))
-                    .collect(java.util.stream.Collectors.joining(" "));
+                    .collect(Collectors.joining(" "));
             return Component.literal(formatted);
         }
     }
@@ -142,7 +144,7 @@ public class RecoveryCompassTweaks {
     }
 
     public void onClientSetup(FMLClientSetupEvent event) {
-        NeoForge.EVENT_BUS.addListener(com.orehall.client.RecoveryCompassTooltipHandler::onItemTooltip);
+        NeoForge.EVENT_BUS.addListener(RecoveryCompassTooltipHandler::onItemTooltip);
     }
 
     private void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
@@ -159,23 +161,31 @@ public class RecoveryCompassTweaks {
         Level level = event.getLevel();
 
         if (!level.isClientSide()) {
-            Optional<GlobalPos> deathLoc = player.getLastDeathLocation();
-            Component message;
-            if (deathLoc.isPresent()) {
-                GlobalPos pos = deathLoc.get();
-                BlockPos blockPos = pos.pos();
-                Component dimName = getDimensionName(pos.dimension());
-                message = Component.translatable(
-                        "orehall.actionbar.recovery_compass.last_death",
-                        blockPos.getX(), blockPos.getY(), blockPos.getZ(), dimName
-                );
-            } else {
-                message = Component.translatable("orehall.actionbar.recovery_compass.no_death");
-            }
-            player.displayClientMessage(message, true);
+            boolean current = player.getData(OrehallAttachments.RECOVERY_COMPASS_OVERLAY);
+            boolean next = !current;
+            player.setData(OrehallAttachments.RECOVERY_COMPASS_OVERLAY, next);
+
             level.playSound(null, player.getX(), player.getY(), player.getZ(),
                     SoundEvents.UI_BUTTON_CLICK, SoundSource.PLAYERS, 0.4F, 1.5F);
-            player.getCooldowns().addCooldown(Items.RECOVERY_COMPASS, 10);
+
+            if (next) {
+                Optional<GlobalPos> deathLoc = player.getLastDeathLocation();
+                Component message;
+                if (deathLoc.isPresent()) {
+                    GlobalPos pos = deathLoc.get();
+                    BlockPos blockPos = pos.pos();
+                    Component dimName = getDimensionName(pos.dimension());
+                    message = Component.translatable(
+                            "orehall.actionbar.recovery_compass.last_death",
+                            blockPos.getX(), blockPos.getY(), blockPos.getZ(), dimName
+                    );
+                } else {
+                    message = Component.translatable("orehall.actionbar.recovery_compass.no_death");
+                }
+                player.displayClientMessage(message, true);
+            } else {
+                player.displayClientMessage(Component.translatable("orehall.actionbar.recovery_compass.overlay_disabled"), true);
+            }
         }
 
         event.setCancellationResult(InteractionResult.sidedSuccess(level.isClientSide()));

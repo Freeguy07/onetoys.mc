@@ -10,7 +10,6 @@ public class OreTweaks {
     private final GiantOreVeinsDisabler giantOreVeinsDisabler = new GiantOreVeinsDisabler(this);
     private ModConfigSpec.BooleanValue enabledConfig;
     private ModConfigSpec.BooleanValue netherLockedLapisConfig;
-    private ModConfigSpec.BooleanValue netherLapisMeltingParticlesConfig;
 
     public void buildConfig(ModConfigSpec.Builder builder) {
         builder.comment("Tweaks and adjustments to ore generation.")
@@ -28,11 +27,6 @@ public class OreTweaks {
                 .translation("orehall.configuration.worldgen.ore_tweaks.nether_locked_lapis")
                 .define("nether_locked_lapis", true);
 
-        netherLapisMeltingParticlesConfig = builder
-                .comment("When enabled, Nether Lapis Ore emits dripping blue melting particles when in a hot dimension (like the Nether).")
-                .translation("orehall.configuration.worldgen.ore_tweaks.nether_lapis_melting_particles")
-                .define("nether_lapis_melting_particles", true);
-
         giantOreVeinsDisabler.buildConfig(builder);
 
         builder.pop();
@@ -44,10 +38,6 @@ public class OreTweaks {
 
     public boolean isNetherLockedLapisEnabled() {
         return isEnabled() && (netherLockedLapisConfig == null || netherLockedLapisConfig.get());
-    }
-
-    public boolean isNetherLapisMeltingParticlesEnabled() {
-        return isEnabled() && (netherLapisMeltingParticlesConfig == null || netherLapisMeltingParticlesConfig.get());
     }
 
     public GiantOreVeinsDisabler getGiantOreVeinsDisabler() {
