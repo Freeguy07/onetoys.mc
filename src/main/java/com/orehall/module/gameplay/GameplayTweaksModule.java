@@ -74,6 +74,10 @@ public class GameplayTweaksModule extends OrehallModule {
         wetnessTweaks.onClientSetup(event);
     }
 
+    public static GameplayTweaksModule getInstance() {
+        return instance;
+    }
+
     public DurabilityTweaks getDurabilityTweaks() {
         return durabilityTweaks;
     }
@@ -108,6 +112,10 @@ public class GameplayTweaksModule extends OrehallModule {
         }
         WetnessTweaks wetness = mod.getWetnessTweaks();
         return wetness != null && wetness.isEnabled();
+    }
+
+    public static boolean isStableFarmlandEnabled() {
+        return WetnessTweaks.isStableFarmlandEnabled();
     }
 
     public static boolean isDisableCharcoal() {

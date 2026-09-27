@@ -109,20 +109,19 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
             headerLayout.addChild(new StringWidget(this.title, this.font));
         }
 
-        // Search bar row with clear button
+        // Search bar row with clear button (310px unified geometry: 286px edit box + 4px gap + 20px clear button = 310px)
         net.minecraft.client.gui.layouts.LinearLayout searchRow = net.minecraft.client.gui.layouts.LinearLayout.horizontal().spacing(4);
-        int searchWidth = Math.min(220, Math.max(160, this.width - 80));
-        this.searchBox = new EditBox(this.font, 0, 0, searchWidth, 18, Component.translatable("orehall.configuration.search"));
+        this.searchBox = new EditBox(this.font, 0, 0, 286, 18, Component.translatable("orehall.configuration.search"));
         this.searchBox.setHint(Component.translatable("orehall.configuration.search.hint").withColor(0x888888));
         this.searchBox.setValue(this.searchQuery);
         this.searchBox.setResponder(this::onSearchChanged);
         searchRow.addChild(this.searchBox);
 
-        Button clearBtn = Button.builder(Component.literal("X"), btn -> {
+        Button clearBtn = Button.builder(Component.literal("\u2715"), btn -> {
             if (this.searchBox != null) {
                 this.searchBox.setValue("");
             }
-        }).width(18).tooltip(Tooltip.create(Component.translatable("orehall.configuration.search.clear"))).build();
+        }).width(20).tooltip(Tooltip.create(Component.translatable("orehall.configuration.search.clear"))).build();
         searchRow.addChild(clearBtn);
 
         headerLayout.addChild(searchRow);
@@ -177,6 +176,7 @@ public class OrehallConfigurationSectionScreen extends ConfigurationSectionScree
             case "content" -> new ItemStack(OrehallBlocks.TUNGSTEN_ORE.get());
             case "tungsten_tweaks" -> new ItemStack(OrehallItems.TUNGSTEN_INGOT.get());
             case "nuggets_and_shards" -> new ItemStack(OrehallItems.COPPER_NUGGET.get());
+            case "sprinkler" -> new ItemStack(OrehallBlocks.SPRINKLER.get());
 
             default -> ItemStack.EMPTY;
         };

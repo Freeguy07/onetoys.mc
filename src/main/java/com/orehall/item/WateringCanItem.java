@@ -5,6 +5,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import com.orehall.module.content.ContentModule;
+import com.orehall.module.content.WateringHelper;
 import com.orehall.module.gameplay.wetness.WetnessTweaks;
 import com.orehall.registry.OrehallDataComponents;
 
@@ -228,13 +229,13 @@ public class WateringCanItem extends Item {
         }
 
         // 4. Simulate rain on the targeted block:
-        applyRainEffects(level, pos, state, player);
+        WateringHelper.applyRainEffects(level, pos, state, player);
         if (!level.isClientSide()) {
             if (player == null || !player.getAbilities().instabuild) {
                 setWaterLevel(stack, water - 1);
             }
         }
-        playWateringEffects(level, pos, context.getClickedFace(), context.getClickLocation());
+        WateringHelper.playWateringEffects(level, pos, context.getClickedFace(), context.getClickLocation());
         if (player != null) {
             player.swing(context.getHand());
         }
@@ -313,119 +314,10 @@ public class WateringCanItem extends Item {
     }
 
     private void applyRainEffects(Level level, BlockPos pos, BlockState state, @Nullable Player player) {
-        // A. Extinguish fire at targeted position
-        if (state.is(BlockTags.FIRE) || state.getBlock() instanceof BaseFireBlock) {
-            level.removeBlock(pos, false);
-            level.playSound(null, pos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5F, 2.6F);
-            return;
-        }
-
-        // B. Extinguish fire directly above targeted position
-        BlockPos abovePos = pos.above();
-        BlockState aboveState = level.getBlockState(abovePos);
-        if (aboveState.is(BlockTags.FIRE) || aboveState.getBlock() instanceof BaseFireBlock) {
-            level.removeBlock(abovePos, false);
-            level.playSound(null, abovePos, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5F, 2.6F);
-        }
-
-        // C. Extinguish lit campfires
-        if (state.getBlock() instanceof CampfireBlock && state.getValue(CampfireBlock.LIT)) {
-            CampfireBlock.dowse(player, level, pos, state);
-            level.setBlockAndUpdate(pos, state.setValue(CampfireBlock.LIT, false));
-            return;
-        }
-
-        // D. Extinguish lit candles and candle cakes
-        if (state.getBlock() instanceof CandleBlock && state.getValue(CandleBlock.LIT)) {
-            CandleBlock.extinguish(player, state, level, pos);
-            return;
-        }
-        if (state.getBlock() instanceof CandleCakeBlock && state.getValue(CandleCakeBlock.LIT)) {
-            CandleCakeBlock.extinguish(player, state, level, pos);
-            return;
-        }
-
-        // E. Farmland hydration:
-        if (state.getBlock() instanceof FarmBlock) {
-            if (state.getValue(FarmBlock.MOISTURE) < 7) {
-                level.setBlock(pos, state.setValue(FarmBlock.MOISTURE, 7), 2);
-            }
-        }
-
-        // If block is a crop/plant sitting on farmland, hydrate the farmland beneath:
-        BlockPos belowPos = pos.below();
-        BlockState belowState = level.getBlockState(belowPos);
-        if (belowState.getBlock() instanceof FarmBlock) {
-            if (belowState.getValue(FarmBlock.MOISTURE) < 7) {
-                level.setBlock(belowPos, belowState.setValue(FarmBlock.MOISTURE, 7), 2);
-            }
-        }
-
-        // F. Concrete Powder solidification:
-        if (state.getBlock() instanceof ConcretePowderBlock) {
-            net.minecraft.resources.ResourceLocation id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
-            String path = id.getPath();
-            if (path.endsWith("_powder")) {
-                net.minecraft.resources.ResourceLocation concreteId = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                        id.getNamespace(),
-                        path.substring(0, path.length() - 7)
-                );
-                net.minecraft.world.level.block.Block concrete = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(concreteId);
-                if (concrete != Blocks.AIR) {
-                    level.setBlockAndUpdate(pos, concrete.defaultBlockState());
-                    return;
-                }
-            }
-        }
-
-        // G. Dry sponge to wet sponge:
-        if (state.is(Blocks.SPONGE)) {
-            level.setBlockAndUpdate(pos, Blocks.WET_SPONGE.defaultBlockState());
-            return;
-        }
-
-        // H. Call native block precipitation handler (e.g. cauldrons):
-        state.getBlock().handlePrecipitation(state, level, pos, Biome.Precipitation.RAIN);
-
-        // I. Extinguish burning entities and apply wetness to living entities standing on or in the watered block
-        AABB box = new AABB(pos).inflate(0.2);
-        List<LivingEntity> livingEntities = level.getEntitiesOfClass(LivingEntity.class, box);
-        for (LivingEntity living : livingEntities) {
-            if (living.isOnFire()) {
-                living.clearFire();
-            }
-            if (living.isSensitiveToWater() && !level.isClientSide()) {
-                living.hurt(living.damageSources().drown(), 1.0F);
-            }
-            WetnessTweaks.setWet(living, WetnessTweaks.getWetDurationTicks());
-        }
-
-        // J. Natural growth / random tick simulation (exclude FarmBlock so farmland never dries out or turns to dirt):
-        if (level instanceof ServerLevel serverLevel) {
-            if (!(state.getBlock() instanceof FarmBlock) && state.isRandomlyTicking()) {
-                state.randomTick(serverLevel, pos, serverLevel.random);
-            }
-            if (state.getBlock() instanceof FarmBlock) {
-                BlockState cropState = level.getBlockState(abovePos);
-                if (cropState.isRandomlyTicking()) {
-                    cropState.randomTick(serverLevel, abovePos, serverLevel.random);
-                }
-            }
-        }
+        WateringHelper.applyRainEffects(level, pos, state, player);
     }
 
     private void playWateringEffects(Level level, BlockPos pos, Direction clickedFace, Vec3 hitVec) {
-        float pitchDrip = 1.0F + level.random.nextFloat() * 0.3F;
-        float pitchSplash = 1.4F + level.random.nextFloat() * 0.3F;
-        level.playSound(null, pos, SoundEvents.POINTED_DRIPSTONE_DRIP_WATER, SoundSource.BLOCKS, 0.6F, pitchDrip);
-        level.playSound(null, pos, SoundEvents.GENERIC_SPLASH, SoundSource.BLOCKS, 0.25F, pitchSplash);
-
-        if (level instanceof ServerLevel serverLevel) {
-            double x = hitVec.x;
-            double y = hitVec.y + (clickedFace == Direction.DOWN ? -0.05 : 0.05);
-            double z = hitVec.z;
-            serverLevel.sendParticles(ParticleTypes.RAIN, x, y + 0.1, z, 8, 0.2, 0.05, 0.2, 0.0);
-            serverLevel.sendParticles(ParticleTypes.SPLASH, x, y, z, 4, 0.15, 0.02, 0.15, 0.05);
-        }
+        WateringHelper.playWateringEffects(level, pos, clickedFace, hitVec);
     }
 }

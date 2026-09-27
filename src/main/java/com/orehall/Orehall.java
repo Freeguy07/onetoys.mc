@@ -42,6 +42,8 @@ public class Orehall {
         // Register blocks, items, and creative tabs
         OrehallBlocks.register(modEventBus);
         OrehallItems.register(modEventBus);
+        com.orehall.registry.OrehallEntityTypes.register(modEventBus);
+        com.orehall.registry.OrehallSoundEvents.register(modEventBus);
         OrehallCreativeModeTabs.register(modEventBus);
 
         // Initialize modules and lifecycle

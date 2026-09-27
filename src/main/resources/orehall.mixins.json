@@ -14,7 +14,8 @@
     "SheepMixin",
     "TagLoaderMixin",
     "HolderSetNamedAccessor",
-    "HolderReferenceAccessor"
+    "HolderReferenceAccessor",
+    "FarmBlockMixin"
   ],
   "client": [
     "client.LivingEntityRendererMixin",

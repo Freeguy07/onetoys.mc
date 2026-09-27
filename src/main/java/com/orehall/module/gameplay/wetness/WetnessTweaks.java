@@ -74,6 +74,7 @@ public class WetnessTweaks {
     private ModConfigSpec.BooleanValue wetCreepersCannotExplodeConfig;
     private ModConfigSpec.BooleanValue mattedWoolFromWetSheepConfig;
     private ModConfigSpec.BooleanValue rainSpeedsUpCropGrowthConfig;
+    private ModConfigSpec.BooleanValue stableFarmlandConfig;
 
     public WetnessTweaks(GameplayTweaksModule parent) {
         this.parent = parent;
@@ -134,6 +135,12 @@ public class WetnessTweaks {
                 .translation("orehall.configuration.gameplay_tweaks.wetness.rain_speeds_up_crop_growth")
                 .define("rain_speeds_up_crop_growth", true);
 
+        stableFarmlandConfig = builder
+                .comment("When enabled, dry farmland does not revert to dirt on its own over time.",
+                        "Mobs and player trampling are unaffected and can still revert farmland to dirt normally.")
+                .translation("orehall.configuration.gameplay_tweaks.wetness.stable_farmland")
+                .define("stable_farmland", true);
+
         builder.pop();
     }
 
@@ -142,6 +149,14 @@ public class WetnessTweaks {
             return false;
         }
         return enabledConfig == null || enabledConfig.get();
+    }
+
+    public boolean isStableFarmland() {
+        return isEnabled() && (stableFarmlandConfig == null || stableFarmlandConfig.get());
+    }
+
+    public static boolean isStableFarmlandEnabled() {
+        return instance != null && instance.isStableFarmland();
     }
 
     public static boolean isTweakEnabled() {

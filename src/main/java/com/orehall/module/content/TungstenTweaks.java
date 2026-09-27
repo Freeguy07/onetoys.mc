@@ -38,7 +38,7 @@ public class TungstenTweaks {
                 .define("ore_generation", true);
 
         calciteStripesConfig = builder
-                .comment("When enabled, rare stratified geological blobs composed of alternating 1-block discs (e.g. tuff and calcite) generate throughout Nether terrain.")
+                .comment("When enabled, rare stratified geological blobs composed of layered discs (calcite, gravel, and tuff) generate throughout Nether terrain.")
                 .translation("orehall.configuration.content.tungsten_tweaks.calcite_stripes")
                 .define("calcite_stripes", true);
 

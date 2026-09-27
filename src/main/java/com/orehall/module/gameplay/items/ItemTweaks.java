@@ -1,12 +1,8 @@
 package com.orehall.module.gameplay.items;
 
-import com.orehall.client.CharcoalTooltipHandler;
-import com.orehall.client.StopwatchTooltipHandler;
-
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
-import net.neoforged.neoforge.common.NeoForge;
 
 public final class ItemTweaks {
     private final RecoveryCompassTweaks recoveryCompassTweaks = new RecoveryCompassTweaks(this);
@@ -64,8 +60,5 @@ public final class ItemTweaks {
     }
 
     public void onClientSetup(FMLClientSetupEvent event) {
-        recoveryCompassTweaks.onClientSetup(event);
-        NeoForge.EVENT_BUS.addListener(CharcoalTooltipHandler::onItemTooltip);
-        NeoForge.EVENT_BUS.addListener(StopwatchTooltipHandler::onItemTooltip);
     }
 }

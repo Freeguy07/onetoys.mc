@@ -34,6 +34,10 @@ public class RespawnAnchorTweaks {
     private volatile Set<ResourceLocation> cachedBlacklist = null;
     private volatile String lastBlacklistRaw = null;
 
+    private volatile String lastFuelRaw = null;
+    private volatile TagKey<Item> cachedFuelTag = null;
+    private volatile Item cachedFuelItem = null;
+
     public RespawnAnchorTweaks() {
         instance = this;
     }
@@ -93,45 +97,63 @@ public class RespawnAnchorTweaks {
         return fuelItemConfig != null ? fuelItemConfig.get() : "minecraft:echo_shard";
     }
 
+    private synchronized void updateCachedFuel(String raw) {
+        if (raw == null || raw.isBlank()) {
+            cachedFuelItem = Items.GLOWSTONE;
+            cachedFuelTag = null;
+            lastFuelRaw = raw;
+            return;
+        }
+        String trimmed = raw.trim();
+        if (trimmed.startsWith("#")) {
+            ResourceLocation tagLoc = ResourceLocation.tryParse(trimmed.substring(1));
+            if (tagLoc != null) {
+                cachedFuelTag = TagKey.create(Registries.ITEM, tagLoc);
+                cachedFuelItem = null;
+            } else {
+                cachedFuelItem = Items.GLOWSTONE;
+                cachedFuelTag = null;
+            }
+            lastFuelRaw = raw;
+            return;
+        }
+        ResourceLocation itemLoc = ResourceLocation.tryParse(trimmed);
+        if (itemLoc == null || !BuiltInRegistries.ITEM.containsKey(itemLoc)) {
+            cachedFuelItem = Items.GLOWSTONE;
+            cachedFuelTag = null;
+            lastFuelRaw = raw;
+            return;
+        }
+        Item configuredItem = BuiltInRegistries.ITEM.get(itemLoc);
+        if (configuredItem == Items.AIR && !itemLoc.equals(BuiltInRegistries.ITEM.getKey(Items.AIR))) {
+            cachedFuelItem = Items.GLOWSTONE;
+            cachedFuelTag = null;
+        } else {
+            cachedFuelItem = configuredItem;
+            cachedFuelTag = null;
+        }
+        lastFuelRaw = raw;
+    }
+
     public static boolean isValidFuel(ItemStack stack) {
         if (stack.isEmpty()) {
             return false;
         }
         RespawnAnchorTweaks tweaks = instance;
-        String raw = tweaks != null ? tweaks.getFuelItemRaw() : "minecraft:echo_shard";
-        if (raw == null || raw.isBlank()) {
+        if (tweaks == null) {
             return stack.is(Items.GLOWSTONE);
         }
-        raw = raw.trim();
-
-        // 1. Tag specification (starts with '#')
-        if (raw.startsWith("#")) {
-            ResourceLocation tagLoc = ResourceLocation.tryParse(raw.substring(1));
-            if (tagLoc != null) {
-                TagKey<Item> tagKey = TagKey.create(Registries.ITEM, tagLoc);
-                return stack.is(tagKey);
-            }
-            // Invalid tag ID syntax -> fallback to glowstone
-            return stack.is(Items.GLOWSTONE);
+        String raw = tweaks.getFuelItemRaw();
+        if (tweaks.lastFuelRaw == null || !raw.equals(tweaks.lastFuelRaw)) {
+            tweaks.updateCachedFuel(raw);
         }
-
-        // 2. Direct item ID specification
-        ResourceLocation itemLoc = ResourceLocation.tryParse(raw);
-        if (itemLoc == null) {
-            return stack.is(Items.GLOWSTONE);
+        if (tweaks.cachedFuelTag != null) {
+            return stack.is(tweaks.cachedFuelTag);
         }
-
-        if (!BuiltInRegistries.ITEM.containsKey(itemLoc)) {
-            // Unknown or invalid item ID -> fallback to glowstone
-            return stack.is(Items.GLOWSTONE);
+        if (tweaks.cachedFuelItem != null) {
+            return stack.is(tweaks.cachedFuelItem);
         }
-
-        Item configuredItem = BuiltInRegistries.ITEM.get(itemLoc);
-        if (configuredItem == Items.AIR && !itemLoc.equals(BuiltInRegistries.ITEM.getKey(Items.AIR))) {
-            return stack.is(Items.GLOWSTONE);
-        }
-
-        return stack.is(configuredItem);
+        return stack.is(Items.GLOWSTONE);
     }
 
     public static boolean isDimensionBlacklisted(Level level) {

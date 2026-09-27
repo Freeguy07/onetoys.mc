@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.orehall.client.RecoveryCompassTooltipHandler;
 import com.orehall.module.ModuleManager;
 import com.orehall.module.gameplay.GameplayTweaksModule;
 import com.orehall.registry.OrehallAttachments;
@@ -28,7 +27,6 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -141,10 +139,6 @@ public class RecoveryCompassTweaks {
         NeoForge.EVENT_BUS.addListener(this::onPlayerClone);
         // Right-click actionbar display
         NeoForge.EVENT_BUS.addListener(this::onRightClickItem);
-    }
-
-    public void onClientSetup(FMLClientSetupEvent event) {
-        NeoForge.EVENT_BUS.addListener(RecoveryCompassTooltipHandler::onItemTooltip);
     }
 
     private void onRightClickItem(PlayerInteractEvent.RightClickItem event) {

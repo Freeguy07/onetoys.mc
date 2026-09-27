@@ -29,6 +29,7 @@ public class OrehallCreativeModeTabs {
                         output.accept(OrehallItems.TUNGSTEN_NUGGET.get());
                         output.accept(OrehallItems.DUMBBELL.get());
                         output.accept(OrehallItems.WATERING_CAN.get());
+                        output.accept(OrehallBlocks.SPRINKLER.get());
                         output.accept(OrehallItems.COPPER_NUGGET.get());
                         output.accept(OrehallItems.DIAMOND_SHARD.get());
                         output.accept(OrehallItems.EMERALD_SHARD.get());

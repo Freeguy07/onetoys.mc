@@ -1,0 +1,33 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "orehall:recipe_enabled",
+      "recipe": "orehall:sprinkler"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "D": {
+      "item": "minecraft:dispenser"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "pattern": [
+    "CRC",
+    "IDI",
+    " I "
+  ],
+  "result": {
+    "count": 1,
+    "id": "orehall:sprinkler"
+  }
+}

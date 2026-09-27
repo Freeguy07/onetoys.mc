@@ -15,6 +15,7 @@ public class OrehallItems {
     public static final DeferredItem<BlockItem> TUNGSTEN_ORE = ITEMS.registerSimpleBlockItem(OrehallBlocks.TUNGSTEN_ORE);
     public static final DeferredItem<BlockItem> RAW_TUNGSTEN_BLOCK = ITEMS.registerSimpleBlockItem(OrehallBlocks.RAW_TUNGSTEN_BLOCK);
     public static final DeferredItem<BlockItem> TUNGSTEN_BLOCK = ITEMS.registerSimpleBlockItem(OrehallBlocks.TUNGSTEN_BLOCK);
+    public static final DeferredItem<BlockItem> SPRINKLER = ITEMS.registerSimpleBlockItem(OrehallBlocks.SPRINKLER);
 
     public static final DeferredItem<Item> RAW_TUNGSTEN = ITEMS.registerSimpleItem("raw_tungsten");
     public static final DeferredItem<Item> TUNGSTEN_INGOT = ITEMS.registerSimpleItem("tungsten_ingot");

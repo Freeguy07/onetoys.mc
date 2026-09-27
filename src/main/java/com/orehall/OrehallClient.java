@@ -26,9 +26,13 @@ public class OrehallClient {
 
         modBus.addListener(OrehallClient::onClientSetup);
         modBus.addListener(OrehallClient::onRegisterParticleProviders);
+        modBus.addListener(OrehallClient::onRegisterRenderers);
 
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.orehall.client.WetnessClientHelper::onClientEntityTick);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.orehall.client.ItemActionBarClientHandler::onClientTick);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.orehall.client.RecoveryCompassTooltipHandler::onItemTooltip);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.orehall.client.CharcoalTooltipHandler::onItemTooltip);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.orehall.client.StopwatchTooltipHandler::onItemTooltip);
     }
 
     private static final float[] STOPWATCH_FRAMES = new float[32];
@@ -91,5 +95,12 @@ public class OrehallClient {
         event.registerSprite(OrehallParticles.LANDING_NETHER_LAPIS.get(),
                 (type, level, x, y, z, xSpeed, ySpeed, zSpeed) ->
                         new NetherLapisDripParticle.LandParticle(level, x, y, z));
+    }
+
+    private static void onRegisterRenderers(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(
+                com.orehall.registry.OrehallEntityTypes.SPRINKLER_DROPLET.get(),
+                com.orehall.client.renderer.SprinklerDropletRenderer::new
+        );
     }
 }
