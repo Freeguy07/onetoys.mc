@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/small_amethyst_bud",
+  "textures": {
+    "layer0": "onetoys:block/small_salt_bud"
+  }
+}
+

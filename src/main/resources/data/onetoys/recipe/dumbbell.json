@@ -1,0 +1,25 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "onetoys:recipe_enabled",
+      "recipe": "onetoys:dumbbell"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "onetoys:tungsten_block"
+    },
+    "I": {
+      "item": "onetoys:tungsten_ingot"
+    }
+  },
+  "pattern": [
+    "BIB"
+  ],
+  "result": {
+    "count": 1,
+    "id": "onetoys:dumbbell"
+  }
+}

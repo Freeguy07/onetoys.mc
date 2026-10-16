@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:husbandry/root",
+  "criteria": {
+    "eat_salted_food": {
+      "conditions": {},
+      "trigger": "onetoys:salted_food_consumed"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "onetoys.advancement.taste_explosion.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "id": "onetoys:salt"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "onetoys.advancement.taste_explosion.title"
+    }
+  },
+  "requirements": [
+    [
+      "eat_salted_food"
+    ]
+  ],
+  "sends_telemetry_event": true
+}
+
+

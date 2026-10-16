@@ -1,0 +1,8 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#onetoys:has_rock_salt_deposits",
+  "features": "onetoys:mineral_rock_salt",
+  "step": "underground_ores"
+}
+
+

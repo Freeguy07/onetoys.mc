@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "onetoys:block/rock_salt_ore_1"
+  }
+}
+

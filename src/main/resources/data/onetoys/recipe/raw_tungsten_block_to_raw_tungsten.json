@@ -1,0 +1,19 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "onetoys:ore_tweak_enabled",
+      "tweak": "tungsten"
+    }
+  ],
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "onetoys:raw_tungsten_block"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "onetoys:raw_tungsten"
+  }
+}

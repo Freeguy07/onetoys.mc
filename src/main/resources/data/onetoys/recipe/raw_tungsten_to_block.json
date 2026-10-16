@@ -1,0 +1,24 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "onetoys:ore_tweak_enabled",
+      "tweak": "tungsten"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "#": {
+      "item": "onetoys:raw_tungsten"
+    }
+  },
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "result": {
+    "count": 1,
+    "id": "onetoys:raw_tungsten_block"
+  }
+}

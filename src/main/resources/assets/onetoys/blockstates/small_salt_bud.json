@@ -1,0 +1,31 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "onetoys:block/small_salt_bud",
+      "x": 180
+    },
+    "facing=east": {
+      "model": "onetoys:block/small_salt_bud",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north": {
+      "model": "onetoys:block/small_salt_bud",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "onetoys:block/small_salt_bud",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up": {
+      "model": "onetoys:block/small_salt_bud"
+    },
+    "facing=west": {
+      "model": "onetoys:block/small_salt_bud",
+      "x": 90,
+      "y": 270
+    }
+  }
+}
+

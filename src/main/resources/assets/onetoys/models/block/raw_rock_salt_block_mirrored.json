@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_mirrored_all",
+  "textures": {
+    "all": "onetoys:block/raw_rock_salt_block"
+  }
+}
+

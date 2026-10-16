@@ -1,0 +1,14 @@
+{
+  "variants": {
+    "level=1": {
+      "model": "onetoys:block/salt_cauldron_level_1"
+    },
+    "level=2": {
+      "model": "onetoys:block/salt_cauldron_level_2"
+    },
+    "level=3": {
+      "model": "onetoys:block/salt_cauldron_full"
+    }
+  }
+}
+

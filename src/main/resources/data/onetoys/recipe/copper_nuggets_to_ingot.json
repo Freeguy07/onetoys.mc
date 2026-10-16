@@ -1,0 +1,24 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "onetoys:ore_tweak_enabled",
+      "tweak": "nuggets_and_shards"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "onetoys:copper_nugget"
+    }
+  },
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "result": {
+    "count": 1,
+    "id": "minecraft:copper_ingot"
+  }
+}

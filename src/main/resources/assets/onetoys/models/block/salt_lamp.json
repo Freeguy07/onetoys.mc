@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "onetoys:block/salt_lamp_bottom",
+    "side": "onetoys:block/salt_lamp_side",
+    "top": "onetoys:block/salt_lamp_top"
+  }
+}
+

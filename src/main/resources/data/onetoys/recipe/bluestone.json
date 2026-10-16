@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "R": {"item": "minecraft:redstone"},
+    "E": {"item": "minecraft:echo_shard"}
+  },
+  "pattern": ["RRR", "RER", "RRR"],
+  "result": {"id": "onetoys:bluestone", "count": 8}
+}
+

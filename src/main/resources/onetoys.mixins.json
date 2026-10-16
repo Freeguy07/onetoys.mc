@@ -1,0 +1,38 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.onetoys.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "onetoys.refmap.json",
+  "mixins": [
+    "NoiseChunkMixin",
+    "OreVeinifierMixin",
+    "RespawnAnchorBlockMixin",
+    "DispenserBlockMixin",
+    "SpiderMixin",
+    "CreeperMixin",
+    "SheepMixin",
+    "TagLoaderMixin",
+    "HolderSetNamedAccessor",
+    "HolderReferenceAccessor",
+    "FarmBlockMixin",
+    "AxeItemAccessor",
+    "AxeItemMixin",
+    "CakeBlockMixin",
+    "PlayerEntityMixin",
+    "RedStoneWireBlockMixin",
+    "salt.LayeredCauldronBlockMixin",
+    "salt.PointedDripstoneBlockMixin",
+    "salt.WaterCauldronMixin"
+  ],
+  "client": [
+    "client.LivingEntityRendererMixin",
+    "client.RenderLayerMixin",
+    "LocalPlayerMixin",
+    "salt.ItemRendererMixin"
+  ],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

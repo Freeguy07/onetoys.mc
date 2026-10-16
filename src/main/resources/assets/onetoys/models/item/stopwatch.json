@@ -1,0 +1,40 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "minecraft:item/compass_00"
+  },
+  "overrides": [
+    { "predicate": { "onetoys:frame": 0 }, "model": "onetoys:item/stopwatch_00" },
+    { "predicate": { "onetoys:frame": 1 }, "model": "onetoys:item/stopwatch_01" },
+    { "predicate": { "onetoys:frame": 2 }, "model": "onetoys:item/stopwatch_02" },
+    { "predicate": { "onetoys:frame": 3 }, "model": "onetoys:item/stopwatch_03" },
+    { "predicate": { "onetoys:frame": 4 }, "model": "onetoys:item/stopwatch_04" },
+    { "predicate": { "onetoys:frame": 5 }, "model": "onetoys:item/stopwatch_05" },
+    { "predicate": { "onetoys:frame": 6 }, "model": "onetoys:item/stopwatch_06" },
+    { "predicate": { "onetoys:frame": 7 }, "model": "onetoys:item/stopwatch_07" },
+    { "predicate": { "onetoys:frame": 8 }, "model": "onetoys:item/stopwatch_08" },
+    { "predicate": { "onetoys:frame": 9 }, "model": "onetoys:item/stopwatch_09" },
+    { "predicate": { "onetoys:frame": 10 }, "model": "onetoys:item/stopwatch_10" },
+    { "predicate": { "onetoys:frame": 11 }, "model": "onetoys:item/stopwatch_11" },
+    { "predicate": { "onetoys:frame": 12 }, "model": "onetoys:item/stopwatch_12" },
+    { "predicate": { "onetoys:frame": 13 }, "model": "onetoys:item/stopwatch_13" },
+    { "predicate": { "onetoys:frame": 14 }, "model": "onetoys:item/stopwatch_14" },
+    { "predicate": { "onetoys:frame": 15 }, "model": "onetoys:item/stopwatch_15" },
+    { "predicate": { "onetoys:frame": 16 }, "model": "onetoys:item/stopwatch_16" },
+    { "predicate": { "onetoys:frame": 17 }, "model": "onetoys:item/stopwatch_17" },
+    { "predicate": { "onetoys:frame": 18 }, "model": "onetoys:item/stopwatch_18" },
+    { "predicate": { "onetoys:frame": 19 }, "model": "onetoys:item/stopwatch_19" },
+    { "predicate": { "onetoys:frame": 20 }, "model": "onetoys:item/stopwatch_20" },
+    { "predicate": { "onetoys:frame": 21 }, "model": "onetoys:item/stopwatch_21" },
+    { "predicate": { "onetoys:frame": 22 }, "model": "onetoys:item/stopwatch_22" },
+    { "predicate": { "onetoys:frame": 23 }, "model": "onetoys:item/stopwatch_23" },
+    { "predicate": { "onetoys:frame": 24 }, "model": "onetoys:item/stopwatch_24" },
+    { "predicate": { "onetoys:frame": 25 }, "model": "onetoys:item/stopwatch_25" },
+    { "predicate": { "onetoys:frame": 26 }, "model": "onetoys:item/stopwatch_26" },
+    { "predicate": { "onetoys:frame": 27 }, "model": "onetoys:item/stopwatch_27" },
+    { "predicate": { "onetoys:frame": 28 }, "model": "onetoys:item/stopwatch_28" },
+    { "predicate": { "onetoys:frame": 29 }, "model": "onetoys:item/stopwatch_29" },
+    { "predicate": { "onetoys:frame": 30 }, "model": "onetoys:item/stopwatch_30" },
+    { "predicate": { "onetoys:frame": 31 }, "model": "onetoys:item/stopwatch_31" }
+  ]
+}

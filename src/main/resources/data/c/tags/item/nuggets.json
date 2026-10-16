@@ -1,10 +1,10 @@
 {
   "replace": false,
   "values": [
-    "orehall:copper_nugget",
-    "orehall:diamond_shard",
-    "orehall:emerald_shard",
-    "orehall:coal_lump",
-    "orehall:tungsten_nugget"
+    "onetoys:copper_nugget",
+    "onetoys:diamond_shard",
+    "onetoys:emerald_shard",
+    "onetoys:coal_lump",
+    "onetoys:tungsten_nugget"
   ]
 }

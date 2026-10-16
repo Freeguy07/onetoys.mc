@@ -1,0 +1,12 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "onetoys:ore_tweak_enabled",
+      "tweak": "nether_locked_lapis"
+    }
+  ],
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_nether",
+  "features": "onetoys:ore_nether_lapis",
+  "step": "underground_ores"
+}

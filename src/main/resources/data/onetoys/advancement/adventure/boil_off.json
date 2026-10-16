@@ -1,0 +1,32 @@
+{
+  "parent": "onetoys:adventure/taste_explosion",
+  "criteria": {
+    "evaporate_water_to_form_salt": {
+      "conditions": {},
+      "trigger": "onetoys:salt_evaporated"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "onetoys.advancement.boil_off.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "id": "minecraft:cauldron"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "onetoys.advancement.boil_off.title"
+    }
+  },
+  "requirements": [
+    [
+      "evaporate_water_to_form_salt"
+    ]
+  ],
+  "sends_telemetry_event": true
+}
+
+

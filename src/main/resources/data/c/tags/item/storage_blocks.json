@@ -1,7 +1,7 @@
 {
   "replace": false,
   "values": [
-    "orehall:tungsten_block",
-    "orehall:raw_tungsten_block"
+    "onetoys:tungsten_block",
+    "onetoys:raw_tungsten_block"
   ]
 }

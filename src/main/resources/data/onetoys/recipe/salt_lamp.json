@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": {
+      "item": "onetoys:raw_rock_salt_block"
+    },
+    "T": {
+      "tag": "c:torches"
+    },
+    "W": {
+      "tag": "minecraft:wooden_slabs"
+    }
+  },
+  "pattern": [
+    " S ",
+    " T ",
+    " W "
+  ],
+  "result": {
+    "id": "onetoys:salt_lamp"
+  },
+  "show_notification": true
+}
+
+

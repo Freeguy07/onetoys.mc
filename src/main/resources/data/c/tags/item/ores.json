@@ -1,7 +1,7 @@
 {
   "replace": false,
   "values": [
-    "orehall:nether_lapis_ore",
-    "orehall:tungsten_ore"
+    "onetoys:nether_lapis_ore",
+    "onetoys:tungsten_ore"
   ]
 }

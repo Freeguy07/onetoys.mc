@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/medium_amethyst_bud",
+  "textures": {
+    "layer0": "onetoys:block/medium_salt_bud"
+  }
+}
+

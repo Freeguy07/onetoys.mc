@@ -1,0 +1,23 @@
+{
+  "variants": {
+    "dumbbells=1,facing=north": { "model": "onetoys:block/dumbbell_1" },
+    "dumbbells=1,facing=east": { "model": "onetoys:block/dumbbell_1", "y": 90 },
+    "dumbbells=1,facing=south": { "model": "onetoys:block/dumbbell_1", "y": 180 },
+    "dumbbells=1,facing=west": { "model": "onetoys:block/dumbbell_1", "y": 270 },
+
+    "dumbbells=2,facing=north": { "model": "onetoys:block/dumbbell_2" },
+    "dumbbells=2,facing=east": { "model": "onetoys:block/dumbbell_2", "y": 90 },
+    "dumbbells=2,facing=south": { "model": "onetoys:block/dumbbell_2", "y": 180 },
+    "dumbbells=2,facing=west": { "model": "onetoys:block/dumbbell_2", "y": 270 },
+
+    "dumbbells=3,facing=north": { "model": "onetoys:block/dumbbell_3" },
+    "dumbbells=3,facing=east": { "model": "onetoys:block/dumbbell_3", "y": 90 },
+    "dumbbells=3,facing=south": { "model": "onetoys:block/dumbbell_3", "y": 180 },
+    "dumbbells=3,facing=west": { "model": "onetoys:block/dumbbell_3", "y": 270 },
+
+    "dumbbells=4,facing=north": { "model": "onetoys:block/dumbbell_4" },
+    "dumbbells=4,facing=east": { "model": "onetoys:block/dumbbell_4", "y": 90 },
+    "dumbbells=4,facing=south": { "model": "onetoys:block/dumbbell_4", "y": 180 },
+    "dumbbells=4,facing=west": { "model": "onetoys:block/dumbbell_4", "y": 270 }
+  }
+}

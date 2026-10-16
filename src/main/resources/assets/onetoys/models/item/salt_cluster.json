@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/amethyst_cluster",
+  "textures": {
+    "layer0": "onetoys:block/salt_cluster"
+  }
+}
+

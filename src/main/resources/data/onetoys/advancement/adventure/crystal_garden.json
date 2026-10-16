@@ -1,0 +1,32 @@
+{
+  "parent": "onetoys:adventure/taste_explosion",
+  "criteria": {
+    "harvest_salt_crystal": {
+      "conditions": {},
+      "trigger": "onetoys:harvest_salt_crystal"
+    }
+  },
+  "display": {
+    "announce_to_chat": true,
+    "description": {
+      "translate": "onetoys.advancement.crystal_garden.description"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "id": "onetoys:salt_cluster"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "onetoys.advancement.crystal_garden.title"
+    }
+  },
+  "requirements": [
+    [
+      "harvest_salt_crystal"
+    ]
+  ],
+  "sends_telemetry_event": true
+}
+
+

@@ -1,0 +1,19 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "onetoys:ore_tweak_enabled",
+      "tweak": "tungsten"
+    }
+  ],
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 0.7,
+  "group": "tungsten_ingot",
+  "ingredient": {
+    "item": "onetoys:tungsten_ore"
+  },
+  "result": {
+    "id": "onetoys:tungsten_ingot"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "onetoys:block/raw_rock_salt_block"
+      },
+      {
+        "model": "onetoys:block/raw_rock_salt_block",
+        "y": 180
+      },
+      {
+        "model": "onetoys:block/raw_rock_salt_block_mirrored"
+      },
+      {
+        "model": "onetoys:block/raw_rock_salt_block_mirrored",
+        "y": 180
+      }
+    ]
+  }
+}
+

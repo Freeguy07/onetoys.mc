@@ -1,0 +1,30 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "onetoys:recipe_enabled",
+      "recipe": "onetoys:watering_can"
+    }
+  ],
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "N": {
+      "item": "onetoys:tungsten_nugget"
+    },
+    "P": {
+      "tag": "minecraft:planks"
+    },
+    "I": {
+      "item": "onetoys:tungsten_ingot"
+    }
+  },
+  "pattern": [
+    "NPN",
+    "I I",
+    " I "
+  ],
+  "result": {
+    "count": 1,
+    "id": "onetoys:watering_can"
+  }
+}

@@ -1,7 +1,7 @@
 {
   "neoforge:conditions": [
     {
-      "type": "orehall:goat_drops_enabled"
+      "type": "onetoys:goat_drops_enabled"
     }
   ],
   "type": "minecraft:entity",
@@ -10,7 +10,7 @@
       "bonus_rolls": 0.0,
       "conditions": [
         {
-          "condition": "orehall:goat_drops_enabled"
+          "condition": "onetoys:goat_drops_enabled"
         }
       ],
       "entries": [
