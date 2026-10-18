@@ -1,5 +1,12 @@
 {
-  "type": "onetoys:distance_blend",
-  "start": 150.0,
-  "end": 600.0
+  "type": "onetoys:distance_profile",
+  "period": 4000.0,
+  "points": [
+    { "d": 0.0,    "v": 0.0  },
+    { "d": 1000.0, "v": 0.0  },
+    { "d": 2000.0, "v": 0.35 },
+    { "d": 2400.0, "v": 1.0  },
+    { "d": 3000.0, "v": 1.0  },
+    { "d": 4000.0, "v": 0.0  }
+  ]
 }
