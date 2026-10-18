@@ -1,0 +1,38 @@
+{
+  "type": "onetoys:far_lerp",
+  "alpha": "onetoys:far_alpha",
+  "near": {
+    "type": "minecraft:add",
+    "argument1": {
+      "type": "minecraft:y_clamped_gradient",
+      "from_y": -64,
+      "to_y": 320,
+      "from_value": 1.5,
+      "to_value": -1.5
+    },
+    "argument2": "minecraft:overworld/offset"
+  },
+  "far": {
+    "type": "minecraft:add",
+    "argument1": {
+      "type": "minecraft:y_clamped_gradient",
+      "from_y": -64,
+      "to_y": 320,
+      "from_value": 1.5,
+      "to_value": -1.5
+    },
+    "argument2": {
+      "type": "minecraft:add",
+      "argument1": -0.5037,
+      "argument2": {
+        "type": "minecraft:mul",
+        "argument1": 1.4,
+        "argument2": {
+          "type": "minecraft:add",
+          "argument1": 0.5037,
+          "argument2": "minecraft:overworld/offset"
+        }
+      }
+    }
+  }
+}
