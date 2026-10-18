@@ -558,5 +558,11 @@
   "onetoys.configuration.damage_reduction": "Доля снижения урона",
   "onetoys.configuration.damage_reduction.tooltip": "Доля входящего урона спереди, поглощаемая при блоке мечом (0.5 = снижение урона на 50%).",
   "onetoys.configuration.durability_damage_ratio": "Коэффициент расхода прочности",
-  "onetoys.configuration.durability_damage_ratio.tooltip": "Доля от заблокированного урона, отнимаемая от прочности меча с округлением вверх (0.5 = половина заблокированного урона, минимум 1)."
+  "onetoys.configuration.durability_damage_ratio.tooltip": "Доля от заблокированного урона, отнимаемая от прочности меча с округлением вверх (0.5 = половина заблокированного урона, минимум 1).",
+  "onetoys.configuration.worldgen.terrain_tweaks": "Высотное покрытие поверхности",
+  "onetoys.configuration.worldgen.terrain_tweaks.tooltip": "Настройки высотного покрытия поверхности.",
+  "onetoys.configuration.worldgen.terrain_tweaks.enabled": "Включить высотное покрытие поверхности",
+  "onetoys.configuration.worldgen.terrain_tweaks.enabled.tooltip": "Включает только высотное покрытие поверхности (форма ландшафта задаётся функциями плотности данных и не затрагивается).",
+  "onetoys.configuration.terrain_tweaks": "Высотное покрытие поверхности",
+  "onetoys.configuration.terrain_tweaks.tooltip": "Настройки высотного покрытия поверхности."
 }

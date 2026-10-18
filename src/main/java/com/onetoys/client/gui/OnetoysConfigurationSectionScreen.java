@@ -170,6 +170,7 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
             case "wetness", "wet", "wet_tweaks" -> new ItemStack(Items.WATER_BUCKET);
 
             case "worldgen", "worldgen_tweaks" -> new ItemStack(Items.GRASS_BLOCK);
+            case "terrain_tweaks" -> new ItemStack(Items.STONE);
             case "ore_tweaks" -> new ItemStack(Items.DIAMOND_ORE);
             case "giant_ore_veins_disabler" -> new ItemStack(Items.RAW_COPPER);
 

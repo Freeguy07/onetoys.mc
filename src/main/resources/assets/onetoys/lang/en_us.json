@@ -1,4 +1,4 @@
-﻿{
+{
   "onetoys.configuration.title": "Onetoys Configuration",
   "onetoys.configuration.section.onetoys.toml": "Onetoys Settings",
   "onetoys.configuration.section.onetoys.toml.title": "Onetoys Settings",
@@ -221,6 +221,10 @@
   "onetoys.configuration.gameplay_tweaks.wetness.cold_water_freezing.tooltip": "When enabled, water in very cold biomes (based on biome temperature) applies the freezing effect, just like powder snow.",
   "onetoys.configuration.gameplay_tweaks.wetness.cold_water_temperature_threshold": "Cold Water Temperature Threshold",
   "onetoys.configuration.gameplay_tweaks.wetness.cold_water_temperature_threshold.tooltip": "Maximum biome temperature threshold for water to be considered freezing cold (vanilla freezing/snow threshold is 0.15; cold oceans are 0.10).",
+  "onetoys.configuration.gameplay_tweaks.wetness.wet_player_freezing": "Wet Player Freezing",
+  "onetoys.configuration.gameplay_tweaks.wetness.wet_player_freezing.tooltip": "When enabled, wet players gradually freeze in cold biomes, deferring if freezing from powder snow, freezing water, or other primary causes.",
+  "onetoys.configuration.gameplay_tweaks.wetness.wet_player_freezing_interval": "Wet Player Freezing Interval (Ticks)",
+  "onetoys.configuration.gameplay_tweaks.wetness.wet_player_freezing_interval.tooltip": "Interval in ticks between each increment of freezing for wet players in cold biomes (1 = same as powder snow, 5 = 5x slower).",
   "onetoys.configuration.gameplay_tweaks.height_weather": "Height-based Weather",
   "onetoys.configuration.gameplay_tweaks.height_weather.tooltip": "Tweaks for height-based weather transitions (e.g. Bedrock-style snow at high elevations).",
   "onetoys.configuration.gameplay_tweaks.height_weather.enabled": "Enable Height Weather",
@@ -233,6 +237,10 @@
   "onetoys.configuration.cold_water_freezing.tooltip": "When enabled, water in very cold biomes (based on biome temperature) applies the freezing effect, just like powder snow.",
   "onetoys.configuration.cold_water_temperature_threshold": "Cold Water Temperature Threshold",
   "onetoys.configuration.cold_water_temperature_threshold.tooltip": "Maximum biome temperature threshold for water to be considered freezing cold (vanilla freezing/snow threshold is 0.15; cold oceans are 0.10).",
+  "onetoys.configuration.wet_player_freezing": "Wet Player Freezing",
+  "onetoys.configuration.wet_player_freezing.tooltip": "When enabled, wet players gradually freeze in cold biomes, deferring if freezing from powder snow, freezing water, or other primary causes.",
+  "onetoys.configuration.wet_player_freezing_interval": "Wet Player Freezing Interval (Ticks)",
+  "onetoys.configuration.wet_player_freezing_interval.tooltip": "Interval in ticks between each increment of freezing for wet players in cold biomes (1 = same as powder snow, 5 = 5x slower).",
   "onetoys.configuration.stable_farmland": "Stable Farmland",
   "onetoys.configuration.stable_farmland.tooltip": "When enabled, dry farmland does not revert to dirt on its own over time. Mobs and player trampling are unaffected and can still revert farmland to dirt.",
   "onetoys.configuration.wetness": "Wet Tweaks",
@@ -566,5 +574,11 @@
   "onetoys.configuration.damage_reduction": "Damage Reduction Ratio",
   "onetoys.configuration.damage_reduction.tooltip": "Fraction of incoming frontal damage blocked when blocking with a sword (0.5 = 50% damage reduction).",
   "onetoys.configuration.durability_damage_ratio": "Durability Damage Ratio",
-  "onetoys.configuration.durability_damage_ratio.tooltip": "Fraction of blocked damage deducted from the sword's durability, rounded up (0.5 = half of blocked damage, minimum 1)."
+  "onetoys.configuration.durability_damage_ratio.tooltip": "Fraction of blocked damage deducted from the sword's durability, rounded up (0.5 = half of blocked damage, minimum 1).",
+  "onetoys.configuration.worldgen.terrain_tweaks": "Altitude Surface Skin",
+  "onetoys.configuration.worldgen.terrain_tweaks.tooltip": "Altitude surface skin tweaks.",
+  "onetoys.configuration.worldgen.terrain_tweaks.enabled": "Enable Altitude Surface Skin",
+  "onetoys.configuration.worldgen.terrain_tweaks.enabled.tooltip": "Gates only the altitude surface skin (density-function terrain is data-driven and unaffected).",
+  "onetoys.configuration.terrain_tweaks": "Altitude Surface Skin",
+  "onetoys.configuration.terrain_tweaks.tooltip": "Altitude surface skin tweaks."
 }

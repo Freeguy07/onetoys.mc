@@ -56,6 +56,14 @@ public class OnetoysAttachments {
                             .build()
             );
 
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> WET_FROZEN_TICKS =
+            ATTACHMENT_TYPES.register("wet_frozen_ticks", () ->
+                    AttachmentType.builder(() -> 0)
+                            .serialize(Codec.INT)
+                            .sync(ByteBufCodecs.VAR_INT)
+                            .build()
+            );
+
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> RECOVERY_COMPASS_OVERLAY =
             ATTACHMENT_TYPES.register("recovery_compass_overlay", () ->
                     AttachmentType.builder(() -> false)

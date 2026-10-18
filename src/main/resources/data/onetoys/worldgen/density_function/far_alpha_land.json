@@ -1,0 +1,5 @@
+{
+  "type": "minecraft:mul",
+  "argument1": "onetoys:far_alpha",
+  "argument2": "onetoys:land_mask"
+}

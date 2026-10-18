@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "refmap": "onetoys.refmap.json",
   "mixins": [
+    "NoiseBasedChunkGeneratorMixin",
     "NoiseChunkMixin",
     "OreVeinifierMixin",
     "RespawnAnchorBlockMixin",

@@ -9,6 +9,7 @@ public class WorldgenTweaksModule extends OnetoysModule {
 
     private static WorldgenTweaksModule instance;
     private final OreTweaks oreTweaks = new OreTweaks();
+    private final TerrainTweaks terrainTweaks = new TerrainTweaks();
 
     public WorldgenTweaksModule() {
         super(ID, "Worldgen Tweaks", "Tweaks and adjustments to world generation.", ModuleCategory.WORLDGEN, true);
@@ -18,10 +19,19 @@ public class WorldgenTweaksModule extends OnetoysModule {
     @Override
     public void buildConfig(ModConfigSpec.Builder builder) {
         oreTweaks.buildConfig(builder);
+        terrainTweaks.buildConfig(builder);
+    }
+
+    public static WorldgenTweaksModule getInstance() {
+        return instance;
     }
 
     public OreTweaks getOreTweaks() {
         return oreTweaks;
+    }
+
+    public TerrainTweaks getTerrainTweaks() {
+        return terrainTweaks;
     }
 
     public GiantOreVeinsDisabler getGiantOreVeinsDisabler() {
@@ -48,5 +58,14 @@ public class WorldgenTweaksModule extends OnetoysModule {
         }
         OreTweaks ore = mod.getOreTweaks();
         return ore != null && ore.isNetherLockedLapisEnabled();
+    }
+
+    public static boolean isTerrainTweaksEnabled() {
+        WorldgenTweaksModule mod = instance;
+        if (mod == null || !mod.isEnabled()) {
+            return false;
+        }
+        TerrainTweaks terrain = mod.getTerrainTweaks();
+        return terrain != null && terrain.isEnabled();
     }
 }

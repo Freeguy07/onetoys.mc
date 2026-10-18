@@ -84,6 +84,8 @@ public class WetnessTweaks {
     private ModConfigSpec.BooleanValue stableFarmlandConfig;
     private ModConfigSpec.BooleanValue coldWaterFreezingConfig;
     private ModConfigSpec.DoubleValue coldWaterTemperatureThresholdConfig;
+    private ModConfigSpec.BooleanValue wetPlayerFreezingConfig;
+    private ModConfigSpec.IntValue wetPlayerFreezingIntervalConfig;
 
     public WetnessTweaks(GameplayTweaksModule parent) {
         this.parent = parent;
@@ -160,6 +162,17 @@ public class WetnessTweaks {
                 .translation("onetoys.configuration.gameplay_tweaks.wetness.cold_water_temperature_threshold")
                 .defineInRange("cold_water_temperature_threshold", 0.15, -2.0, 2.0);
 
+        wetPlayerFreezingConfig = builder
+                .comment("When enabled, wet players in cold biomes gradually freeze over time, as if in powder snow but much slower.")
+                .translation("onetoys.configuration.gameplay_tweaks.wetness.wet_player_freezing")
+                .define("wet_player_freezing", true);
+
+        wetPlayerFreezingIntervalConfig = builder
+                .comment("Interval in ticks between each increment of freezing for wet players in cold biomes (powder snow is 1 tick).",
+                        "Higher values mean slower freezing. Default is 5 (5x slower than powder snow).")
+                .translation("onetoys.configuration.gameplay_tweaks.wetness.wet_player_freezing_interval")
+                .defineInRange("wet_player_freezing_interval", 5, 2, 20);
+
         builder.pop();
     }
 
@@ -184,6 +197,20 @@ public class WetnessTweaks {
 
     public static boolean isColdWaterFreezingActive() {
         return instance != null && instance.isColdWaterFreezing();
+    }
+
+    public boolean isWetPlayerFreezing() {
+        return isEnabled() && (wetPlayerFreezingConfig == null || wetPlayerFreezingConfig.get());
+    }
+
+    public static boolean isWetPlayerFreezingActive() {
+        return instance != null && instance.isWetPlayerFreezing();
+    }
+
+    public static int getWetPlayerFreezingInterval() {
+        return instance != null && instance.wetPlayerFreezingIntervalConfig != null
+                ? instance.wetPlayerFreezingIntervalConfig.get()
+                : 5;
     }
 
     public static double getColdWaterTemperatureThreshold() {
@@ -221,6 +248,13 @@ public class WetnessTweaks {
         return baseTemp;
     }
 
+    public static boolean isColdBiome(Level level, BlockPos pos) {
+        if (!level.isLoaded(pos)) {
+            return false;
+        }
+        return getBiomeTemperature(level, pos) < (float) getColdWaterTemperatureThreshold();
+    }
+
     public static boolean isInColdWater(LivingEntity entity) {
         if (entity == null || !isColdWaterFreezingActive()) {
             return false;
@@ -239,15 +273,30 @@ public class WetnessTweaks {
         }
         Level level = entity.level();
         BlockPos pos = entity.blockPosition();
-        if (!level.isLoaded(pos)) {
-            return false;
-        }
-        double threshold = getColdWaterTemperatureThreshold();
-        float temp = getBiomeTemperature(level, pos);
-        if (temp >= (float) threshold) {
+        if (!isColdBiome(level, pos)) {
             return false;
         }
         return !isNearHeatSource(entity);
+    }
+
+    public static int getWetFrozenTicks(LivingEntity entity) {
+        if (entity == null || !entity.hasData(OnetoysAttachments.WET_FROZEN_TICKS)) {
+            return 0;
+        }
+        return entity.getData(OnetoysAttachments.WET_FROZEN_TICKS);
+    }
+
+    public static void setWetFrozenTicks(LivingEntity entity, int ticks) {
+        if (entity == null) {
+            return;
+        }
+        if (ticks <= 0) {
+            if (entity.hasData(OnetoysAttachments.WET_FROZEN_TICKS)) {
+                entity.removeData(OnetoysAttachments.WET_FROZEN_TICKS);
+            }
+        } else {
+            entity.setData(OnetoysAttachments.WET_FROZEN_TICKS, ticks);
+        }
     }
 
     public static boolean isTweakEnabled() {

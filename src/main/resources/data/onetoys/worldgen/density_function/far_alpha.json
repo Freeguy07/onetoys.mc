@@ -1,12 +1,16 @@
 {
-  "type": "onetoys:distance_profile",
-  "period": 4000.0,
-  "points": [
-    { "d": 0.0,    "v": 0.0  },
-    { "d": 1000.0, "v": 0.0  },
-    { "d": 2000.0, "v": 0.35 },
-    { "d": 2400.0, "v": 1.0  },
-    { "d": 3000.0, "v": 1.0  },
-    { "d": 4000.0, "v": 0.0  }
-  ]
+  "type": "minecraft:flat_cache",
+  "argument": {
+    "type": "minecraft:cache_2d",
+    "argument": {
+      "type": "onetoys:distance_profile",
+      "period": 0.0,
+      "points": [
+        { "d": 0.0,    "v": 0.0  },
+        { "d": 400.0,  "v": 0.0  },
+        { "d": 1200.0, "v": 0.65 },
+        { "d": 2000.0, "v": 1.0  }
+      ]
+    }
+  }
 }

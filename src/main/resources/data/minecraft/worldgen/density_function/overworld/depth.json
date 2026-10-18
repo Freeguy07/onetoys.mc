@@ -1,6 +1,6 @@
 {
   "type": "onetoys:far_lerp",
-  "alpha": "onetoys:far_alpha",
+  "alpha": "onetoys:far_alpha_land",
   "near": {
     "type": "minecraft:add",
     "argument1": {
@@ -23,14 +23,22 @@
     },
     "argument2": {
       "type": "minecraft:add",
-      "argument1": -0.5037,
+      "argument1": {
+        "type": "minecraft:add",
+        "argument1": "minecraft:overworld/offset",
+        "argument2": -0.10
+      },
       "argument2": {
         "type": "minecraft:mul",
-        "argument1": 1.4,
+        "argument1": 0.4,
         "argument2": {
-          "type": "minecraft:add",
-          "argument1": 0.5037,
-          "argument2": "minecraft:overworld/offset"
+          "type": "minecraft:max",
+          "argument2": 0.0,
+          "argument1": {
+            "type": "minecraft:add",
+            "argument1": "minecraft:overworld/offset",
+            "argument2": 0.5037
+          }
         }
       }
     }

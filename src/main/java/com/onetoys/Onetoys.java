@@ -17,6 +17,7 @@ import com.onetoys.registry.OnetoysItems;
 import com.onetoys.registry.OnetoysParticles;
 import com.onetoys.salt.Salt;
 import com.onetoys.sol_valheim.SOLValheim;
+import com.onetoys.worldgen.surface.FarAlpha;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -169,6 +170,8 @@ public class Onetoys {
         // Register game event bus listeners
         NeoForge.EVENT_BUS.addListener(this::onFurnaceFuelBurnTime);
         NeoForge.EVENT_BUS.addListener(this::registerBrewingRecipes);
+        NeoForge.EVENT_BUS.addListener(FarAlpha::onServerAboutToStart);
+        NeoForge.EVENT_BUS.addListener(FarAlpha::onServerStopped);
 
         // Register unified mod configuration
         modContainer.registerConfig(ModConfig.Type.STARTUP, Config.SPEC, "onetoys.toml");

@@ -558,5 +558,11 @@
   "onetoys.configuration.damage_reduction": "Частка зменшення шкоди",
   "onetoys.configuration.damage_reduction.tooltip": "Частка вхідної шкоди спереду, що поглинається при блокуванні мечем (0.5 = зменшення шкоди на 50%).",
   "onetoys.configuration.durability_damage_ratio": "Коефіцієнт витрати міцності",
-  "onetoys.configuration.durability_damage_ratio.tooltip": "Частка від заблокованої шкоди, що віднімається від міцності меча з округленням вгору (0.5 = половина заблокованої шкоди, мінімум 1)."
+  "onetoys.configuration.durability_damage_ratio.tooltip": "Частка від заблокованої шкоди, що віднімається від міцності меча з округленням вгору (0.5 = половина заблокованої шкоди, мінімум 1).",
+  "onetoys.configuration.worldgen.terrain_tweaks": "Висотне покриття поверхні",
+  "onetoys.configuration.worldgen.terrain_tweaks.tooltip": "Налаштування висотного покриття поверхні.",
+  "onetoys.configuration.worldgen.terrain_tweaks.enabled": "Увімкнути висотне покриття поверхні",
+  "onetoys.configuration.worldgen.terrain_tweaks.enabled.tooltip": "Вмикає лише висотне покриття поверхні (форма ландшафту визначається функціями щільності даних і не зачіпається).",
+  "onetoys.configuration.terrain_tweaks": "Висотне покриття поверхні",
+  "onetoys.configuration.terrain_tweaks.tooltip": "Налаштування висотного покриття поверхні."
 }
