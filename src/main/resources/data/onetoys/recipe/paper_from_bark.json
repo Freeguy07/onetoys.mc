@@ -1,10 +1,33 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "onetoys:ore_tweak_enabled",
+      "tweak": "content"
+    }
+  ],
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
   "ingredients": [
-    {"item": "onetoys:bark"}, {"item": "onetoys:bark"}, {"item": "onetoys:bark"},
-    {"item": "onetoys:bark"}, {"item": "onetoys:bark"}, {"item": "onetoys:bark"}
+    {
+      "item": "onetoys:bark"
+    },
+    {
+      "item": "onetoys:bark"
+    },
+    {
+      "item": "onetoys:bark"
+    },
+    {
+      "item": "onetoys:bark"
+    },
+    {
+      "item": "onetoys:bark"
+    },
+    {
+      "item": "onetoys:bark"
+    }
   ],
-  "result": {"id": "minecraft:paper"}
+  "result": {
+    "id": "minecraft:paper"
+  }
 }
-

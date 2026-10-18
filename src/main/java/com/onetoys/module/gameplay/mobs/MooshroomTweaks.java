@@ -1,7 +1,6 @@
 package com.onetoys.module.gameplay.mobs;
 
 import net.minecraft.world.entity.animal.MushroomCow;
-import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
@@ -73,10 +72,6 @@ public class MooshroomTweaks {
 
     public int getStewMilkingCooldownTicks() {
         return stewMilkingCooldownTicksConfig != null ? stewMilkingCooldownTicksConfig.get() : 1200;
-    }
-
-    public void onConstruct(IEventBus modBus) {
-        // Reserved for future mooshroom-specific event bus listeners
     }
 
     public void handleMilking(PlayerInteractEvent.EntityInteract event, MushroomCow mooshroom) {

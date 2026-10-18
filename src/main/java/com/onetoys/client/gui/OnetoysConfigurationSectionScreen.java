@@ -164,6 +164,7 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
             case "item_tweaks" -> new ItemStack(Items.COMPASS);
             case "recovery_compass" -> new ItemStack(Items.RECOVERY_COMPASS);
             case "stopwatch" -> new ItemStack(OnetoysItems.STOPWATCH.get());
+            case "sword_blocking" -> new ItemStack(Items.IRON_SWORD);
             case "sleeping_tweaks" -> new ItemStack(Items.RED_BED);
             case "respawn_anchor_required" -> new ItemStack(Items.RESPAWN_ANCHOR);
             case "stack_tweaks" -> new ItemStack(Items.BUNDLE);
@@ -171,6 +172,7 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
 
             case "worldgen", "worldgen_tweaks" -> new ItemStack(Items.GRASS_BLOCK);
             case "terrain_tweaks" -> new ItemStack(Items.STONE);
+            case "height_weather" -> new ItemStack(Items.SNOWBALL);
             case "ore_tweaks" -> new ItemStack(Items.DIAMOND_ORE);
             case "giant_ore_veins_disabler" -> new ItemStack(Items.RAW_COPPER);
 
@@ -437,7 +439,6 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
 
         list.children().clear();
         dependentWidgets.clear();
-        boolean hasUndoableElements = false;
 
         Entry enabledEntry = null;
         for (final Entry entry : context.entries()) {
@@ -460,7 +461,6 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
                         || bigButton.getMessage().getString().toLowerCase().contains(searchQuery);
                 if (masterMatches) {
                     list.addSmall(bigButton, null);
-                    hasUndoableElements = true;
                 }
             }
         }
@@ -598,7 +598,6 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
                     dependentWidgets.add(label);
                     list.addSmall(label, widget);
                 }
-                hasUndoableElements |= element.undoable();
             }
         }
 

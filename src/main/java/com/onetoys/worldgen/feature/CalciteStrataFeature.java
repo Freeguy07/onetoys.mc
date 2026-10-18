@@ -7,6 +7,7 @@ import com.onetoys.module.content.ContentModule;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
@@ -19,7 +20,7 @@ import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 /**
  * Highly optimized feature that generates 3D geological strata formations in the Nether.
  * Features:
- * - 3D orthonormal frame rotation for natural 25° dip/strike strata incline on X and Z axes.
+ * - 3D orthonormal frame rotation for natural dip/strike strata incline on X and Z axes.
  * - Exact spherical and column-based range culling (eliminates dead-space loop iterations).
  * - Linear coordinate accumulation in the innermost vertical loop (eliminates multiplications).
  * - Core-rejection noise optimization (skips 3D noise evaluation for ~75% of candidate blocks).
@@ -35,22 +36,10 @@ public class CalciteStrataFeature extends Feature<CalciteStrataConfiguration> {
     private static final int PRIME_SEED = 1013904223;
     private static final float INT_TO_UNIT = 1.0F / 2147483647.0F;
 
-    // 25-degree incline orthonormal basis constants (precomputed statically)
+    // Basis constants
     private static final float TILT_DEG = 25.0F;
-    private static final float TAN_TILT = (float) Math.tan(Math.toRadians(TILT_DEG));
-    private static final float INV_LEN = 1.0F / (float) Math.sqrt(1.0 + 2.0 * TAN_TILT * TAN_TILT);
-
-    private static final float N_H = TAN_TILT * INV_LEN;            // ~0.3892816F
-    private static final float N_Y = INV_LEN;                       // ~0.8348171F
     private static final float U_H = 1.0F / (float) Math.sqrt(2.0); // ~0.70710678F
-    private static final float W_H = N_Y * U_H;                     // ~0.59030485F
-    private static final float W_Y = -(float) Math.sqrt(2.0) * N_H; // ~-0.5505273F
-
     private static final float U_H_SQ = U_H * U_H; // 0.5F
-    private static final float N_H_SQ = N_H * N_H;
-    private static final float N_Y_SQ = N_Y * N_Y;
-    private static final float W_H_SQ = W_H * W_H;
-    private static final float W_Y_SQ = W_Y * W_Y;
 
     private static final float WARP_EXPANSION = 1.15F;
 
@@ -86,24 +75,39 @@ public class CalciteStrataFeature extends Feature<CalciteStrataConfiguration> {
         float invRy = 1.0F / ry;
         float invRz = 1.0F / rz;
 
+        // Incline orthonormal basis vectors from config
+        double maxTiltRad = config.maxTiltDegrees() * Mth.DEG_TO_RAD;
+        float tanTilt = (float) Math.tan(maxTiltRad);
+        float invLen = 1.0F / (float) Math.sqrt(1.0 + 2.0 * tanTilt * tanTilt);
+
+        float nH = tanTilt * invLen;
+        float nY = invLen;
+        float wH = nY * U_H;
+        float wY = -(float) Math.sqrt(2.0) * nH;
+
+        float nHSq = nH * nH;
+        float nYSq = nY * nY;
+        float wHSq = wH * wH;
+        float wYSq = wY * wY;
+
         // Randomly pick one of the 4 symmetrical diagonal dip quadrants (±X, ±Z)
         float signX = random.nextBoolean() ? 1.0F : -1.0F;
         float signZ = random.nextBoolean() ? 1.0F : -1.0F;
 
         // Orthonormal 3D basis vectors:
         // u is horizontal bedding axis (uy = 0)
-        // n is normal to strata bedding planes (inclined 25° on both X and Z)
+        // n is normal to strata bedding planes (inclined on both X and Z)
         // w is inclined bedding axis
         float ux = -signZ * U_H;
         float uz = signX * U_H;
 
-        float nx = signX * N_H;
-        float ny = N_Y;
-        float nz = signZ * N_H;
+        float nx = signX * nH;
+        float ny = nY;
+        float nz = signZ * nH;
 
-        float wx = signX * W_H;
-        float wy = W_Y;
-        float wz = signZ * W_H;
+        float wx = signX * wH;
+        float wy = wY;
+        float wz = signZ * wH;
 
         // Pre-scaled transformation vectors: transforms world displacement directly into normalized ellipsoid space
         float uxNorm = ux * invRx;
@@ -118,9 +122,9 @@ public class CalciteStrataFeature extends Feature<CalciteStrataConfiguration> {
         float wzNorm = wz * invRz;
 
         // Maximum radial extents including maximum 3D perimeter warp (+30% warp = sqrt(1.30) ~ 1.15x)
-        float maxDx = (float) Math.sqrt(rx * rx * U_H_SQ + ry * ry * N_H_SQ + rz * rz * W_H_SQ) * WARP_EXPANSION;
-        float maxDy = (float) Math.sqrt(ry * ry * N_Y_SQ + rz * rz * W_Y_SQ) * WARP_EXPANSION;
-        float maxDz = (float) Math.sqrt(rx * rx * U_H_SQ + ry * ry * N_H_SQ + rz * rz * W_H_SQ) * WARP_EXPANSION;
+        float maxDx = (float) Math.sqrt(rx * rx * U_H_SQ + ry * ry * nHSq + rz * rz * wHSq) * WARP_EXPANSION;
+        float maxDy = (float) Math.sqrt(ry * ry * nYSq + rz * rz * wYSq) * WARP_EXPANSION;
+        float maxDz = (float) Math.sqrt(rx * rx * U_H_SQ + ry * ry * nHSq + rz * rz * wHSq) * WARP_EXPANSION;
 
         int limitX = (int) Math.ceil(maxDx);
         int limitY = (int) Math.ceil(maxDy);
@@ -233,7 +237,7 @@ public class CalciteStrataFeature extends Feature<CalciteStrataConfiguration> {
                                 }
                             }
 
-                            // Determine strata layer along rotated 25° normal axis
+                            // Determine strata layer along rotated normal axis
                             int layerIndex = Math.floorMod(fastFloor(yLocal), layerCount);
                             section.setBlockState(relX, relY, relZ, layers[layerIndex], false);
                             placedCount++;

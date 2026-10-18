@@ -1,8 +1,5 @@
 package com.onetoys.module.content;
 
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
@@ -32,14 +29,5 @@ public class NuggetsAndShardsTweaks {
 
     public boolean isEnabled() {
         return parent.isEnabled() && (enabledConfig == null || enabledConfig.get());
-    }
-
-    public void onConstruct(IEventBus modBus) {
-    }
-
-    public void onCommonSetup(FMLCommonSetupEvent event) {
-    }
-
-    public void onClientSetup(FMLClientSetupEvent event) {
     }
 }

@@ -26,8 +26,8 @@ public class GameplayTweaksModule extends OnetoysModule {
     private static GameplayTweaksModule instance;
 
     private final DurabilityTweaks durabilityTweaks = new DurabilityTweaks();
-    private final MobTweaks mobTweaks = new MobTweaks();
-    private final ItemTweaks itemTweaks = new ItemTweaks();
+    private final MobTweaks mobTweaks = new MobTweaks(this);
+    private final ItemTweaks itemTweaks = new ItemTweaks(this);
     private final SleepingTweaks sleepingTweaks = new SleepingTweaks();
     private final StackTweaks stackTweaks = new StackTweaks();
     private final WetnessTweaks wetnessTweaks = new WetnessTweaks(this);
@@ -82,13 +82,10 @@ public class GameplayTweaksModule extends OnetoysModule {
     @Override
     public void onCommonSetup(FMLCommonSetupEvent event) {
         sleepingTweaks.onCommonSetup(event);
-        wetnessTweaks.onCommonSetup(event);
     }
 
     @Override
     public void onClientSetup(FMLClientSetupEvent event) {
-        itemTweaks.onClientSetup(event);
-        wetnessTweaks.onClientSetup(event);
     }
 
     public static GameplayTweaksModule getInstance() {

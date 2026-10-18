@@ -6,6 +6,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.onetoys.module.worldgen.WorldgenTweaksModule;
 import net.minecraft.util.KeyDispatchDataCodec;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.DensityFunction;
@@ -47,6 +48,9 @@ public record DistanceProfile(double period, List<Point> points) implements Dens
 
     @Override
     public double compute(FunctionContext ctx) {
+        if (!WorldgenTweaksModule.isTerrainTweaksEnabled()) {
+            return 0.0D;
+        }
         double x = ctx.blockX(), z = ctx.blockZ();
         double rawD = Math.sqrt(x * x + z * z);
         double d = period > 0.0 ? rawD % period : rawD;

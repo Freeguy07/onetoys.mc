@@ -1,9 +1,18 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "onetoys:ore_tweak_enabled",
+      "tweak": "content"
+    }
+  ],
   "type": "minecraft:smelting",
   "category": "misc",
-  "ingredient": {"item": "onetoys:bark"},
-  "result": {"id": "minecraft:charcoal"},
+  "ingredient": {
+    "item": "onetoys:bark"
+  },
+  "result": {
+    "id": "minecraft:charcoal"
+  },
   "experience": 0.15,
   "cookingtime": 200
 }
-

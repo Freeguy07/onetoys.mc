@@ -44,12 +44,6 @@ public final class WateringHelper {
     private WateringHelper() {
     }
 
-    public static void applyWatering(Level level, BlockPos pos, Direction clickedFace, Vec3 hitVec, @Nullable Player player) {
-        BlockState state = level.getBlockState(pos);
-        applyRainEffects(level, pos, state, player);
-        playWateringEffects(level, pos, clickedFace, hitVec);
-    }
-
     public static void applyRainEffects(Level level, BlockPos pos, BlockState state, @Nullable Player player) {
         // A. Extinguish fire at targeted position
         if (state.is(BlockTags.FIRE) || state.getBlock() instanceof BaseFireBlock) {

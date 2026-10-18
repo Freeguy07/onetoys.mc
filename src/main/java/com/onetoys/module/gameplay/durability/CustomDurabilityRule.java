@@ -42,10 +42,6 @@ public sealed interface CustomDurabilityRule permits
         }
     }
 
-    default void apply(ModifyDefaultComponentsEvent event, Item item, ResourceLocation id) {
-        apply(event, item, id, true);
-    }
-
     default void applyDirect(Item item, ResourceLocation id, boolean showInTooltip) {
         final int target = durability();
         var builder = DataComponentMap.builder().addAll(item.components());

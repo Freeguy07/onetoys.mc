@@ -1,5 +1,6 @@
 package com.onetoys.salt.block;
 
+import com.onetoys.module.content.ContentModule;
 import com.onetoys.salt.Dissolving;
 import com.onetoys.salt.Melting;
 import com.onetoys.salt.SaltBlocks;
@@ -24,7 +25,8 @@ public interface ISaltBlock {
     @NotNull BlockState getDissolvedState(BlockState state, ServerLevel level, BlockPos pos, Fluid fluid);
 
     default boolean onSaltRandomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        if (!SaltConfiguration.isLoaded()
+        if (!ContentModule.isSaltEnabled()
+                || !SaltConfiguration.isLoaded()
                 || (!SaltConfiguration.DISSOLVING_ENABLED.get() && !SaltConfiguration.MELTING_BY_BLOCK_ENABLED.get())) {
             return true;
         }
@@ -49,6 +51,9 @@ public interface ISaltBlock {
     }
 
     default void onSaltAnimateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (!ContentModule.isSaltEnabled()) {
+            return;
+        }
         if (SaltConfiguration.isLoaded() && random.nextInt(3) == 0 && level.isRainingAt(pos.above())) {
             Direction direction = Direction.getRandom(random);
             if (direction != Direction.UP) {
@@ -65,6 +70,9 @@ public interface ISaltBlock {
     }
 
     static void maybeGrowCluster(BlockState baseState, BlockPos basePos, ServerLevel level) {
+        if (!ContentModule.isSaltEnabled()) {
+            return;
+        }
         if (SaltConfiguration.isLoaded()
                 && baseState.is(SaltTags.Blocks.SALT_CLUSTER_GROWABLES)
                 && SaltConfiguration.SALT_CLUSTER_GROWING_ENABLED.get()
@@ -87,6 +95,9 @@ public interface ISaltBlock {
     }
 
     static boolean canGrowCluster(BlockPos clusterPos, ServerLevel level) {
+        if (!ContentModule.isSaltEnabled()) {
+            return false;
+        }
         if (!level.getBlockState(clusterPos.below()).is(SaltTags.Blocks.SALT_CLUSTER_GROWABLES))
             return false;
 
@@ -95,6 +106,9 @@ public interface ISaltBlock {
     }
 
     static void growCluster(BlockState state, BlockPos basePos, ServerLevel level) {
+        if (!ContentModule.isSaltEnabled()) {
+            return;
+        }
         BlockPos clusterPos = basePos.above();
         BlockState prevState = level.getBlockState(clusterPos);
         BlockState clusterState;

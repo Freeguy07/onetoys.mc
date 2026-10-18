@@ -1,11 +1,27 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "onetoys:ore_tweak_enabled",
+      "tweak": "content"
+    }
+  ],
   "type": "minecraft:crafting_shaped",
   "category": "redstone",
   "key": {
-    "R": {"item": "minecraft:redstone"},
-    "E": {"item": "minecraft:echo_shard"}
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "E": {
+      "item": "minecraft:echo_shard"
+    }
   },
-  "pattern": ["RRR", "RER", "RRR"],
-  "result": {"id": "onetoys:bluestone", "count": 8}
+  "pattern": [
+    "RRR",
+    "RER",
+    "RRR"
+  ],
+  "result": {
+    "count": 8,
+    "id": "onetoys:bluestone"
+  }
 }
-

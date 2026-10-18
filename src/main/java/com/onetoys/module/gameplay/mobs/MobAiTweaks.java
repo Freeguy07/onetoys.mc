@@ -1,7 +1,6 @@
 package com.onetoys.module.gameplay.mobs;
 
 import com.onetoys.module.gameplay.GameplayTweaksModule;
-import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 /**
@@ -161,9 +160,5 @@ public class MobAiTweaks {
             return 32;
         }
         return instance.aiThrottleStartDistanceConfig != null ? instance.aiThrottleStartDistanceConfig.get() : 32;
-    }
-
-    public void onConstruct(IEventBus modBus) {
-        // Reserved for future AI tweaks lifecycle events
     }
 }

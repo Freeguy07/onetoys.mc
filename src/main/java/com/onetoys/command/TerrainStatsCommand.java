@@ -3,6 +3,8 @@ package com.onetoys.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.onetoys.Onetoys;
+import com.onetoys.module.ModuleManager;
+import com.onetoys.module.worldgen.WorldgenTweaksModule;
 import com.onetoys.worldgen.surface.FarAlpha;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -15,13 +17,7 @@ import net.minecraft.world.level.levelgen.RandomState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.server.ServerStartedEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,11 +25,12 @@ import java.util.Locale;
 
 @EventBusSubscriber(modid = Onetoys.MODID)
 public class TerrainStatsCommand {
-    private static final Logger LOGGER = LoggerFactory.getLogger("TerrainStats");
 
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
-        register(event.getDispatcher());
+        if (ModuleManager.get().isModuleEnabled(WorldgenTweaksModule.ID)) {
+            register(event.getDispatcher());
+        }
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -44,25 +41,6 @@ public class TerrainStatsCommand {
                                 .then(Commands.argument("distance", IntegerArgumentType.integer())
                                         .executes(ctx -> executeStats(ctx.getSource(), IntegerArgumentType.getInteger(ctx, "distance")))))
         );
-    }
-
-    @SubscribeEvent
-    public static void onServerStarted(ServerStartedEvent event) {
-        Path flag = Paths.get("run_stats.flag");
-        if (Files.exists(flag)) {
-            try {
-                Files.deleteIfExists(flag);
-            } catch (Exception ignored) {
-            }
-            ServerLevel overworld = event.getServer().overworld();
-            int[] distances = {500, 1500, 2200, 2700, 3500};
-            for (int d : distances) {
-                String result = computeStats(overworld, d);
-                LOGGER.info(result);
-                System.out.println(result);
-            }
-            event.getServer().halt(false);
-        }
     }
 
     private static int executeStats(CommandSourceStack source, int distance) {

@@ -14,7 +14,6 @@ import net.minecraft.world.item.TieredItem;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.ItemAbilities;
-import net.neoforged.neoforge.common.ItemAbility;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(SwordItem.class)
@@ -22,14 +21,6 @@ public abstract class SwordItemMixin extends TieredItem {
 
     public SwordItemMixin(Tier tier, Properties properties) {
         super(tier, properties);
-    }
-
-    @Override
-    public boolean canPerformAction(ItemStack stack, ItemAbility itemAbility) {
-        if (SwordBlockingTweaks.isTweakEnabled() && itemAbility == ItemAbilities.SHIELD_BLOCK) {
-            return true;
-        }
-        return super.canPerformAction(stack, itemAbility);
     }
 
     @Override

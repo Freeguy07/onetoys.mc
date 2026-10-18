@@ -2,6 +2,7 @@ package com.onetoys.worldgen.density;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.onetoys.module.worldgen.WorldgenTweaksModule;
 import net.minecraft.util.KeyDispatchDataCodec;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.DensityFunction;
@@ -18,6 +19,9 @@ public record FarLerp(DensityFunction alpha, DensityFunction near, DensityFuncti
 
     @Override
     public double compute(FunctionContext ctx) {
+        if (!WorldgenTweaksModule.isTerrainTweaksEnabled()) {
+            return this.near.compute(ctx);
+        }
         double a = alpha.compute(ctx);
         if (a <= 0.0) return near.compute(ctx);
         if (a >= 1.0) return far.compute(ctx);

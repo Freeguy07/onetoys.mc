@@ -108,7 +108,6 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
 
     public List<EatenFoodItem> ItemEntries = new ArrayList<>();
     public EatenFoodItem DrinkSlot;
-    public int MaxItemSlots = MAX_ITEM_SLOTS;
     public int hungerCountdown;
     public int secondHungerCountdown;
     public float hungerExhaustion = 0f;
@@ -121,7 +120,6 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
     private transient ResourceKey<Level> lastDimension = null;
 
     public ValheimFoodData() {
-        this.MaxItemSlots = MAX_ITEM_SLOTS;
         this.hungerCountdown = getMaxHungerTimer();
         this.secondHungerCountdown = getMaxSecondHungerTimer();
     }
@@ -390,7 +388,6 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
 
     public ValheimFoodData copy() {
         ValheimFoodData copy = new ValheimFoodData();
-        copy.MaxItemSlots = MAX_ITEM_SLOTS;
         copy.hungerCountdown = this.hungerCountdown;
         copy.secondHungerCountdown = this.secondHungerCountdown;
         copy.hungerExhaustion = this.hungerExhaustion;
@@ -559,10 +556,6 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
         }
     }
 
-    public void tick() {
-        tick(false);
-    }
-
     public void onWakeUp(boolean pauseFoodTimers) {
         if (SOLValheim.Config.common != null && SOLValheim.Config.common.passTicksDuringNight != null && ModConfig.isLoaded() && !SOLValheim.Config.common.passTicksDuringNight.get()) {
             return;
@@ -593,34 +586,6 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
             secondHungerCountdown = getMaxSecondHungerTimer();
             hungerExhaustion = 0f;
         }
-    }
-
-    public void onWakeUp() {
-        onWakeUp(false);
-    }
-
-    public float getTotalFoodNutrition() {
-        float nutrition = 0f;
-        for (var item : ItemEntries) {
-            ModConfig.Common.FoodConfig food = ModConfig.getFoodConfig(item.item);
-            if (food == null)
-                continue;
-
-            nutrition += food.getHearts();
-        }
-
-        if (DrinkSlot != null) {
-            ModConfig.Common.FoodConfig food = ModConfig.getFoodConfig(DrinkSlot.item);
-            if (food != null) {
-                nutrition += food.getHearts();
-            }
-
-            double bonus = (SOLValheim.Config.common != null && SOLValheim.Config.common.drinkSlotFoodEffectivenessBonus != null && ModConfig.isLoaded())
-                    ? SOLValheim.Config.common.drinkSlotFoodEffectivenessBonus.get() : 0.10;
-            nutrition = (float) (nutrition * (1.0 + bonus));
-        }
-
-        return nutrition;
     }
 
     public float getTotalMaxHealthBonus() {
@@ -665,10 +630,6 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
         return healPerSecond;
     }
 
-    public float getRegenSpeed() {
-        return 0.25f + getTotalHealPerSecond();
-    }
-
     @Override
     public CompoundTag serializeNBT(HolderLookup.Provider provider) {
         CompoundTag tag = new CompoundTag();
@@ -704,7 +665,6 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
 
     @Override
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag tag) {
-        this.MaxItemSlots = MAX_ITEM_SLOTS;
         if (tag.contains("hunger_timer")) {
             hungerCountdown = tag.getInt("hunger_timer");
         } else {

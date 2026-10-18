@@ -1,5 +1,6 @@
 package com.onetoys.module.gameplay.mobs;
 
+import com.onetoys.module.gameplay.GameplayTweaksModule;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.MushroomCow;
@@ -12,12 +13,21 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
 public class MobTweaks {
+    private final GameplayTweaksModule parent;
     private final GoatTweaks goatTweaks = new GoatTweaks();
     private final CowTweaks cowTweaks = new CowTweaks();
     private final MooshroomTweaks mooshroomTweaks = new MooshroomTweaks();
     private final MobAiTweaks aiTweaks = new MobAiTweaks();
     private final SpecialMobTweaks specialMobTweaks = new SpecialMobTweaks();
     private ModConfigSpec.BooleanValue enabledConfig;
+
+    public MobTweaks(GameplayTweaksModule parent) {
+        this.parent = parent;
+    }
+
+    public MobTweaks() {
+        this(null);
+    }
 
     public void buildConfig(ModConfigSpec.Builder builder) {
         builder.comment("Tweaks and adjustments to vanilla mobs and creatures.")
@@ -39,7 +49,7 @@ public class MobTweaks {
     }
 
     public boolean isEnabled() {
-        return enabledConfig == null || enabledConfig.get();
+        return (parent == null || parent.isEnabled()) && (enabledConfig == null || enabledConfig.get());
     }
 
     public MobAiTweaks getAiTweaks() {
@@ -63,11 +73,7 @@ public class MobTweaks {
     }
 
     public void onConstruct(IEventBus modBus) {
-        aiTweaks.onConstruct(modBus);
         specialMobTweaks.onConstruct(modBus);
-        goatTweaks.onConstruct(modBus);
-        cowTweaks.onConstruct(modBus);
-        mooshroomTweaks.onConstruct(modBus);
 
         // Single consolidated interaction listener for all mob milking and feeding mechanics
         NeoForge.EVENT_BUS.addListener(this::onEntityInteract);

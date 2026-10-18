@@ -21,10 +21,6 @@ public record MineralDepositConfiguration(List<DepositBlockStateInfo> mainStateI
                             .forGetter(config -> config.clusterStateInfo))
                     .apply(instance, MineralDepositConfiguration::new));
 
-    public static DepositBlockStateInfo blockStateInfo(BlockStateProvider blockStateProvider, RuleTest ruleTest) {
-        return new DepositBlockStateInfo(blockStateProvider, ruleTest);
-    }
-
     public int getSize() {
         if (SaltConfiguration.ROCK_SALT_SIZE != null && SaltConfiguration.isLoaded()) {
             return SaltConfiguration.ROCK_SALT_SIZE.get();
@@ -57,4 +53,3 @@ public record MineralDepositConfiguration(List<DepositBlockStateInfo> mainStateI
         }
     }
 }
-

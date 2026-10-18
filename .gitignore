@@ -38,6 +38,10 @@ run/
 **/src/generated/**/.cache/
 repo/
 !**/src/**/repo/
+*.class
+*.jfc
+net/
+run_stats.flag
 
 ### AI Agent / Internal Docs ###
 AGENTS.md

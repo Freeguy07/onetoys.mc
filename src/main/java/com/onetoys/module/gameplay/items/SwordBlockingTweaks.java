@@ -7,6 +7,7 @@ import java.util.WeakHashMap;
 import com.onetoys.module.ModuleManager;
 import com.onetoys.module.gameplay.GameplayTweaksModule;
 
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -160,7 +161,7 @@ public final class SwordBlockingTweaks {
     }
 
     private void onLivingIncomingDamage(LivingIncomingDamageEvent event) {
-        if (!isTweakEnabled()) {
+        if (!isTweakEnabled() || event.isCanceled()) {
             return;
         }
         LivingEntity entity = event.getEntity();
@@ -186,7 +187,12 @@ public final class SwordBlockingTweaks {
         event.setAmount(newDamage);
 
         if (blockedDamage > 0.0F) {
-            pendingBlockedDamage.put(event.getContainer(), blockedDamage);
+            if (newDamage <= 0.0F) {
+                pendingBlockedDamage.remove(event.getContainer());
+                applySwordBlockEffects(entity, source, blockedDamage);
+            } else {
+                pendingBlockedDamage.put(event.getContainer(), blockedDamage);
+            }
         }
     }
 
@@ -196,7 +202,10 @@ public final class SwordBlockingTweaks {
             return;
         }
 
-        LivingEntity entity = event.getEntity();
+        applySwordBlockEffects(event.getEntity(), event.getSource(), blockedDamage);
+    }
+
+    private void applySwordBlockEffects(LivingEntity entity, DamageSource source, float blockedDamage) {
         if (entity.level().isClientSide() || !isBlockingWithSword(entity)) {
             return;
         }
@@ -204,6 +213,17 @@ public final class SwordBlockingTweaks {
         InteractionHand usedHand = entity.getUsedItemHand();
         ItemStack useItem = entity.getUseItem();
         Item swordItem = useItem.getItem();
+
+        entity.level().playSound(
+                null,
+                entity.getX(),
+                entity.getY(),
+                entity.getZ(),
+                SoundEvents.SHIELD_BLOCK,
+                entity.getSoundSource(),
+                1.0F,
+                0.8F + entity.level().random.nextFloat() * 0.4F
+        );
 
         int durabilityDamage = calculateBlockDurabilityDamage(blockedDamage);
         if (durabilityDamage > 0) {
@@ -214,7 +234,6 @@ public final class SwordBlockingTweaks {
             }
         }
 
-        DamageSource source = event.getSource();
         if (!source.is(DamageTypeTags.IS_PROJECTILE)
                 && source.getDirectEntity() instanceof LivingEntity attacker
                 && entity instanceof Player player

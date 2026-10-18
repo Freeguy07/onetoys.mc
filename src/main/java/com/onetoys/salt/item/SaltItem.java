@@ -1,5 +1,6 @@
 package com.onetoys.salt.item;
 
+import com.onetoys.module.content.ContentModule;
 import com.onetoys.salt.Melting;
 import com.onetoys.salt.SaltConfiguration;
 import com.onetoys.salt.SaltTags;
@@ -23,6 +24,10 @@ public class SaltItem extends Item {
 
     @Override
     public @NotNull InteractionResult useOn(UseOnContext context) {
+        if (!ContentModule.isSaltEnabled()) {
+            return super.useOn(context);
+        }
+
         Level level = context.getLevel();
         BlockPos clickedPos = context.getClickedPos();
         BlockState clickedBlockState = level.getBlockState(clickedPos);
@@ -51,4 +56,3 @@ public class SaltItem extends Item {
         return super.useOn(context);
     }
 }
-

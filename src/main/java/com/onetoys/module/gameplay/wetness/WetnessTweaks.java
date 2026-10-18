@@ -39,8 +39,6 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
@@ -450,12 +448,6 @@ public class WetnessTweaks {
         if (level.isRainingAt(mpos)) {
             event.setResult(CropGrowEvent.Pre.Result.GROW);
         }
-    }
-
-    public void onCommonSetup(FMLCommonSetupEvent event) {
-    }
-
-    public void onClientSetup(FMLClientSetupEvent event) {
     }
 
     private void onEntityTick(EntityTickEvent.Pre event) {

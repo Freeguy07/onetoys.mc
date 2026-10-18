@@ -1,7 +1,6 @@
 package com.onetoys.module.gameplay.mobs;
 
 import net.minecraft.world.entity.animal.Cow;
-import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
@@ -53,10 +52,6 @@ public class CowTweaks {
 
     public int getMilkingCooldownTicks() {
         return milkingCooldownTicksConfig != null ? milkingCooldownTicksConfig.get() : 1200;
-    }
-
-    public void onConstruct(IEventBus modBus) {
-        // Reserved for future cow-specific event bus listeners
     }
 
     public void handleMilking(PlayerInteractEvent.EntityInteract event, Cow cow) {

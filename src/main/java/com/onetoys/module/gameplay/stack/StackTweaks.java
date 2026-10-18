@@ -64,6 +64,7 @@ public class StackTweaks {
     private ModConfigSpec.BooleanValue snowballsStackTo64Config;
     private ModConfigSpec.BooleanValue eggsStackTo64Config;
 
+    private final List<CustomStackRule> cachedOverrideRules = new ArrayList<>();
     private final List<CustomStackRule.Tag> cachedTagRules = new ArrayList<>();
     private final Map<Item, Integer> originalStackSizes = new HashMap<>();
 
@@ -198,6 +199,7 @@ public class StackTweaks {
             builder.set(DataComponents.MAX_STACK_SIZE, original);
             ((ItemAccessor) item).onetoys$setComponents(builder.build());
         }
+        originalStackSizes.clear();
 
         if (!isEnabled() || cachedTagRules.isEmpty()) {
             return;
@@ -206,10 +208,13 @@ public class StackTweaks {
         for (Item item : BuiltInRegistries.ITEM) {
             ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
             String path = id.getPath();
-            for (CustomStackRule.Tag rule : cachedTagRules) {
+            for (CustomStackRule rule : cachedOverrideRules) {
                 if (rule.matches(item, id, path)) {
-                    originalStackSizes.computeIfAbsent(item, i -> i.components().getOrDefault(DataComponents.MAX_STACK_SIZE, 64));
-                    rule.applyDirect(item, id);
+                    if (rule instanceof CustomStackRule.Tag tagRule) {
+                        originalStackSizes.computeIfAbsent(item, i -> i.components().getOrDefault(DataComponents.MAX_STACK_SIZE, 64));
+                        tagRule.applyDirect(item, id);
+                    }
+                    break;
                 }
             }
         }
@@ -224,6 +229,7 @@ public class StackTweaks {
                 .build()) {
             config.load();
 
+            cachedOverrideRules.clear();
             cachedTagRules.clear();
 
             // 1. Read [overrides] table
@@ -287,6 +293,8 @@ public class StackTweaks {
             Onetoys.LOGGER.error("Failed to load stack configuration from '{}'", configPath, e);
         }
 
+        cachedOverrideRules.addAll(overrideRules);
+
         boolean saddles = isSaddlesStackTo16();
         boolean boats = isBoatsStackTo16();
         boolean minecarts = isMinecartsStackTo16();
@@ -304,8 +312,12 @@ public class StackTweaks {
             // 1. Check [overrides] rules (highest priority)
             CustomStackRule matchedRule = null;
             for (CustomStackRule rule : overrideRules) {
+                if (rule instanceof CustomStackRule.Tag) {
+                    continue;
+                }
                 if (rule.matches(item, id, path)) {
                     matchedRule = rule;
+                    break;
                 }
             }
 

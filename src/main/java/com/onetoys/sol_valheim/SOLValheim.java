@@ -54,11 +54,8 @@ public class SOLValheim {
         return speedBuff;
     }
 
+    @Deprecated
     public static void init(ModContainer modContainer) {
-    }
-
-    public static void addTooltip(ItemStack item, TooltipFlag flag, List<Component> list) {
-        addTooltip(item, flag, list, false);
     }
 
     public static void addTooltip(ItemStack item, TooltipFlag flag, List<Component> list, boolean shiftDown) {

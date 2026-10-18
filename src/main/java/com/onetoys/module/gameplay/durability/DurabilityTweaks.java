@@ -46,6 +46,7 @@ public class DurabilityTweaks {
     private ModConfigSpec.ConfigValue<List<? extends String>> unbreakableItemsConfig;
     private ModConfigSpec.BooleanValue showUnbreakableTooltipConfig;
 
+    private final List<CustomDurabilityRule> cachedOverrideRules = new ArrayList<>();
     private final List<CustomDurabilityRule.Tag> cachedTagRules = new ArrayList<>();
     private final Map<Item, OriginalDurability> originalDurabilities = new HashMap<>();
 
@@ -133,6 +134,7 @@ public class DurabilityTweaks {
             builder.set(DataComponents.UNBREAKABLE, original.unbreakable());
             ((ItemAccessor) item).onetoys$setComponents(builder.build());
         }
+        originalDurabilities.clear();
 
         if (!isEnabled() || cachedTagRules.isEmpty()) {
             return;
@@ -142,13 +144,16 @@ public class DurabilityTweaks {
         for (Item item : BuiltInRegistries.ITEM) {
             ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
             String path = id.getPath();
-            for (CustomDurabilityRule.Tag rule : cachedTagRules) {
+            for (CustomDurabilityRule rule : cachedOverrideRules) {
                 if (rule.matches(item, id, path)) {
-                    originalDurabilities.computeIfAbsent(item, i -> new OriginalDurability(
-                            i.components().get(DataComponents.MAX_DAMAGE),
-                            i.components().get(DataComponents.UNBREAKABLE)
-                    ));
-                    rule.applyDirect(item, id, showTooltip);
+                    if (rule instanceof CustomDurabilityRule.Tag tagRule) {
+                        originalDurabilities.computeIfAbsent(item, i -> new OriginalDurability(
+                                i.components().get(DataComponents.MAX_DAMAGE),
+                                i.components().get(DataComponents.UNBREAKABLE)
+                        ));
+                        tagRule.applyDirect(item, id, showTooltip);
+                    }
+                    break;
                 }
             }
         }
@@ -247,6 +252,7 @@ public class DurabilityTweaks {
                 .build()) {
             config.load();
 
+            cachedOverrideRules.clear();
             cachedTagRules.clear();
 
             // 1. Read [overrides] table
@@ -317,6 +323,8 @@ public class DurabilityTweaks {
                 }
             }
         }
+
+        cachedOverrideRules.addAll(overrideRules);
 
         // 5. Apply modifiers to registered items
         boolean showTooltip = shouldShowUnbreakableTooltip();

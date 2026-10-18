@@ -8,6 +8,7 @@ import com.onetoys.module.content.ContentModule;
 import com.onetoys.module.content.WateringHelper;
 import com.onetoys.module.gameplay.wetness.WetnessTweaks;
 import com.onetoys.registry.OnetoysDataComponents;
+import com.onetoys.registry.OnetoysItems;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -58,6 +59,12 @@ public class WateringCanItem extends Item {
 
     public static void setWaterLevel(ItemStack stack, int level) {
         stack.set(OnetoysDataComponents.WATERING_CAN_USES.get(), Math.clamp(level, 0, MAX_USES));
+    }
+
+    public static ItemStack createFilledWateringCan() {
+        ItemStack stack = new ItemStack(OnetoysItems.WATERING_CAN.get());
+        setWaterLevel(stack, MAX_USES);
+        return stack;
     }
 
     @Override
@@ -311,13 +318,5 @@ public class WateringCanItem extends Item {
 
         player.swing(hand);
         return InteractionResult.sidedSuccess(level.isClientSide());
-    }
-
-    private void applyRainEffects(Level level, BlockPos pos, BlockState state, @Nullable Player player) {
-        WateringHelper.applyRainEffects(level, pos, state, player);
-    }
-
-    private void playWateringEffects(Level level, BlockPos pos, Direction clickedFace, Vec3 hitVec) {
-        WateringHelper.playWateringEffects(level, pos, clickedFace, hitVec);
     }
 }

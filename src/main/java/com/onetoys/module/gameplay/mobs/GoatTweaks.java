@@ -1,7 +1,6 @@
 package com.onetoys.module.gameplay.mobs;
 
 import net.minecraft.world.entity.animal.goat.Goat;
-import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
@@ -63,10 +62,6 @@ public class GoatTweaks {
 
     public int getMilkingCooldownTicks() {
         return milkingCooldownTicksConfig != null ? milkingCooldownTicksConfig.get() : 6000;
-    }
-
-    public void onConstruct(IEventBus modBus) {
-        // Reserved for future goat-specific event bus listeners
     }
 
     public void handleMilking(PlayerInteractEvent.EntityInteract event, Goat goat) {

@@ -1,4 +1,10 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "onetoys:ore_tweak_enabled",
+      "tweak": "salt"
+    }
+  ],
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
@@ -16,5 +22,3 @@
   },
   "show_notification": true
 }
-
-

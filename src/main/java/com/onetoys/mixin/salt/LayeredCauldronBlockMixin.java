@@ -1,5 +1,6 @@
 package com.onetoys.mixin.salt;
 
+import com.onetoys.module.content.ContentModule;
 import com.onetoys.salt.Evaporation;
 import com.onetoys.salt.Heater;
 import com.onetoys.salt.SaltConfiguration;
@@ -27,13 +28,16 @@ public abstract class LayeredCauldronBlockMixin extends AbstractCauldronBlock {
 
     @Override
     protected boolean isRandomlyTicking(BlockState state) {
-        return state.is(Blocks.WATER_CAULDRON) || super.isRandomlyTicking(state);
+        if (state.is(Blocks.WATER_CAULDRON) && ContentModule.isSaltEnabled() && (!SaltConfiguration.isLoaded() || SaltConfiguration.EVAPORATION_ENABLED.get())) {
+            return true;
+        }
+        return super.isRandomlyTicking(state);
     }
 
     @Override
     protected void randomTick(BlockState state, ServerLevel serverLevel, BlockPos pos, RandomSource random) {
         if (state.is(Blocks.WATER_CAULDRON)) {
-            if (SaltConfiguration.isLoaded() && SaltConfiguration.EVAPORATION_ENABLED.get()) {
+            if (ContentModule.isSaltEnabled() && SaltConfiguration.isLoaded() && SaltConfiguration.EVAPORATION_ENABLED.get()) {
                 if (state.getValue(LayeredCauldronBlock.LEVEL) > 0
                         && Heater.isHeatSource(serverLevel.getBlockState(pos.below()))
                         && random.nextDouble() < SaltConfiguration.EVAPORATION_CHANCE.get()) {
@@ -47,7 +51,8 @@ public abstract class LayeredCauldronBlockMixin extends AbstractCauldronBlock {
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        if (state.is(Blocks.WATER_CAULDRON)
+        if (ContentModule.isSaltEnabled()
+                && state.is(Blocks.WATER_CAULDRON)
                 && SaltConfiguration.isLoaded()
                 && SaltConfiguration.EVAPORATION_ENABLED.get()
                 && Heater.isHeatSource(level.getBlockState(pos.below()))) {
@@ -58,7 +63,8 @@ public abstract class LayeredCauldronBlockMixin extends AbstractCauldronBlock {
 
     @Inject(method = "entityInside", at = @At("HEAD"))
     private void onEntityInside(BlockState state, Level level, BlockPos pos, Entity entity, CallbackInfo ci) {
-        if (state.is(Blocks.WATER_CAULDRON)
+        if (ContentModule.isSaltEnabled()
+                && state.is(Blocks.WATER_CAULDRON)
                 && SaltConfiguration.isLoaded()
                 && SaltConfiguration.EVAPORATION_ENABLED.get()
                 && Heater.isHeatSource(level.getBlockState(pos.below()))) {
@@ -68,4 +74,3 @@ public abstract class LayeredCauldronBlockMixin extends AbstractCauldronBlock {
         }
     }
 }
-

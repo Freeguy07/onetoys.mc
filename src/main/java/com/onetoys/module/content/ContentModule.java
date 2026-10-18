@@ -44,6 +44,10 @@ public class ContentModule extends OnetoysModule {
         return mod != null && mod.isEnabled() && mod.getTungstenTweaks().isEnabled();
     }
 
+    public static boolean isTungstenEnabled() {
+        return isTungstenTweaksEnabled();
+    }
+
     public static boolean isNuggetsAndShardsEnabled() {
         ContentModule mod = instance;
         return mod != null && mod.isEnabled() && mod.getNuggetsAndShardsTweaks().isEnabled();
@@ -85,8 +89,6 @@ public class ContentModule extends OnetoysModule {
 
     @Override
     public void onConstruct(IEventBus modBus) {
-        tungstenTweaks.onConstruct(modBus);
-        nuggetsAndShardsTweaks.onConstruct(modBus);
         modBus.addListener(this::onModifyDefaultComponents);
     }
 
@@ -111,13 +113,9 @@ public class ContentModule extends OnetoysModule {
 
     @Override
     public void onCommonSetup(FMLCommonSetupEvent event) {
-        tungstenTweaks.onCommonSetup(event);
-        nuggetsAndShardsTweaks.onCommonSetup(event);
     }
 
     @Override
     public void onClientSetup(FMLClientSetupEvent event) {
-        tungstenTweaks.onClientSetup(event);
-        nuggetsAndShardsTweaks.onClientSetup(event);
     }
 }

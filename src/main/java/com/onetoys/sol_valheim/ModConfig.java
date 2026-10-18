@@ -23,7 +23,9 @@ public class ModConfig {
 
     public static final Common COMMON = new Common();
     public static final Client CLIENT = new Client();
+    @Deprecated
     public static ModConfigSpec COMMON_SPEC;
+    @Deprecated
     public static ModConfigSpec CLIENT_SPEC;
 
     public record FoodCacheKey(Item item, byte seasoningFlags) {}
@@ -139,7 +141,7 @@ public class ModConfig {
                 existing.saturationModifier = food.nutrition() > 0 ? (food.saturation() / (food.nutrition() * 2.0f)) : 0.5f;
 
                 if (registry.startsWith("farmers")) {
-                    existing.nutrition = (int) ((existing.nutrition * 1.25));
+                    existing.nutrition = Math.max(existing.nutrition + 1, Math.round(existing.nutrition * 1.25f));
                     existing.saturationModifier = existing.saturationModifier * 1.10f;
                     existing.healthRegenModifier = 1.25f;
                 }

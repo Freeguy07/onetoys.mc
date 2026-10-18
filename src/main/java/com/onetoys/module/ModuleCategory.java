@@ -3,9 +3,6 @@ package com.onetoys.module;
 public enum ModuleCategory {
     RECIPE_TWEAKS("recipe_tweaks", "Recipe Tweaks"),
     GAMEPLAY("gameplay", "Gameplay"),
-    BUILDING("building", "Building"),
-    TWEAKS("tweaks", "Tweaks"),
-    TOOLS("tools", "Tools"),
     WORLDGEN("worldgen", "Worldgen Tweaks"),
     CONTENT("content", "Content");
 

@@ -4,9 +4,6 @@ import com.onetoys.module.content.SaltModule;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public class SaltConfiguration {
-    public static ModConfigSpec COMMON_SPEC;
-    public static ModConfigSpec CLIENT_SPEC;
-
     // Salting:
     public static ModConfigSpec.IntValue SALTING_BONUS_HEARTS;
 
@@ -53,7 +50,7 @@ public class SaltConfiguration {
 
     public static void buildConfig(ModConfigSpec.Builder builder) {
         builder.comment("Salting foods to provide an additional heart to max health. Can be disabled by removing 'onetoys:salting' recipe " +
-                "or removing all items from 'onetoys/tags/items/can_be_salted' tag.").push("Salting");
+                "or removing all items from 'onetoys/tags/item/can_be_salted' tag.").push("Salting");
 
         SALTING_BONUS_HEARTS = builder
                 .comment("Bonus hearts provided to max health by salted food (1 = +1 heart / +2 HP).")
@@ -147,7 +144,7 @@ public class SaltConfiguration {
         builder.comment("Rock Salt Deposits will generate in biomes defined in tag 'onetoys/tags/worldgen/biome/has_rock_salt_deposits'",
                         "Since 1.19 - parts of the Rock Salt generation is defined in jsons.",
                         "To enable/disable the generation or configure the generation chances you'll need to create a datapack.",
-                        "Enable/disable generation - 'onetoys/worldgen/biome_modifier/add_rock_salt_deposit.json' - {\"type\": \"forge:none\"} will disable the generation.",
+                        "Enable/disable generation - 'onetoys/worldgen/biome_modifier/add_rock_salt_deposit.json' - {\"type\": \"neoforge:none\"} will disable the generation.",
                         "Changing generation chances - 'onetoys/worldgen/placed_feature/mineral_rock_salt.json'")
                 .push("RockSalt");
 

@@ -44,7 +44,6 @@ public class SaltClusterBlock extends Block implements ISaltBlock {
 
     protected final VoxelShape northAabb;
     protected final VoxelShape southAabb;
-    protected final VoxelShape diamondEastAabb;
     protected final VoxelShape eastAabb;
     protected final VoxelShape westAabb;
     protected final VoxelShape upAabb;
@@ -58,7 +57,6 @@ public class SaltClusterBlock extends Block implements ISaltBlock {
         this.northAabb = Block.box(offset, offset, (16 - size), (16 - offset), (16 - offset), 16.0D);
         this.southAabb = Block.box(offset, offset, 0.0D, (16 - offset), (16 - offset), size);
         this.eastAabb = Block.box(0.0D, offset, offset, size, (16 - offset), (16 - offset));
-        this.diamondEastAabb = this.eastAabb;
         this.westAabb = Block.box((16 - size), offset, offset, 16.0D, (16 - offset), (16 - offset));
     }
 
@@ -181,4 +179,3 @@ public class SaltClusterBlock extends Block implements ISaltBlock {
         return Blocks.AIR.defaultBlockState();
     }
 }
-

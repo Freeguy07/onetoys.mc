@@ -2,6 +2,7 @@ package com.onetoys.mixin.salt;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.onetoys.module.content.ContentModule;
 import com.onetoys.salt.SaltConfiguration;
 import com.onetoys.salt.SaltTags;
 import com.onetoys.salt.block.ISaltBlock;
@@ -43,7 +44,8 @@ public abstract class PointedDripstoneBlockMixin {
     )
     private static BlockPos onFindFillableCauldron(Level level, BlockPos tipPos, Fluid fluid, Operation<BlockPos> original) {
         BlockPos cauldronPos = original.call(level, tipPos, fluid);
-        if (cauldronPos == null && level instanceof ServerLevel serverLevel
+        if (ContentModule.isSaltEnabled()
+                && cauldronPos == null && level instanceof ServerLevel serverLevel
                 && (fluid == Fluids.WATER || fluid == Fluids.LAVA)
                 && SaltConfiguration.isLoaded() && SaltConfiguration.SALT_CLUSTER_GROWING_ENABLED.get()) {
             BlockPos growablePos = salt$findSaltGrowablesBelowStalactiteTip(level, tipPos, fluid);

@@ -1,6 +1,10 @@
 package com.onetoys.registry;
 
 import com.onetoys.Onetoys;
+import com.onetoys.item.WateringCanItem;
+import com.onetoys.module.content.ContentModule;
+import com.onetoys.module.gameplay.GameplayTweaksModule;
+import com.onetoys.module.worldgen.WorldgenTweaksModule;
 import com.onetoys.salt.SaltItems;
 
 import net.minecraft.core.registries.Registries;
@@ -21,39 +25,62 @@ public class OnetoysCreativeModeTabs {
                     .title(Component.translatable("itemGroup.onetoys"))
                     .icon(() -> new ItemStack(OnetoysBlocks.NETHER_LAPIS_ORE.get()))
                     .displayItems((parameters, output) -> {
-                        output.accept(OnetoysBlocks.NETHER_LAPIS_ORE.get());
-                        output.accept(OnetoysBlocks.TUNGSTEN_ORE.get());
-                        output.accept(OnetoysBlocks.RAW_TUNGSTEN_BLOCK.get());
-                        output.accept(OnetoysBlocks.TUNGSTEN_BLOCK.get());
-                        output.accept(OnetoysItems.RAW_TUNGSTEN.get());
-                        output.accept(OnetoysItems.TUNGSTEN_INGOT.get());
-                        output.accept(OnetoysItems.TUNGSTEN_NUGGET.get());
-                        output.accept(OnetoysItems.DUMBBELL.get());
-                        output.accept(OnetoysItems.WATERING_CAN.get());
-                        output.accept(OnetoysItems.COPPER_NUGGET.get());
-                        output.accept(OnetoysItems.DIAMOND_SHARD.get());
-                        output.accept(OnetoysItems.EMERALD_SHARD.get());
-                        output.accept(OnetoysItems.COAL_LUMP.get());
-                        output.accept(OnetoysItems.MATTED_WOOL.get());
-                        output.accept(OnetoysItems.STOPWATCH.get());
-                        output.accept(Onetoys.BARK.get());
-                        output.accept(Onetoys.COPPER_PATINA.get());
-                        output.accept(Onetoys.BLUESTONE.get());
+                        if (WorldgenTweaksModule.isNetherLockedLapisEnabled()) {
+                            output.accept(OnetoysBlocks.NETHER_LAPIS_ORE.get());
+                        }
+                        if (ContentModule.isTungstenEnabled()) {
+                            output.accept(OnetoysBlocks.TUNGSTEN_ORE.get());
+                            output.accept(OnetoysBlocks.RAW_TUNGSTEN_BLOCK.get());
+                            output.accept(OnetoysBlocks.TUNGSTEN_BLOCK.get());
+                            output.accept(OnetoysItems.RAW_TUNGSTEN.get());
+                            output.accept(OnetoysItems.TUNGSTEN_INGOT.get());
+                            output.accept(OnetoysItems.TUNGSTEN_NUGGET.get());
+                        }
+                        if (ContentModule.isDumbbellEnabled()) {
+                            output.accept(OnetoysItems.DUMBBELL.get());
+                        }
+                        if (ContentModule.isWateringCanEnabled()) {
+                            output.accept(OnetoysItems.WATERING_CAN.get());
+                            output.accept(createFilledWateringCan());
+                        }
+                        if (ContentModule.isNuggetsAndShardsEnabled()) {
+                            output.accept(OnetoysItems.COPPER_NUGGET.get());
+                            output.accept(OnetoysItems.DIAMOND_SHARD.get());
+                            output.accept(OnetoysItems.EMERALD_SHARD.get());
+                            output.accept(OnetoysItems.COAL_LUMP.get());
+                        }
+                        if (GameplayTweaksModule.isMattedWoolFromWetSheepEnabled()) {
+                            output.accept(OnetoysItems.MATTED_WOOL.get());
+                        }
+                        if (GameplayTweaksModule.isStopwatchEnabled()) {
+                            output.accept(OnetoysItems.STOPWATCH.get());
+                        }
+                        if (ContentModule.isContentEnabled()) {
+                            output.accept(Onetoys.BARK.get());
+                            output.accept(Onetoys.COPPER_PATINA.get());
+                            output.accept(Onetoys.BLUESTONE.get());
+                        }
                         output.accept(Onetoys.CHRYSANTHEMUM.get());
-                        output.accept(SaltItems.SALT.get());
-                        output.accept(SaltItems.RAW_ROCK_SALT.get());
-                        output.accept(SaltItems.SALT_BLOCK.get());
-                        output.accept(SaltItems.ROCK_SALT_ORE.get());
-                        output.accept(SaltItems.DEEPSLATE_ROCK_SALT_ORE.get());
-                        output.accept(SaltItems.RAW_ROCK_SALT_BLOCK.get());
-                        output.accept(SaltItems.SMALL_SALT_BUD.get());
-                        output.accept(SaltItems.MEDIUM_SALT_BUD.get());
-                        output.accept(SaltItems.LARGE_SALT_BUD.get());
-                        output.accept(SaltItems.SALT_CLUSTER.get());
-                        output.accept(SaltItems.SALT_LAMP.get());
+                        if (ContentModule.isSaltEnabled()) {
+                            output.accept(SaltItems.SALT.get());
+                            output.accept(SaltItems.RAW_ROCK_SALT.get());
+                            output.accept(SaltItems.SALT_BLOCK.get());
+                            output.accept(SaltItems.ROCK_SALT_ORE.get());
+                            output.accept(SaltItems.DEEPSLATE_ROCK_SALT_ORE.get());
+                            output.accept(SaltItems.RAW_ROCK_SALT_BLOCK.get());
+                            output.accept(SaltItems.SMALL_SALT_BUD.get());
+                            output.accept(SaltItems.MEDIUM_SALT_BUD.get());
+                            output.accept(SaltItems.LARGE_SALT_BUD.get());
+                            output.accept(SaltItems.SALT_CLUSTER.get());
+                            output.accept(SaltItems.SALT_LAMP.get());
+                        }
                     })
                     .build()
     );
+
+    private static ItemStack createFilledWateringCan() {
+        return WateringCanItem.createFilledWateringCan();
+    }
 
     public static void register(IEventBus modBus) {
         CREATIVE_MODE_TABS.register(modBus);

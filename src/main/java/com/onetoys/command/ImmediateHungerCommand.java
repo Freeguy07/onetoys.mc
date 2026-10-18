@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.onetoys.Onetoys;
 import com.onetoys.api.PerestroykaHungerAPI;
+import com.onetoys.module.gameplay.GameplayTweaksModule;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -30,7 +31,9 @@ public class ImmediateHungerCommand {
 
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
-        register(event.getDispatcher());
+        if (GameplayTweaksModule.isFoodOverhaulEnabled()) {
+            register(event.getDispatcher());
+        }
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {

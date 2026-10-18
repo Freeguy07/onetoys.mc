@@ -18,28 +18,17 @@ public record OreTweakEnabledCondition(String tweak) implements ICondition {
 
     @Override
     public boolean test(IContext context) {
-        if ("nether_locked_lapis".equals(tweak) || "nether_lapis_ore".equals(tweak)) {
-            return WorldgenTweaksModule.isNetherLockedLapisEnabled();
-        }
-        if ("tungsten_ore".equals(tweak)) {
-            return ContentModule.isTungstenOreGenerationEnabled();
-        }
-        if ("calcite_stripes".equals(tweak)) {
-            return ContentModule.isCalciteStripesEnabled();
-        }
-        if ("tungsten".equals(tweak)) {
-            return ContentModule.isTungstenTweaksEnabled();
-        }
-        if ("nuggets_and_shards".equals(tweak) || "content".equals(tweak)) {
-            return ContentModule.isNuggetsAndShardsEnabled();
-        }
-        if ("wetness".equals(tweak)) {
-            return GameplayTweaksModule.isWetnessEnabled();
-        }
-        if ("matted_wool".equals(tweak)) {
-            return GameplayTweaksModule.isMattedWoolFromWetSheepEnabled();
-        }
-        return false;
+        return switch (tweak) {
+            case "salt" -> ContentModule.isSaltEnabled();
+            case "nether_locked_lapis", "nether_lapis_ore" -> WorldgenTweaksModule.isNetherLockedLapisEnabled();
+            case "tungsten_ore" -> ContentModule.isTungstenOreGenerationEnabled();
+            case "calcite_stripes" -> ContentModule.isCalciteStripesEnabled();
+            case "tungsten" -> ContentModule.isTungstenTweaksEnabled();
+            case "nuggets_and_shards", "content" -> ContentModule.isNuggetsAndShardsEnabled();
+            case "wetness" -> GameplayTweaksModule.isWetnessEnabled();
+            case "matted_wool" -> GameplayTweaksModule.isMattedWoolFromWetSheepEnabled();
+            default -> false;
+        };
     }
 
     @Override

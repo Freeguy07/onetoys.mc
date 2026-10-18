@@ -1,5 +1,6 @@
 package com.onetoys.mixin.salt;
 
+import com.onetoys.module.content.ContentModule;
 import com.onetoys.salt.Heater;
 import com.onetoys.salt.SaltConfiguration;
 import com.onetoys.salt.SaltSounds;
@@ -30,7 +31,8 @@ public abstract class WaterCauldronMixin extends Block {
 
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random, CallbackInfo ci) {
-        if (state.is(Blocks.CAULDRON)
+        if (ContentModule.isSaltEnabled()
+                && state.is(Blocks.CAULDRON)
                 && SaltConfiguration.isLoaded()
                 && SaltConfiguration.EVAPORATION_ENABLED.get()
                 && Heater.isHeatSource(level.getBlockState(pos.below()))) {
@@ -49,4 +51,3 @@ public abstract class WaterCauldronMixin extends Block {
         }
     }
 }
-

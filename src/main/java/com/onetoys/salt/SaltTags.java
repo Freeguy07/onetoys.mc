@@ -17,10 +17,6 @@ public class SaltTags {
                 ResourceLocation.fromNamespaceAndPath("forge", "salts"));
         public static final TagKey<Item> COMMON_SALTS = ItemTags.create(
                 ResourceLocation.fromNamespaceAndPath("c", "salts"));
-        public static final TagKey<Item> FORGE_TORCHES = ItemTags.create(
-                ResourceLocation.fromNamespaceAndPath("forge", "torches"));
-        public static final TagKey<Item> COMMON_TORCHES = ItemTags.create(
-                ResourceLocation.fromNamespaceAndPath("c", "torches"));
     }
 
     public static class Blocks {
@@ -41,4 +37,3 @@ public class SaltTags {
                 Registries.BIOME, ResourceLocation.fromNamespaceAndPath(Salt.ID, "has_rock_salt_deposits"));
     }
 }
-

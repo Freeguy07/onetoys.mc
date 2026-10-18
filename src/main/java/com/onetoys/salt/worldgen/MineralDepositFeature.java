@@ -180,6 +180,7 @@ public class MineralDepositFeature extends Feature<MineralDepositConfiguration> 
                 BlockState newBlockState = mainStateInfo.blockStateProvider.getState(random, mutableBlockPos);
                 levelchunksection.setBlockState(relativeX, relativeY, relativeZ, newBlockState, false);
                 mainBlockPlaced = true;
+                break;
             }
         }
 
@@ -231,4 +232,3 @@ public class MineralDepositFeature extends Feature<MineralDepositConfiguration> 
         return airDirections;
     }
 }
-

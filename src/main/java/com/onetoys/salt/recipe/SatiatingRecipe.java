@@ -2,143 +2,57 @@ package com.onetoys.salt.recipe;
 
 import com.onetoys.Onetoys;
 import com.onetoys.salt.SaltRecipeSerializers;
-import com.onetoys.salt.SaltTags;
 import com.onetoys.salt.Satiating;
 import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
-import net.minecraft.world.item.crafting.CraftingInput;
-import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-public class SatiatingRecipe extends CustomRecipe {
-    public static final MapCodec<SatiatingRecipe> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
-            CraftingBookCategory.CODEC.optionalFieldOf("category", CraftingBookCategory.MISC).forGetter(CustomRecipe::category),
-            Ingredient.CODEC_NONEMPTY.listOf().optionalFieldOf("ingredients", List.of(Ingredient.of(Onetoys.CHRYSANTHEMUM))).forGetter(r -> r.ingredients)
-    ).apply(inst, (category, ingredients) -> new SatiatingRecipe(category, NonNullList.copyOf(ingredients))));
-
-    public static final StreamCodec<RegistryFriendlyByteBuf, SatiatingRecipe> STREAM_CODEC = StreamCodec.of(
-            (buf, recipe) -> {
-                CraftingBookCategory.STREAM_CODEC.encode(buf, recipe.category());
-                buf.writeVarInt(recipe.ingredients.size());
-                for (Ingredient ing : recipe.ingredients) {
-                    Ingredient.CONTENTS_STREAM_CODEC.encode(buf, ing);
-                }
-            },
-            buf -> {
-                CraftingBookCategory cat = CraftingBookCategory.STREAM_CODEC.decode(buf);
-                int size = buf.readVarInt();
-                NonNullList<Ingredient> list = NonNullList.withSize(size, Ingredient.EMPTY);
-                for (int i = 0; i < size; i++) {
-                    list.set(i, Ingredient.CONTENTS_STREAM_CODEC.decode(buf));
-                }
-                return new SatiatingRecipe(cat, list);
-            }
+public class SatiatingRecipe extends SingleSeasoningRecipe {
+    public static final MapCodec<SatiatingRecipe> CODEC = makeCodec(
+            Ingredient.of(Onetoys.CHRYSANTHEMUM),
+            SatiatingRecipe::new
     );
 
-    private final NonNullList<Ingredient> ingredients;
+    public static final StreamCodec<RegistryFriendlyByteBuf, SatiatingRecipe> STREAM_CODEC = makeStreamCodec(
+            SatiatingRecipe::new
+    );
 
     public SatiatingRecipe(CraftingBookCategory category, NonNullList<Ingredient> ingredients) {
-        super(category);
-        this.ingredients = ingredients;
+        super(category, ingredients);
     }
 
     public static boolean isSatiable(ItemStack stack) {
-        if (stack == null || stack.isEmpty() || Satiating.isSatiating(stack)) {
-            return false;
-        }
-        return stack.has(DataComponents.FOOD) || stack.is(SaltTags.Items.CAN_BE_SALTED);
+        return !Satiating.isSatiating(stack) && FoodSeasoningRecipe.isSeasonableFood(stack);
     }
 
     public boolean isChrysanthemum(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) {
-            return false;
-        }
-        if (stack.is(Onetoys.CHRYSANTHEMUM)) {
-            return true;
-        }
-        for (Ingredient ingredient : this.ingredients) {
-            if (ingredient.test(stack)) {
-                return true;
-            }
-        }
-        return false;
+        return FoodSeasoningRecipe.isChrysanthemum(stack) || testIngredients(stack);
     }
 
     @Override
-    public @NotNull NonNullList<ItemStack> getRemainingItems(CraftingInput pContainer) {
-        return NonNullList.withSize(pContainer.size(), ItemStack.EMPTY);
+    protected boolean isSeasoning(ItemStack stack) {
+        return isChrysanthemum(stack);
     }
 
     @Override
-    public boolean matches(CraftingInput craftingInput, @NotNull Level level) {
-        ItemStack food = ItemStack.EMPTY;
-        int chrysanthemumCount = 0;
-        int totalItems = 0;
-
-        for (int i = 0; i < craftingInput.size(); i++) {
-            ItemStack stack = craftingInput.getItem(i);
-            if (stack.isEmpty()) {
-                continue;
-            }
-
-            totalItems++;
-
-            if (isChrysanthemum(stack)) {
-                chrysanthemumCount++;
-            } else if (isSatiable(stack) && food.isEmpty()) {
-                food = stack;
-            } else {
-                return false;
-            }
-        }
-
-        int requiredChrysanthemum = Math.max(1, this.ingredients.size());
-        return !food.isEmpty() && chrysanthemumCount == requiredChrysanthemum && totalItems == requiredChrysanthemum + 1;
+    protected boolean isSeasonable(ItemStack stack) {
+        return isSatiable(stack);
     }
 
     @Override
-    public @NotNull ItemStack assemble(CraftingInput craftingInput, @NotNull HolderLookup.Provider registryAccess) {
-        for (int index = 0; index < craftingInput.size(); index++) {
-            ItemStack itemStack = craftingInput.getItem(index);
-
-            if (!isChrysanthemum(itemStack) && isSatiable(itemStack)) {
-                ItemStack resultStack = itemStack.copyWithCount(1);
-                return Satiating.setSatiating(resultStack);
-            }
-        }
-
-        return ItemStack.EMPTY;
-    }
-
-    @Override
-    public boolean canCraftInDimensions(int width, int height) {
-        return width * height >= Math.max(2, this.ingredients.size() + 1);
+    protected ItemStack applySeasoning(ItemStack stack) {
+        return Satiating.setSatiating(stack);
     }
 
     @Override
     public @NotNull RecipeSerializer<?> getSerializer() {
         return SaltRecipeSerializers.SATIATING.get();
-    }
-
-    @Override
-    public @NotNull NonNullList<Ingredient> getIngredients() {
-        return ingredients;
-    }
-
-    public Ingredient getFoodIngredient() {
-        return Ingredient.of(SaltTags.Items.CAN_BE_SALTED);
     }
 
     public static class Serializer implements RecipeSerializer<SatiatingRecipe> {
@@ -153,4 +67,3 @@ public class SatiatingRecipe extends CustomRecipe {
         }
     }
 }
-

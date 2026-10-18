@@ -38,9 +38,15 @@ public class CommonEvents {
                 if (player.hasEffect(Onetoys.HUNGER_2)) {
                     player.removeEffect(Onetoys.HUNGER_2);
                 }
-                var maxHealth = player.getAttribute(Attributes.MAX_HEALTH);
-                if (maxHealth != null && maxHealth.getBaseValue() != 20.0) {
-                    maxHealth.setBaseValue(20.0);
+                if (player.hasData(SOLValheim.FOOD_DATA)) {
+                    ValheimFoodData foodData = player.getData(SOLValheim.FOOD_DATA);
+                    if (foodData != null && foodData.hasActiveFoods()) {
+                        foodData.clear();
+                        var maxHealth = player.getAttribute(Attributes.MAX_HEALTH);
+                        if (maxHealth != null && maxHealth.getBaseValue() != 20.0) {
+                            maxHealth.setBaseValue(20.0);
+                        }
+                    }
                 }
                 var movementSpeed = player.getAttribute(Attributes.MOVEMENT_SPEED);
                 if (movementSpeed != null && movementSpeed.hasModifier(SOLValheim.SPEED_BUFF_ID)) {
@@ -60,9 +66,15 @@ public class CommonEvents {
             if (player.hasEffect(MobEffects.HUNGER)) {
                 player.removeEffect(MobEffects.HUNGER);
             }
-            var maxHealth = player.getAttribute(Attributes.MAX_HEALTH);
-            if (maxHealth != null && maxHealth.getBaseValue() != 20.0) {
-                maxHealth.setBaseValue(20.0);
+            if (player.hasData(SOLValheim.FOOD_DATA)) {
+                ValheimFoodData foodData = player.getData(SOLValheim.FOOD_DATA);
+                if (foodData != null && foodData.hasActiveFoods()) {
+                    foodData.clear();
+                    var maxHealth = player.getAttribute(Attributes.MAX_HEALTH);
+                    if (maxHealth != null && maxHealth.getBaseValue() != 20.0) {
+                        maxHealth.setBaseValue(20.0);
+                    }
+                }
             }
             var movementSpeed = player.getAttribute(Attributes.MOVEMENT_SPEED);
             if (movementSpeed != null && movementSpeed.hasModifier(SOLValheim.SPEED_BUFF_ID)) {
@@ -113,8 +125,13 @@ public class CommonEvents {
                     player.addEffect(new MobEffectInstance(MobEffects.HUNGER, 100, 0, false, true, true));
                 }
             }
-        } else if (player.hasEffect(Onetoys.HUNGER_2)) {
-            player.removeEffect(Onetoys.HUNGER_2);
+        } else {
+            if (player.hasEffect(Onetoys.HUNGER_2)) {
+                player.removeEffect(Onetoys.HUNGER_2);
+            }
+            if (player.hasEffect(MobEffects.HUNGER)) {
+                player.removeEffect(MobEffects.HUNGER);
+            }
         }
 
         if (hasItems && player.tickCount % 20 == 0) {

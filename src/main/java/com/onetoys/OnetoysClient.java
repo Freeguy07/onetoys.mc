@@ -46,13 +46,6 @@ public class OnetoysClient {
         event.registerEntityRenderer(OnetoysEntityTypes.TANGLED_THREAD.get(), ThrownItemRenderer::new);
     }
 
-    private static final float[] STOPWATCH_FRAMES = new float[32];
-    static {
-        for (int i = 0; i < 32; i++) {
-            STOPWATCH_FRAMES[i] = (float) i;
-        }
-    }
-
     private static void onClientSetup(FMLClientSetupEvent event) {
         Onetoys.LOGGER.info("Onetoys client setup");
         ModuleManager.get().onClientSetup(event);
@@ -68,7 +61,7 @@ public class OnetoysClient {
                             return 0.0F;
                         }
                         if (!data.active()) {
-                            return STOPWATCH_FRAMES[(int) (data.elapsedTicks() & 31L)];
+                            return (float) (data.elapsedTicks() & 31L);
                         }
                         if (level == null) {
                             level = (entity != null && entity.level() instanceof net.minecraft.client.multiplayer.ClientLevel cl)
@@ -78,7 +71,7 @@ public class OnetoysClient {
                             return 0.0F;
                         }
                         long elapsed = data.elapsedTicks() + Math.max(0L, level.getGameTime() - data.startTick());
-                        return STOPWATCH_FRAMES[(int) (elapsed & 31L)];
+                        return (float) (elapsed & 31L);
                     }
             );
 
