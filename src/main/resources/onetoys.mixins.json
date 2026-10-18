@@ -26,6 +26,7 @@
     "PlayerEntityMixin",
     "RedStoneWireBlockMixin",
     "BiomeInvoker",
+    "BiomeMixin",
     "LivingEntityMixin",
     "TargetGoalMixin",
     "MeleeAttackGoalMixin",

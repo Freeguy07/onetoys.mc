@@ -9,6 +9,7 @@ import com.onetoys.module.gameplay.items.ItemTweaks;
 import com.onetoys.module.gameplay.mobs.MobTweaks;
 import com.onetoys.module.gameplay.sleep.SleepingTweaks;
 import com.onetoys.module.gameplay.stack.StackTweaks;
+import com.onetoys.module.gameplay.weather.HeightWeatherTweaks;
 import com.onetoys.module.gameplay.wetness.WetnessTweaks;
 
 import net.neoforged.bus.api.IEventBus;
@@ -31,6 +32,7 @@ public class GameplayTweaksModule extends OnetoysModule {
     private final StackTweaks stackTweaks = new StackTweaks();
     private final WetnessTweaks wetnessTweaks = new WetnessTweaks(this);
     private final FoodOverhaulTweaks foodOverhaulTweaks = new FoodOverhaulTweaks(this);
+    private final HeightWeatherTweaks heightWeatherTweaks = new HeightWeatherTweaks(this);
 
     public GameplayTweaksModule() {
         super(ID, "Gameplay Tweaks", "Tweaks and adjustments to core gameplay mechanics.", ModuleCategory.GAMEPLAY, true);
@@ -46,6 +48,7 @@ public class GameplayTweaksModule extends OnetoysModule {
         stackTweaks.buildConfig(builder);
         wetnessTweaks.buildConfig(builder);
         foodOverhaulTweaks.buildConfig(builder);
+        heightWeatherTweaks.buildConfig(builder);
     }
 
     @Override
@@ -118,6 +121,10 @@ public class GameplayTweaksModule extends OnetoysModule {
 
     public FoodOverhaulTweaks getFoodOverhaulTweaks() {
         return foodOverhaulTweaks;
+    }
+
+    public HeightWeatherTweaks getHeightWeatherTweaks() {
+        return heightWeatherTweaks;
     }
 
     public static boolean isWetnessEnabled() {
