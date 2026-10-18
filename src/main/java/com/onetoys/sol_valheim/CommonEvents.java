@@ -30,8 +30,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 @EventBusSubscriber(modid = Onetoys.MODID)
 public class CommonEvents {
 
-    private static final String TAG_LAST_DAMAGE_TIME = "sol_last_damage_time";
-
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!FoodOverhaulModule.isFoodOverhaulEnabled()) {
@@ -140,27 +138,8 @@ public class CommonEvents {
         if (checkPeriodic || wasDirty || (hadItems != hasItems)) {
             var maxHealth = player.getAttribute(Attributes.MAX_HEALTH);
             if (maxHealth != null) {
-                float maxHealthBonus = 0f;
-                float healPerSecond = 0f;
-
-                float drinkBonus = (foodData.DrinkSlot != null && SOLValheim.Config.common != null && SOLValheim.Config.common.drinkSlotFoodEffectivenessBonus != null)
-                        ? (float) (1.0 + SOLValheim.Config.common.drinkSlotFoodEffectivenessBonus.get()) : 1.0f;
-
-                for (var eaten : foodData.ItemEntries) {
-                    var config = ModConfig.getFoodConfig(eaten.item);
-                    if (config != null) {
-                        maxHealthBonus += eaten.getHeartsBonus(config) * drinkBonus;
-                        healPerSecond += eaten.getHealAmount(config) * drinkBonus;
-                    }
-                }
-
-                if (foodData.DrinkSlot != null) {
-                    var config = ModConfig.getFoodConfig(foodData.DrinkSlot.item);
-                    if (config != null) {
-                        maxHealthBonus += foodData.DrinkSlot.getHeartsBonus(config);
-                        healPerSecond += foodData.DrinkSlot.getHealAmount(config);
-                    }
-                }
+                float maxHealthBonus = foodData.getTotalMaxHealthBonus();
+                float healPerSecond = foodData.getTotalHealPerSecond();
 
                 double baseStartingHealth = (SOLValheim.Config.common != null && SOLValheim.Config.common.startingHealth != null)
                         ? SOLValheim.Config.common.startingHealth.get() * 2.0 : 6.0;
@@ -189,11 +168,11 @@ public class CommonEvents {
                 // Health regeneration from food buffs (every 10 ticks = 0.5s)
                 // Combat cooldown: pauses after taking non-hunger damage for regenDelay ticks
                 if (checkPeriodic) {
-                    long lastDamageTime = player.getPersistentData().getLong(TAG_LAST_DAMAGE_TIME);
+                    long lastDamageTime = foodData.lastDamageGameTime;
                     long gameTime = player.level().getGameTime();
                     int delay = (SOLValheim.Config.common != null && SOLValheim.Config.common.regenDelay != null)
                             ? SOLValheim.Config.common.regenDelay.get() : 80;
-                    boolean inCombat = (gameTime - lastDamageTime) < delay;
+                    boolean inCombat = lastDamageTime >= 0L && lastDamageTime <= gameTime && (gameTime - lastDamageTime) < delay;
 
                     if (!inCombat && player.getHealth() < maxHealth.getValue() && player.getHealth() > 0) {
                         if (healPerSecond > 0f) {
@@ -334,21 +313,22 @@ public class CommonEvents {
     public static void onPlayerLoggedIn(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
         if (!FoodOverhaulModule.isFoodOverhaulEnabled()) return;
         Player player = event.getEntity();
+        ValheimFoodData foodData = player.getData(SOLValheim.FOOD_DATA);
+        if (foodData != null) {
+            foodData.lastDamageGameTime = -1L;
+        }
         if (!player.isCreative() && PerestroykaHungerAPI.isImmediateHungerActive() && !PerestroykaHungerAPI.hasActiveFoods(player)) {
             PerestroykaHungerAPI.setHungerToLowest(player);
         }
         player.syncData(SOLValheim.FOOD_DATA);
-        // Clear any stale last-damage timestamp on login so health regen is immediately eligible
-        player.getPersistentData().remove(TAG_LAST_DAMAGE_TIME);
-        player.getPersistentData().remove("sol_last_damage_tick");
     }
 
     @SubscribeEvent
     public static void onPlayerRespawn(net.neoforged.neoforge.event.entity.player.PlayerEvent.Clone event) {
         if (!FoodOverhaulModule.isFoodOverhaulEnabled()) return;
         Player player = event.getEntity();
+        ValheimFoodData foodData = player.getData(SOLValheim.FOOD_DATA);
         if (event.isWasDeath()) {
-            ValheimFoodData foodData = player.getData(SOLValheim.FOOD_DATA);
             if (PerestroykaHungerAPI.isImmediateHungerActive()) {
                 foodData.hungerCountdown = 0;
             } else {
@@ -367,9 +347,8 @@ public class CommonEvents {
             }
             player.setHealth(original.getHealth());
         }
+        foodData.lastDamageGameTime = -1L;
         player.syncData(SOLValheim.FOOD_DATA);
-        player.getPersistentData().remove(TAG_LAST_DAMAGE_TIME);
-        player.getPersistentData().remove("sol_last_damage_tick");
     }
 
     @SubscribeEvent
@@ -385,10 +364,12 @@ public class CommonEvents {
         if (!FoodOverhaulModule.isFoodOverhaulEnabled()) return;
         if (event.getEntity() instanceof Player player && !player.level().isClientSide && !player.isCreative()) {
             if (event.getNewDamage() > 0f) {
-                player.getPersistentData().putLong(TAG_LAST_DAMAGE_TIME, player.level().getGameTime());
                 ValheimFoodData foodData = player.getData(SOLValheim.FOOD_DATA);
-                if (foodData != null && !foodData.hasActiveFoods()) {
-                    foodData.addExhaustion(player, 0.05F); // Taking damage drains ~10 hunger points
+                if (foodData != null) {
+                    foodData.lastDamageGameTime = player.level().getGameTime();
+                    if (!foodData.hasActiveFoods()) {
+                        foodData.addExhaustion(player, 0.05F); // Taking damage drains ~10 hunger points
+                    }
                 }
             }
         }

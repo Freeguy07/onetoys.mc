@@ -27,9 +27,6 @@ public record RecipeEnabledCondition(ResourceLocation recipe) implements ICondit
         if ("watering_can".equals(path)) {
             return com.onetoys.module.content.ContentModule.isWateringCanEnabled();
         }
-        if ("sprinkler".equals(path)) {
-            return com.onetoys.module.content.ContentModule.isSprinklerEnabled();
-        }
         RecipeTweaksModule module = RecipeTweaksModule.get();
         return module != null && module.isRecipeEnabled(path);
     }

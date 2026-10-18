@@ -6,6 +6,7 @@ import net.minecraft.Util;
 import net.neoforged.fml.ModList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
@@ -15,7 +16,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -28,13 +28,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-@OnlyIn(Dist.CLIENT)
 @EventBusSubscriber(modid = Onetoys.MODID, value = Dist.CLIENT)
 public class ClientEvents {
 
     private static final ResourceLocation CAKE_SLICE_ID = ResourceLocation.fromNamespaceAndPath("farmersdelight", "cake_slice");
     private static final ResourceLocation EMPTY_HUNGER_ICON = ResourceLocation.fromNamespaceAndPath(Onetoys.MODID, "textures/gui/empty_hunger.png");
     private static final ResourceLocation EMPTY_HUNGER_2_ICON = ResourceLocation.fromNamespaceAndPath(Onetoys.MODID, "textures/gui/empty_hunger_2.png");
+
+    private static final Comparator<ClientFoodAnimationState> TICKS_COMPARATOR = Comparator.comparingInt(a -> a.ticksLeft);
 
     private static Item cakeSliceItem;
     private static boolean cakeSliceChecked;
@@ -90,7 +91,7 @@ public class ClientEvents {
     @SubscribeEvent
     public static void onItemTooltip(ItemTooltipEvent event) {
         if (!com.onetoys.module.gameplay.FoodOverhaulModule.isFoodOverhaulEnabled()) return;
-        SOLValheim.addTooltip(event.getItemStack(), event.getFlags(), event.getToolTip());
+        SOLValheim.addTooltip(event.getItemStack(), event.getFlags(), event.getToolTip(), Screen.hasShiftDown());
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -272,7 +273,7 @@ public class ClientEvents {
             for (ClientFoodAnimationState state : foodAnimStates) {
                 if (!state.isFadingOut) reusableActiveStates.add(state);
             }
-            reusableActiveStates.sort(Comparator.comparingInt(a -> a.ticksLeft));
+            reusableActiveStates.sort(TICKS_COMPARATOR);
 
             for (int i = reusableActiveStates.size() - 1; i >= 0; i--) {
                 ClientFoodAnimationState state = reusableActiveStates.get(i);

@@ -26,7 +26,9 @@ public class ModConfig {
     public static ModConfigSpec COMMON_SPEC;
     public static ModConfigSpec CLIENT_SPEC;
 
-    private static final Map<Item, Common.FoodConfig> ITEM_CONFIG_CACHE = new ConcurrentHashMap<>();
+    public record FoodCacheKey(Item item, byte seasoningFlags) {}
+
+    private static final Map<FoodCacheKey, Common.FoodConfig> ITEM_CONFIG_CACHE = new ConcurrentHashMap<>();
 
     public static boolean isLoaded() {
         return com.onetoys.Config.SPEC != null && com.onetoys.Config.SPEC.isLoaded();
@@ -90,9 +92,12 @@ public class ModConfig {
         if (stack == null || stack.isEmpty()) return null;
         var item = stack.getItem();
 
-        Common.FoodConfig cached = ITEM_CONFIG_CACHE.get(item);
+        byte seasoningFlags = (byte) ((Salting.isSalted(stack) ? 1 : 0) | (Sweetening.isSweetened(stack) ? 2 : 0) | (Satiating.isSatiating(stack) ? 4 : 0));
+        FoodCacheKey cacheKey = new FoodCacheKey(item, seasoningFlags);
+
+        Common.FoodConfig cached = ITEM_CONFIG_CACHE.get(cacheKey);
         if (cached != null) {
-            return applyFoodModifiers(stack, cached);
+            return cached;
         }
 
         var isDrink = stack.getUseAnimation() == UseAnim.DRINK;
@@ -112,50 +117,52 @@ public class ModConfig {
                 existing.saturationModifier = 0.1f;
                 existing.healthRegenModifier = 1.0f;
                 existing.time = 0;
-                ITEM_CONFIG_CACHE.put(item, existing);
-                return applyFoodModifiers(stack, existing);
-            }
+                SOLValheim.Config.common.foodConfigs.put(registry, existing);
+            } else {
+                if (isDrink) {
+                    if (registry.contains("potion")) {
+                        food = new FoodProperties.Builder().nutrition(4).saturationModifier(0.75f).build();
+                    } else if (registry.contains("milk")) {
+                        food = new FoodProperties.Builder().nutrition(6).saturationModifier(1f).build();
+                    } else {
+                        food = new FoodProperties.Builder().nutrition(2).saturationModifier(0.5f).build();
+                    }
+                }
 
-            if (isDrink) {
-                if (registry.contains("potion")) {
-                    food = new FoodProperties.Builder().nutrition(4).saturationModifier(0.75f).build();
-                } else if (registry.contains("milk")) {
-                    food = new FoodProperties.Builder().nutrition(6).saturationModifier(1f).build();
-                } else {
+                if (food == null) {
                     food = new FoodProperties.Builder().nutrition(2).saturationModifier(0.5f).build();
                 }
-            }
 
-            if (food == null) {
-                food = new FoodProperties.Builder().nutrition(2).saturationModifier(0.5f).build();
-            }
+                existing = new Common.FoodConfig();
+                existing.nutrition = food.nutrition();
+                existing.healthRegenModifier = 1f;
+                existing.saturationModifier = food.nutrition() > 0 ? (food.saturation() / (food.nutrition() * 2.0f)) : 0.5f;
 
-            existing = new Common.FoodConfig();
-            existing.nutrition = food.nutrition();
-            existing.healthRegenModifier = 1f;
-            existing.saturationModifier = food.nutrition() > 0 ? (food.saturation() / (food.nutrition() * 2.0f)) : 0.5f;
+                if (registry.startsWith("farmers")) {
+                    existing.nutrition = (int) ((existing.nutrition * 1.25));
+                    existing.saturationModifier = existing.saturationModifier * 1.10f;
+                    existing.healthRegenModifier = 1.25f;
+                }
 
-            if (registry.startsWith("farmers")) {
-                existing.nutrition = (int) ((existing.nutrition * 1.25));
-                existing.saturationModifier = existing.saturationModifier * 1.10f;
-                existing.healthRegenModifier = 1.25f;
-            }
+                if (registry.equals("minecraft:golden_apple") || registry.equals("minecraft:enchanted_golden_apple")) {
+                    existing.nutrition = 10;
+                    existing.healthRegenModifier = 1.5f;
+                }
 
-            if (registry.equals("minecraft:golden_apple") || registry.equals("minecraft:enchanted_golden_apple")) {
-                existing.nutrition = 10;
-                existing.healthRegenModifier = 1.5f;
+                if (registry.equals("minecraft:beetroot_soup")) {
+                    var effectConfig = new Common.MobEffectConfig();
+                    effectConfig.ID = BuiltInRegistries.MOB_EFFECT.getKey(MobEffects.MOVEMENT_SPEED.value()).toString();
+                    existing.extraEffects.add(effectConfig);
+                }
+                SOLValheim.Config.common.foodConfigs.put(registry, existing);
             }
-
-            if (registry.equals("minecraft:beetroot_soup")) {
-                var effectConfig = new Common.MobEffectConfig();
-                effectConfig.ID = BuiltInRegistries.MOB_EFFECT.getKey(MobEffects.MOVEMENT_SPEED.value()).toString();
-                existing.extraEffects.add(effectConfig);
-            }
-            SOLValheim.Config.common.foodConfigs.put(registry, existing);
         }
 
-        ITEM_CONFIG_CACHE.put(item, existing);
-        return applyFoodModifiers(stack, existing);
+        Common.FoodConfig modified = applyFoodModifiers(stack, existing);
+        if (modified != null) {
+            ITEM_CONFIG_CACHE.put(cacheKey, modified);
+        }
+        return modified;
     }
 
 

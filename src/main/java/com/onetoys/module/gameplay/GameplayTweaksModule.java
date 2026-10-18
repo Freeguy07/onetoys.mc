@@ -1,5 +1,6 @@
 package com.onetoys.module.gameplay;
 
+import com.onetoys.BarkItem;
 import com.onetoys.module.ModuleCategory;
 import com.onetoys.module.ModuleManager;
 import com.onetoys.module.OnetoysModule;
@@ -14,7 +15,9 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
+import net.neoforged.neoforge.event.TagsUpdatedEvent;
 
 public class GameplayTweaksModule extends OnetoysModule {
     public static final String ID = "gameplay_tweaks";
@@ -27,6 +30,7 @@ public class GameplayTweaksModule extends OnetoysModule {
     private final SleepingTweaks sleepingTweaks = new SleepingTweaks();
     private final StackTweaks stackTweaks = new StackTweaks();
     private final WetnessTweaks wetnessTweaks = new WetnessTweaks(this);
+    private final FoodOverhaulTweaks foodOverhaulTweaks = new FoodOverhaulTweaks(this);
 
     public GameplayTweaksModule() {
         super(ID, "Gameplay Tweaks", "Tweaks and adjustments to core gameplay mechanics.", ModuleCategory.GAMEPLAY, true);
@@ -41,11 +45,13 @@ public class GameplayTweaksModule extends OnetoysModule {
         sleepingTweaks.buildConfig(builder);
         stackTweaks.buildConfig(builder);
         wetnessTweaks.buildConfig(builder);
+        foodOverhaulTweaks.buildConfig(builder);
     }
 
     @Override
     public void onConstruct(IEventBus modBus) {
         modBus.addListener(this::onModifyDefaultComponents);
+        NeoForge.EVENT_BUS.addListener(this::onTagsUpdated);
         mobTweaks.onConstruct(modBus);
         itemTweaks.onConstruct(modBus);
         sleepingTweaks.onConstruct(modBus);
@@ -59,6 +65,14 @@ public class GameplayTweaksModule extends OnetoysModule {
         if (isEnabled()) {
             durabilityTweaks.apply(event);
             stackTweaks.apply(event);
+        }
+    }
+
+    private void onTagsUpdated(TagsUpdatedEvent event) {
+        BarkItem.invalidateCache();
+        if (isEnabled()) {
+            durabilityTweaks.applyTagOverrides();
+            stackTweaks.applyTagOverrides();
         }
     }
 
@@ -102,6 +116,10 @@ public class GameplayTweaksModule extends OnetoysModule {
         return wetnessTweaks;
     }
 
+    public FoodOverhaulTweaks getFoodOverhaulTweaks() {
+        return foodOverhaulTweaks;
+    }
+
     public static boolean isWetnessEnabled() {
         GameplayTweaksModule mod = instance;
         if (mod == null) {
@@ -112,6 +130,10 @@ public class GameplayTweaksModule extends OnetoysModule {
         }
         WetnessTweaks wetness = mod.getWetnessTweaks();
         return wetness != null && wetness.isEnabled();
+    }
+
+    public static boolean isColdWaterFreezingEnabled() {
+        return isWetnessEnabled() && WetnessTweaks.isColdWaterFreezingActive();
     }
 
     public static boolean isStableFarmlandEnabled() {
@@ -156,5 +178,28 @@ public class GameplayTweaksModule extends OnetoysModule {
         }
         ItemTweaks itemTweaks = mod.getItemTweaks();
         return itemTweaks != null && itemTweaks.isStopwatchHotbarDisplayEnabled();
+    }
+
+    public static boolean isSwordBlockingEnabled() {
+        GameplayTweaksModule mod = instance;
+        if (mod == null) {
+            mod = ModuleManager.get().getModule(GameplayTweaksModule.class).orElse(null);
+        }
+        if (mod == null || !mod.isEnabled()) {
+            return false;
+        }
+        ItemTweaks itemTweaks = mod.getItemTweaks();
+        return itemTweaks != null && itemTweaks.isSwordBlockingEnabled();
+    }
+
+    public static boolean isFoodOverhaulEnabled() {
+        GameplayTweaksModule mod = instance;
+        if (mod == null) {
+            mod = ModuleManager.get().getModule(GameplayTweaksModule.class).orElse(null);
+        }
+        if (mod == null || !mod.isEnabled()) {
+            return false;
+        }
+        return mod.getFoodOverhaulTweaks().isEnabled();
     }
 }

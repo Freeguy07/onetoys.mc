@@ -19,13 +19,19 @@ import org.jetbrains.annotations.NotNull;
 
 
 public interface ISaltBlock {
+    Direction[] DIRECTIONS = Direction.values();
+
     @NotNull BlockState getDissolvedState(BlockState state, ServerLevel level, BlockPos pos, Fluid fluid);
 
     default boolean onSaltRandomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        if (!SaltConfiguration.isLoaded()) {
+        if (!SaltConfiguration.isLoaded()
+                || (!SaltConfiguration.DISSOLVING_ENABLED.get() && !SaltConfiguration.MELTING_BY_BLOCK_ENABLED.get())) {
             return true;
         }
-        for (Direction direction : net.minecraft.Util.shuffledCopy(Direction.values(), random)) {
+
+        int offset = random.nextInt(DIRECTIONS.length);
+        for (int i = 0; i < DIRECTIONS.length; i++) {
+            Direction direction = DIRECTIONS[(offset + i) % DIRECTIONS.length];
             BlockPos adjacentPos = pos.relative(direction);
             BlockState adjacentState = level.getBlockState(adjacentPos);
 

@@ -14,7 +14,7 @@ public class ContentModule extends OnetoysModule {
     private static ContentModule instance;
     private final TungstenTweaks tungstenTweaks = new TungstenTweaks(this);
     private final NuggetsAndShardsTweaks nuggetsAndShardsTweaks = new NuggetsAndShardsTweaks(this);
-    private final SprinklerTweaks sprinklerTweaks = new SprinklerTweaks(this);
+    private final SaltTweaks saltTweaks = new SaltTweaks(this);
 
     public ContentModule() {
         super(ID, "Content", "Mod-specific items, blocks, and original content additions.", ModuleCategory.CONTENT, true);
@@ -59,29 +59,9 @@ public class ContentModule extends OnetoysModule {
         return mod != null && mod.isEnabled() && mod.getTungstenTweaks().isWateringCanEnabled();
     }
 
-    public static boolean isSprinklerEnabled() {
+    public static boolean isSaltEnabled() {
         ContentModule mod = instance;
-        return mod != null && mod.isEnabled() && mod.getSprinklerTweaks().isEnabled();
-    }
-
-    public static boolean isSprinklerContinuous() {
-        ContentModule mod = instance;
-        return mod != null && mod.getSprinklerTweaks().isContinuousIrrigation();
-    }
-
-    public static int getSprinklerIntervalTicks() {
-        ContentModule mod = instance;
-        return mod != null ? mod.getSprinklerTweaks().getIrrigationIntervalTicks() : 100;
-    }
-
-    public static boolean isSprinklerWaterRequired() {
-        ContentModule mod = instance;
-        return mod != null && mod.getSprinklerTweaks().isRequireWater();
-    }
-
-    public static double getSprinklerGrowthChance() {
-        ContentModule mod = instance;
-        return mod != null ? mod.getSprinklerTweaks().getCropGrowthChance() : 0.5;
+        return mod != null && mod.isEnabled() && mod.getSaltTweaks().isEnabled();
     }
 
     public TungstenTweaks getTungstenTweaks() {
@@ -92,22 +72,21 @@ public class ContentModule extends OnetoysModule {
         return nuggetsAndShardsTweaks;
     }
 
-    public SprinklerTweaks getSprinklerTweaks() {
-        return sprinklerTweaks;
+    public SaltTweaks getSaltTweaks() {
+        return saltTweaks;
     }
 
     @Override
     public void buildConfig(ModConfigSpec.Builder builder) {
         tungstenTweaks.buildConfig(builder);
         nuggetsAndShardsTweaks.buildConfig(builder);
-        sprinklerTweaks.buildConfig(builder);
+        saltTweaks.buildConfig(builder);
     }
 
     @Override
     public void onConstruct(IEventBus modBus) {
         tungstenTweaks.onConstruct(modBus);
         nuggetsAndShardsTweaks.onConstruct(modBus);
-        sprinklerTweaks.onConstruct(modBus);
         modBus.addListener(this::onModifyDefaultComponents);
     }
 
@@ -134,13 +113,11 @@ public class ContentModule extends OnetoysModule {
     public void onCommonSetup(FMLCommonSetupEvent event) {
         tungstenTweaks.onCommonSetup(event);
         nuggetsAndShardsTweaks.onCommonSetup(event);
-        sprinklerTweaks.onCommonSetup(event);
     }
 
     @Override
     public void onClientSetup(FMLClientSetupEvent event) {
         tungstenTweaks.onClientSetup(event);
         nuggetsAndShardsTweaks.onClientSetup(event);
-        sprinklerTweaks.onClientSetup(event);
     }
 }

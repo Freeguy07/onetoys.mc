@@ -142,6 +142,7 @@ public class Onetoys {
         OnetoysParticles.register(modEventBus);
         // Register features
         OnetoysFeatures.register(modEventBus);
+        com.onetoys.registry.OnetoysDensityFunctions.register(modEventBus);
         // Register blocks, items, effects, potions, and creative tabs
         OnetoysBlocks.register(modEventBus);
         OnetoysItems.register(modEventBus);

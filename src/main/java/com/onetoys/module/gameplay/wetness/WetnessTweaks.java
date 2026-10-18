@@ -2,7 +2,13 @@ package com.onetoys.module.gameplay.wetness;
 
 import java.util.List;
 
+import com.onetoys.mixin.BiomeInvoker;
 import com.onetoys.module.gameplay.GameplayTweaksModule;
+import net.minecraft.core.Holder;
+import net.minecraft.tags.BiomeTags;
+import net.minecraft.tags.EntityTypeTags;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
 import com.onetoys.registry.OnetoysAttachments;
 
 import net.minecraft.core.BlockPos;
@@ -38,6 +44,7 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -75,6 +82,8 @@ public class WetnessTweaks {
     private ModConfigSpec.BooleanValue mattedWoolFromWetSheepConfig;
     private ModConfigSpec.BooleanValue rainSpeedsUpCropGrowthConfig;
     private ModConfigSpec.BooleanValue stableFarmlandConfig;
+    private ModConfigSpec.BooleanValue coldWaterFreezingConfig;
+    private ModConfigSpec.DoubleValue coldWaterTemperatureThresholdConfig;
 
     public WetnessTweaks(GameplayTweaksModule parent) {
         this.parent = parent;
@@ -141,6 +150,16 @@ public class WetnessTweaks {
                 .translation("onetoys.configuration.gameplay_tweaks.wetness.stable_farmland")
                 .define("stable_farmland", true);
 
+        coldWaterFreezingConfig = builder
+                .comment("When enabled, water in very cold biomes (based on biome temperature) applies the freezing effect, just like powder snow.")
+                .translation("onetoys.configuration.gameplay_tweaks.wetness.cold_water_freezing")
+                .define("cold_water_freezing", true);
+
+        coldWaterTemperatureThresholdConfig = builder
+                .comment("Maximum biome temperature threshold for water to be considered freezing cold (vanilla freezing/snow threshold is 0.15; cold oceans are 0.10).")
+                .translation("onetoys.configuration.gameplay_tweaks.wetness.cold_water_temperature_threshold")
+                .defineInRange("cold_water_temperature_threshold", 0.15, -2.0, 2.0);
+
         builder.pop();
     }
 
@@ -157,6 +176,78 @@ public class WetnessTweaks {
 
     public static boolean isStableFarmlandEnabled() {
         return instance != null && instance.isStableFarmland();
+    }
+
+    public boolean isColdWaterFreezing() {
+        return isEnabled() && (coldWaterFreezingConfig == null || coldWaterFreezingConfig.get());
+    }
+
+    public static boolean isColdWaterFreezingActive() {
+        return instance != null && instance.isColdWaterFreezing();
+    }
+
+    public static double getColdWaterTemperatureThreshold() {
+        return instance != null && instance.coldWaterTemperatureThresholdConfig != null
+                ? instance.coldWaterTemperatureThresholdConfig.get()
+                : 0.15;
+    }
+
+    public static float getEffectiveBaseTemperature(Holder<Biome> holder) {
+        if (holder.is(Biomes.FROZEN_OCEAN) || holder.is(Biomes.DEEP_FROZEN_OCEAN) || holder.is(Biomes.FROZEN_RIVER)
+                || holder.is(Tags.Biomes.IS_AQUATIC_ICY)) {
+            return Math.min(0.0F, holder.value().getBaseTemperature());
+        }
+        if (holder.is(Biomes.COLD_OCEAN) || holder.is(Biomes.DEEP_COLD_OCEAN)
+                || (holder.is(Tags.Biomes.IS_COLD_OVERWORLD) && (holder.is(Tags.Biomes.IS_OCEAN) || holder.is(BiomeTags.IS_OCEAN)))) {
+            return Math.min(0.10F, holder.value().getBaseTemperature());
+        }
+        return holder.value().getBaseTemperature();
+    }
+
+    public static float getBiomeTemperature(Level level, BlockPos pos) {
+        Holder<Biome> holder = level.getBiome(pos);
+        float baseTemp = getEffectiveBaseTemperature(holder);
+        if (pos.getY() > 80) {
+            float vanillaBase = holder.value().getBaseTemperature();
+            float vanillaTemp;
+            try {
+                vanillaTemp = ((BiomeInvoker) (Object) holder.value()).invokeGetTemperature(pos);
+            } catch (Throwable t) {
+                vanillaTemp = vanillaBase;
+            }
+            float heightOffset = vanillaTemp - vanillaBase;
+            return baseTemp + heightOffset;
+        }
+        return baseTemp;
+    }
+
+    public static boolean isInColdWater(LivingEntity entity) {
+        if (entity == null || !isColdWaterFreezingActive()) {
+            return false;
+        }
+        if (!entity.isInWaterOrBubble()) {
+            return false;
+        }
+        if (entity.isSpectator()) {
+            return false;
+        }
+        if (entity instanceof Player player && player.isCreative()) {
+            return false;
+        }
+        if (entity.getType().is(EntityTypeTags.CAN_BREATHE_UNDER_WATER) || isWetnessproof(entity)) {
+            return false;
+        }
+        Level level = entity.level();
+        BlockPos pos = entity.blockPosition();
+        if (!level.isLoaded(pos)) {
+            return false;
+        }
+        double threshold = getColdWaterTemperatureThreshold();
+        float temp = getBiomeTemperature(level, pos);
+        if (temp >= (float) threshold) {
+            return false;
+        }
+        return !isNearHeatSource(entity);
     }
 
     public static boolean isTweakEnabled() {
@@ -504,4 +595,3 @@ public class WetnessTweaks {
         }
     }
 }
-

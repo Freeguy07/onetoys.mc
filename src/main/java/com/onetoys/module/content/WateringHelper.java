@@ -35,7 +35,7 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * Shared utility for applying watering, rain, and hydration effects to blocks, crops,
- * entities, and fluids (used by both WateringCanItem and Sprinkler system).
+ * entities, and fluids (used by WateringCanItem).
  */
 public final class WateringHelper {
 
@@ -156,7 +156,7 @@ public final class WateringHelper {
 
         // J. Natural growth / random tick simulation (exclude FarmBlock so farmland never dries out or turns to dirt):
         if (level instanceof ServerLevel serverLevel) {
-            boolean shouldGrow = player != null || serverLevel.random.nextDouble() < ContentModule.getSprinklerGrowthChance();
+            boolean shouldGrow = player != null;
             if (shouldGrow) {
                 if (!(state.getBlock() instanceof FarmBlock) && state.isRandomlyTicking()) {
                     state.randomTick(serverLevel, pos, serverLevel.random);

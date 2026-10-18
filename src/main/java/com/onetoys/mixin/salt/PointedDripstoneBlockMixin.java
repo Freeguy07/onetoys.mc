@@ -1,5 +1,7 @@
 package com.onetoys.mixin.salt;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.onetoys.salt.SaltConfiguration;
 import com.onetoys.salt.SaltTags;
 import com.onetoys.salt.block.ISaltBlock;
@@ -15,14 +17,10 @@ import net.minecraft.world.level.block.PointedDripstoneBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.neoforged.neoforge.fluids.FluidType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -36,39 +34,33 @@ public abstract class PointedDripstoneBlockMixin {
         throw new AssertionError();
     }
 
-    @Inject(method = "maybeTransferFluid",
-            at = @At(value = "INVOKE_ASSIGN",
-                    target = "Lnet/minecraft/world/level/block/PointedDripstoneBlock;findFillableCauldronBelowStalactiteTip(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/Fluid;)Lnet/minecraft/core/BlockPos;",
-                    shift = At.Shift.AFTER),
-            locals = LocalCapture.CAPTURE_FAILSOFT)
-    private static void onMaybeTransferFluid(BlockState pState, ServerLevel level, BlockPos pos, float pRandChance,
-                                             CallbackInfo ci,
-                                             Optional<?> optional,
-                                             Fluid fluid, float f,
-                                             FluidType.DripstoneDripInfo dripInfo,
-                                             BlockPos tipPos, BlockPos cauldronPos) {
-        if (fluid != Fluids.WATER && fluid != Fluids.LAVA) {
-            return;
-        }
+    @WrapOperation(
+            method = "maybeTransferFluid",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/world/level/block/PointedDripstoneBlock;findFillableCauldronBelowStalactiteTip(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/Fluid;)Lnet/minecraft/core/BlockPos;"
+            )
+    )
+    private static BlockPos onFindFillableCauldron(Level level, BlockPos tipPos, Fluid fluid, Operation<BlockPos> original) {
+        BlockPos cauldronPos = original.call(level, tipPos, fluid);
+        if (cauldronPos == null && level instanceof ServerLevel serverLevel
+                && (fluid == Fluids.WATER || fluid == Fluids.LAVA)
+                && SaltConfiguration.isLoaded() && SaltConfiguration.SALT_CLUSTER_GROWING_ENABLED.get()) {
+            BlockPos growablePos = salt$findSaltGrowablesBelowStalactiteTip(level, tipPos, fluid);
+            if (growablePos != null) {
+                serverLevel.levelEvent(LevelEvent.DRIPSTONE_DRIP, tipPos, 0);
+                int distanceToGrowable = tipPos.getY() - growablePos.getY();
+                int delay = 50 + distanceToGrowable;
+                BlockState growableState = serverLevel.getBlockState(growablePos);
 
-        if (cauldronPos != null || !SaltConfiguration.isLoaded() || !SaltConfiguration.SALT_CLUSTER_GROWING_ENABLED.get()) {
-            return;
-        }
-
-        @Nullable BlockPos growablePos = salt$findSaltGrowablesBelowStalactiteTip(level, tipPos, fluid);
-
-        if (growablePos != null) {
-            level.levelEvent(LevelEvent.DRIPSTONE_DRIP, tipPos, 0);
-            int distanceToGrowable = tipPos.getY() - growablePos.getY();
-            int delay = 50 + distanceToGrowable;
-            BlockState growableState = level.getBlockState(growablePos);
-
-            if (growableState.getBlock() instanceof ISaltBlock) {
-                level.scheduleTick(growablePos, growableState.getBlock(), delay);
-            } else {
-                ISaltBlock.maybeGrowCluster(growableState, growablePos, level);
+                if (growableState.getBlock() instanceof ISaltBlock) {
+                    serverLevel.scheduleTick(growablePos, growableState.getBlock(), delay);
+                } else {
+                    ISaltBlock.maybeGrowCluster(growableState, growablePos, serverLevel);
+                }
             }
         }
+        return cauldronPos;
     }
 
     @Unique
@@ -102,4 +94,3 @@ public abstract class PointedDripstoneBlockMixin {
         return Optional.empty();
     }
 }
-

@@ -8,6 +8,7 @@ import com.onetoys.Onetoys;
 import com.onetoys.module.gameplay.items.SavedRecoveryCompass;
 
 import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -22,7 +23,6 @@ public class OnetoysAttachments {
             ATTACHMENT_TYPES.register("milk_cooldown", () ->
                     AttachmentType.builder(() -> 0L)
                             .serialize(Codec.LONG)
-                            .sync(ByteBufCodecs.VAR_LONG)
                             .build()
             );
 
@@ -30,7 +30,6 @@ public class OnetoysAttachments {
             ATTACHMENT_TYPES.register("stew_cooldown", () ->
                     AttachmentType.builder(() -> 0L)
                             .serialize(Codec.LONG)
-                            .sync(ByteBufCodecs.VAR_LONG)
                             .build()
             );
 
@@ -62,6 +61,35 @@ public class OnetoysAttachments {
                     AttachmentType.builder(() -> false)
                             .serialize(Codec.BOOL)
                             .sync(ByteBufCodecs.BOOL)
+                            .build()
+            );
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> SPECIAL_MOB_ROLLED =
+            ATTACHMENT_TYPES.register("special_mob_rolled", () ->
+                    AttachmentType.builder(() -> false)
+                            .serialize(Codec.BOOL)
+                            .build()
+            );
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<String>> SPECIAL_MOB_TYPE =
+            ATTACHMENT_TYPES.register("special_mob_type", () ->
+                    AttachmentType.builder(() -> "")
+                            .serialize(Codec.STRING)
+                            .sync(ByteBufCodecs.STRING_UTF8)
+                            .build()
+            );
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<ItemStack>> SMART_SKELETON_STORED_BOW =
+            ATTACHMENT_TYPES.register("smart_skeleton_stored_bow", () ->
+                    AttachmentType.builder(() -> ItemStack.EMPTY)
+                            .serialize(ItemStack.OPTIONAL_CODEC)
+                            .build()
+            );
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> SLIME_SWELL_TICKS =
+            ATTACHMENT_TYPES.register("slime_swell_ticks", () ->
+                    AttachmentType.builder(() -> 0)
+                            .sync(ByteBufCodecs.VAR_INT)
                             .build()
             );
 

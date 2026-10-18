@@ -58,39 +58,34 @@ public class SOLValheim {
     }
 
     public static void addTooltip(ItemStack item, TooltipFlag flag, List<Component> list) {
+        addTooltip(item, flag, list, false);
+    }
+
+    public static void addTooltip(ItemStack item, TooltipFlag flag, List<Component> list, boolean shiftDown) {
         if (item.is(Items.ROTTEN_FLESH)) {
-            list.add(Component.literal("\ud83e\udd2e Empties Your Stomach!").withStyle(ChatFormatting.GREEN));
-            if (Salting.isSalted(item)) {
-                list.add(Component.literal("\ud83e\uddc2 Salted!").withStyle(ChatFormatting.WHITE));
-            }
-            if (Sweetening.isSweetened(item)) {
-                list.add(Component.literal("\ud83c\udf6c Sweetened!").withStyle(ChatFormatting.LIGHT_PURPLE));
-            }
-            if (Satiating.isSatiating(item)) {
-                list.add(Component.literal("\ud83c\udf3c Satiating!").withStyle(ChatFormatting.YELLOW));
-            }
+            list.add(Component.translatable("onetoys.tooltip.food.empties_stomach").withStyle(ChatFormatting.GREEN));
+            addSeasoningTooltips(item, list, shiftDown);
             return;
         }
 
         var config = ModConfig.getFoodConfig(item);
         if (config == null) {
             if (item.getUseAnimation() == UseAnim.DRINK) {
-                list.add(Component.literal("\u2744 Refreshing!").withStyle(ChatFormatting.AQUA));
+                list.add(Component.translatable("onetoys.tooltip.food.refreshing").withStyle(ChatFormatting.AQUA));
             }
-            if (Salting.isSalted(item)) {
-                list.add(Component.literal("\ud83e\uddc2 Salted!").withStyle(ChatFormatting.WHITE));
-            }
-            if (Sweetening.isSweetened(item)) {
-                list.add(Component.literal("\ud83c\udf6c Sweetened!").withStyle(ChatFormatting.LIGHT_PURPLE));
-            }
-            if (Satiating.isSatiating(item)) {
-                list.add(Component.literal("\ud83c\udf3c Satiating!").withStyle(ChatFormatting.YELLOW));
-            }
+            addSeasoningTooltips(item, list, shiftDown);
             return;
         }
 
-        int rawHearts = config.getHearts();
-        list.add(Component.literal("\u2764 +" + (rawHearts * 2) + " Health").withStyle(ChatFormatting.RED));
+        float healthVal = config.getHeartsBonus();
+        String healthStr;
+        if (Math.abs(healthVal - Math.round(healthVal)) < 0.005f) {
+            healthStr = Integer.toString(Math.round(healthVal));
+        } else {
+            healthStr = String.format(Locale.ROOT, "%.1f", healthVal);
+        }
+        list.add(Component.translatable("onetoys.tooltip.food.health", healthStr).withStyle(ChatFormatting.RED));
+
         float regenVal = config.getHealthRegen();
         String regenStr;
         if (Math.abs(regenVal - Math.round(regenVal)) < 0.005f) {
@@ -100,20 +95,25 @@ public class SOLValheim {
         } else {
             regenStr = String.format(Locale.ROOT, "%.2f", regenVal);
         }
-        list.add(Component.literal("\ud83d\udc96 " + regenStr + " Regen").withStyle(ChatFormatting.DARK_RED));
+        list.add(Component.translatable("onetoys.tooltip.food.regen", regenStr).withStyle(ChatFormatting.DARK_RED));
 
         int totalTicks = config.getTime();
         int totalSeconds = totalTicks / 20;
         int minutes = totalSeconds / 60;
         int seconds = totalSeconds % 60;
-        list.add(Component.literal("\ud83d\udd52 " + String.format(Locale.ROOT, "%d:%02d", minutes, seconds)).withStyle(ChatFormatting.GOLD));
+        String timeStr = String.format(Locale.ROOT, "%d:%02d", minutes, seconds);
+        list.add(Component.translatable("onetoys.tooltip.food.duration", timeStr).withStyle(ChatFormatting.GOLD));
 
-        if (item.is(Items.GLOW_LICHEN) && Config.common.displayEffects.get()) {
+        boolean displayEffects = Config.common.displayEffects != null && ModConfig.isLoaded()
+                ? Config.common.displayEffects.get()
+                : true;
+
+        if (item.is(Items.GLOW_LICHEN) && displayEffects) {
             var effectName = Component.translatable("effect.minecraft.glowing");
             var text = Component.literal("  \u2726 ").append(effectName).append(" (0:15)");
             list.add(text.withStyle(ChatFormatting.YELLOW));
         }
-        if (!config.extraEffects.isEmpty() && Config.common.displayEffects.get()) {
+        if (!config.extraEffects.isEmpty() && displayEffects) {
             for (var effectCfg : config.extraEffects) {
                 var effectHolder = effectCfg.getEffect();
                 if (effectHolder != null) {
@@ -129,16 +129,42 @@ public class SOLValheim {
         }
 
         if (item.getUseAnimation() == UseAnim.DRINK) {
-            list.add(Component.literal("\u2744 Refreshing!").withStyle(ChatFormatting.AQUA));
+            list.add(Component.translatable("onetoys.tooltip.food.refreshing").withStyle(ChatFormatting.AQUA));
         }
-        if (Salting.isSalted(item)) {
-            list.add(Component.literal("\ud83e\uddc2 Salted!").withStyle(ChatFormatting.WHITE));
+
+        addSeasoningTooltips(item, list, shiftDown);
+    }
+
+    private static void addSeasoningTooltips(ItemStack item, List<Component> list, boolean shiftDown) {
+        boolean salted = Salting.isSalted(item);
+        boolean sweetened = Sweetening.isSweetened(item);
+        boolean satiating = Satiating.isSatiating(item);
+
+        if (!salted && !sweetened && !satiating) {
+            return;
         }
-        if (Sweetening.isSweetened(item)) {
-            list.add(Component.literal("\ud83c\udf6c Sweetened!").withStyle(ChatFormatting.LIGHT_PURPLE));
-        }
-        if (Satiating.isSatiating(item)) {
-            list.add(Component.literal("\ud83c\udf3c Satiating!").withStyle(ChatFormatting.YELLOW));
+
+        if (shiftDown) {
+            if (salted) {
+                list.add(Component.translatable("onetoys.tooltip.food.salted_expanded").withStyle(ChatFormatting.WHITE));
+            }
+            if (sweetened) {
+                list.add(Component.translatable("onetoys.tooltip.food.sweetened_expanded").withStyle(ChatFormatting.LIGHT_PURPLE));
+            }
+            if (satiating) {
+                list.add(Component.translatable("onetoys.tooltip.food.satiating_expanded").withStyle(ChatFormatting.YELLOW));
+            }
+        } else {
+            if (salted) {
+                list.add(Component.translatable("onetoys.tooltip.food.salted").withStyle(ChatFormatting.WHITE));
+            }
+            if (sweetened) {
+                list.add(Component.translatable("onetoys.tooltip.food.sweetened").withStyle(ChatFormatting.LIGHT_PURPLE));
+            }
+            if (satiating) {
+                list.add(Component.translatable("onetoys.tooltip.food.satiating").withStyle(ChatFormatting.YELLOW));
+            }
+            list.add(Component.translatable("onetoys.tooltip.food.seasoning.hold_shift").withStyle(ChatFormatting.DARK_GRAY));
         }
     }
 }

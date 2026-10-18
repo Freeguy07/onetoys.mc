@@ -12,14 +12,11 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
  * Client-only tooltip handler for displaying death coordinates on recovery compasses.
  */
-@OnlyIn(Dist.CLIENT)
 public class RecoveryCompassTooltipHandler {
     private static final Component NO_DEATH = Component.translatable("onetoys.tooltip.recovery_compass.no_death").withStyle(ChatFormatting.GRAY);
     private static final Component HOLD_SHIFT = Component.translatable("onetoys.tooltip.recovery_compass.hold_shift").withStyle(ChatFormatting.DARK_GRAY);

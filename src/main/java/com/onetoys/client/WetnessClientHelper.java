@@ -9,8 +9,6 @@ import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 /**
@@ -18,7 +16,6 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
  * applying wetness darkening to models and layers with zero per-cube allocations,
  * and managing client dripping particles with distance culling.
  */
-@OnlyIn(Dist.CLIENT)
 public class WetnessClientHelper {
     private static final int MAX_DEPTH = 16;
     private static final boolean[] WET_STACK = new boolean[MAX_DEPTH];

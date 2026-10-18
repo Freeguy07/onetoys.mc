@@ -13,12 +13,6 @@ public class OnetoysSoundEvents {
     public static final DeferredRegister<SoundEvent> SOUND_EVENTS =
             DeferredRegister.create(Registries.SOUND_EVENT, Onetoys.MODID);
 
-    public static final DeferredHolder<SoundEvent, SoundEvent> SPRINKLER_ACTIVATE =
-            SOUND_EVENTS.register("block.sprinkler.activate",
-                    () -> SoundEvent.createVariableRangeEvent(
-                            ResourceLocation.fromNamespaceAndPath(Onetoys.MODID, "block.sprinkler.activate")
-                    ));
-
     public static final DeferredHolder<SoundEvent, SoundEvent> TINY_SPLASH =
             SOUND_EVENTS.register("water.tiny_splash",
                     () -> SoundEvent.createVariableRangeEvent(

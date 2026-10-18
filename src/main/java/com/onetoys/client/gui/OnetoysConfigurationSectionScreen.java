@@ -36,8 +36,6 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
@@ -55,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
  * full-width big toggle buttons for module master switches, automatic dependent option graying out,
  * real-time search filtering, and contextual vanilla category item icons.
  */
-@OnlyIn(Dist.CLIENT)
 public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScreen {
 
     private final List<AbstractWidget> dependentWidgets = new ArrayList<>();
@@ -159,6 +156,8 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
             case "gameplay_tweaks" -> new ItemStack(Items.GOLDEN_APPLE);
             case "durability_tweaks" -> new ItemStack(Items.DIAMOND_PICKAXE);
             case "mob_tweaks" -> new ItemStack(Items.LEAD);
+            case "ai_tweaks" -> new ItemStack(Items.ZOMBIE_HEAD);
+            case "special_mobs" -> new ItemStack(Items.WITHER_SKELETON_SKULL);
             case "cow" -> new ItemStack(Items.MILK_BUCKET);
             case "goat" -> new ItemStack(Items.GOAT_HORN);
             case "mooshroom" -> new ItemStack(Items.MUSHROOM_STEW);
@@ -177,9 +176,9 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
             case "content" -> new ItemStack(OnetoysBlocks.TUNGSTEN_ORE.get());
             case "tungsten_tweaks" -> new ItemStack(OnetoysItems.TUNGSTEN_INGOT.get());
             case "nuggets_and_shards" -> new ItemStack(OnetoysItems.COPPER_NUGGET.get());
-            case "sprinkler" -> new ItemStack(OnetoysBlocks.SPRINKLER.get());
 
             case "food_overhaul" -> new ItemStack(Items.COOKED_BEEF);
+            case "General" -> new ItemStack(Items.BREAD);
             case "salt", "Salting" -> new ItemStack(SaltItems.SALT.get());
             case "Sweetening" -> new ItemStack(Items.SUGAR);
             case "Satiating" -> new ItemStack(Onetoys.CHRYSANTHEMUM.get());
@@ -625,7 +624,6 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
         return this;
     }
 
-    @OnlyIn(Dist.CLIENT)
     public static class IconLabelWidget extends AbstractWidget {
         private static final int ICON_SIZE = 16;
         private static final int ICON_SPACING = 4;
@@ -673,7 +671,6 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     public static class IconWidget extends AbstractWidget {
         private final ItemStack icon;
 
@@ -725,7 +722,6 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     public static class ConfigFileButton extends Button {
         private final ItemStack icon = new ItemStack(Items.WRITABLE_BOOK);
 
@@ -753,4 +749,3 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
         }
     }
 }
-

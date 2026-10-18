@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.onetoys.mixin.AxeItemAccessor;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -16,6 +17,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.neoforged.neoforge.registries.datamaps.builtin.NeoForgeDataMaps;
+import net.neoforged.neoforge.registries.datamaps.builtin.Strippable;
 
 /** Edible bark that can also be pressed onto a stripped log to restore its bark. */
 public class BarkItem extends Item {
@@ -25,9 +28,22 @@ public class BarkItem extends Item {
         if (UNSTRIP_MAP == null) {
             Map<Block, Block> map = new HashMap<>();
             AxeItemAccessor.getStrippables().forEach((original, result) -> map.put(result, original));
+            var dataMap = BuiltInRegistries.BLOCK.getDataMap(NeoForgeDataMaps.STRIPPABLES);
+            if (dataMap != null) {
+                dataMap.forEach((key, strippable) -> {
+                    Block original = BuiltInRegistries.BLOCK.get(key);
+                    if (original != null && strippable != null && strippable.strippedBlock() != null) {
+                        map.put(strippable.strippedBlock(), original);
+                    }
+                });
+            }
             UNSTRIP_MAP = Collections.unmodifiableMap(map);
         }
         return UNSTRIP_MAP;
+    }
+
+    public static synchronized void invalidateCache() {
+        UNSTRIP_MAP = null;
     }
 
     /** Reverse of vanilla stripping: returns the barked block for a stripped one, or null. */
@@ -60,4 +76,3 @@ public class BarkItem extends Item {
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 }
-

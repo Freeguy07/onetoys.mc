@@ -83,21 +83,6 @@ public class OnetoysBlocks {
             )
     );
 
-    public static final DeferredBlock<Block> SPRINKLER = BLOCKS.register(
-            "sprinkler",
-            () -> new com.onetoys.block.SprinklerBlock(
-                    BlockBehaviour.Properties.of()
-                            .noOcclusion()
-                            .isSuffocating((state, level, pos) -> false)
-                            .isViewBlocking((state, level, pos) -> false)
-                            .mapColor(MapColor.COLOR_ORANGE)
-                            .instrument(NoteBlockInstrument.IRON_XYLOPHONE)
-                            .requiresCorrectToolForDrops()
-                            .strength(3.0F, 6.0F)
-                            .sound(SoundType.COPPER)
-            )
-    );
-
     public static void register(IEventBus modBus) {
         BLOCKS.register(modBus);
     }

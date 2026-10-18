@@ -30,7 +30,6 @@ public class OnetoysCreativeModeTabs {
                         output.accept(OnetoysItems.TUNGSTEN_NUGGET.get());
                         output.accept(OnetoysItems.DUMBBELL.get());
                         output.accept(OnetoysItems.WATERING_CAN.get());
-                        output.accept(OnetoysBlocks.SPRINKLER.get());
                         output.accept(OnetoysItems.COPPER_NUGGET.get());
                         output.accept(OnetoysItems.DIAMOND_SHARD.get());
                         output.accept(OnetoysItems.EMERALD_SHARD.get());

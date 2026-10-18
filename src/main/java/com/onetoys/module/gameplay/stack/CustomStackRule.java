@@ -3,7 +3,9 @@ package com.onetoys.module.gameplay.stack;
 import java.util.regex.Pattern;
 
 import com.onetoys.Onetoys;
+import com.onetoys.mixin.ItemAccessor;
 
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -31,6 +33,17 @@ public sealed interface CustomStackRule permits
         if (current != target) {
             event.modify(item, b -> b.set(DataComponents.MAX_STACK_SIZE, target));
             Onetoys.LOGGER.info("Applied custom stack size [{}] for '{}': {} -> {}", this, id, current, target);
+        }
+    }
+
+    default void applyDirect(Item item, ResourceLocation id) {
+        final int target = maxStackSize();
+        int current = item.components().getOrDefault(DataComponents.MAX_STACK_SIZE, 64);
+        if (current != target) {
+            var builder = DataComponentMap.builder().addAll(item.components());
+            builder.set(DataComponents.MAX_STACK_SIZE, target);
+            ((ItemAccessor) item).onetoys$setComponents(builder.build());
+            Onetoys.LOGGER.info("Applied direct stack size [{}] for '{}': {} -> {}", this, id, current, target);
         }
     }
 

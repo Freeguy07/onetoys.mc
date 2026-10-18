@@ -12,7 +12,9 @@ import java.util.Map;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.onetoys.Onetoys;
+import com.onetoys.mixin.ItemAccessor;
 
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -61,6 +63,9 @@ public class StackTweaks {
     private ModConfigSpec.BooleanValue enderPearlsStackTo64Config;
     private ModConfigSpec.BooleanValue snowballsStackTo64Config;
     private ModConfigSpec.BooleanValue eggsStackTo64Config;
+
+    private final List<CustomStackRule.Tag> cachedTagRules = new ArrayList<>();
+    private final Map<Item, Integer> originalStackSizes = new HashMap<>();
 
     public void buildConfig(ModConfigSpec.Builder builder) {
         builder.comment("Tweaks and adjustments to item maximum stack sizes.",
@@ -185,6 +190,31 @@ public class StackTweaks {
         loadAndApplyStackSizes(event, configPath);
     }
 
+    public void applyTagOverrides() {
+        for (Map.Entry<Item, Integer> entry : originalStackSizes.entrySet()) {
+            Item item = entry.getKey();
+            int original = entry.getValue();
+            var builder = DataComponentMap.builder().addAll(item.components());
+            builder.set(DataComponents.MAX_STACK_SIZE, original);
+            ((ItemAccessor) item).onetoys$setComponents(builder.build());
+        }
+
+        if (!isEnabled() || cachedTagRules.isEmpty()) {
+            return;
+        }
+
+        for (Item item : BuiltInRegistries.ITEM) {
+            ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+            String path = id.getPath();
+            for (CustomStackRule.Tag rule : cachedTagRules) {
+                if (rule.matches(item, id, path)) {
+                    originalStackSizes.computeIfAbsent(item, i -> i.components().getOrDefault(DataComponents.MAX_STACK_SIZE, 64));
+                    rule.applyDirect(item, id);
+                }
+            }
+        }
+    }
+
     private void loadAndApplyStackSizes(ModifyDefaultComponentsEvent event, Path configPath) {
         List<CustomStackRule> overrideRules = new ArrayList<>();
         Map<ResourceLocation, Integer> configuredStackSizes = new HashMap<>();
@@ -193,6 +223,8 @@ public class StackTweaks {
                 .sync()
                 .build()) {
             config.load();
+
+            cachedTagRules.clear();
 
             // 1. Read [overrides] table
             Object overridesObj = config.get("overrides");
@@ -206,6 +238,9 @@ public class StackTweaks {
                             CustomStackRule rule = CustomStackRule.parse(pattern + "=" + size);
                             if (rule != null) {
                                 overrideRules.add(rule);
+                                if (rule instanceof CustomStackRule.Tag tagRule) {
+                                    cachedTagRules.add(tagRule);
+                                }
                             }
                         } else {
                             Onetoys.LOGGER.warn("Invalid stack size '{}' for override '{}' in '{}' (must be 1-99)", size, pattern, configPath.getFileName());
@@ -216,12 +251,15 @@ public class StackTweaks {
 
             // 2. Read 'rules' list if present
             Object rulesObj = config.get("rules");
-            if (rulesObj instanceof List<?> list) {
-                for (Object item : list) {
-                    if (item instanceof String s && !s.isBlank()) {
-                        CustomStackRule rule = CustomStackRule.parse(s.trim());
+            if (rulesObj instanceof List<?> rulesList) {
+                for (Object ruleEntry : rulesList) {
+                    if (ruleEntry instanceof String entryStr) {
+                        CustomStackRule rule = CustomStackRule.parse(entryStr);
                         if (rule != null) {
                             overrideRules.add(rule);
+                            if (rule instanceof CustomStackRule.Tag tagRule) {
+                                cachedTagRules.add(tagRule);
+                            }
                         }
                     }
                 }
@@ -306,12 +344,11 @@ public class StackTweaks {
         }
     }
 
-    private void modifyStackSize(ModifyDefaultComponentsEvent event, Item item, ResourceLocation id, int targetSize) {
+    private void modifyStackSize(ModifyDefaultComponentsEvent event, Item item, ResourceLocation id, int target) {
         int current = item.components().getOrDefault(DataComponents.MAX_STACK_SIZE, 64);
-        if (current != targetSize) {
-            event.modify(item, b -> b.set(DataComponents.MAX_STACK_SIZE, targetSize));
-            Onetoys.LOGGER.info("Adjusted stack size for '{}': {} -> {}", id, current, targetSize);
+        if (current != target) {
+            event.modify(item, b -> b.set(DataComponents.MAX_STACK_SIZE, target));
+            Onetoys.LOGGER.info("Applied preset stack size for '{}': {} -> {}", id, current, target);
         }
     }
 }
-

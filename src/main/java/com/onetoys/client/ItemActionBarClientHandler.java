@@ -3,6 +3,7 @@ package com.onetoys.client;
 import java.util.Optional;
 
 import com.onetoys.item.StopwatchData;
+import com.onetoys.mixin.client.GuiAccessor;
 import com.onetoys.module.gameplay.GameplayTweaksModule;
 import com.onetoys.module.gameplay.items.RecoveryCompassTweaks;
 import com.onetoys.registry.OnetoysAttachments;
@@ -10,27 +11,40 @@ import com.onetoys.registry.OnetoysDataComponents;
 import com.onetoys.registry.OnetoysItems;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 /**
  * Client-only tick handler maintaining dynamic real-time action bar overlays
  * for the Stopwatch and toggled Recovery Compass while held.
  */
-@OnlyIn(Dist.CLIENT)
 public class ItemActionBarClientHandler {
+
+    private static Component lastSentMessage = null;
 
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null || mc.level == null) {
+            return;
+        }
+
+        Gui gui = mc.gui;
+        GuiAccessor guiAccessor = (GuiAccessor) gui;
+        int currentOverlayTime = guiAccessor.getOverlayMessageTime();
+        Component currentOverlayMessage = guiAccessor.getOverlayMessageString();
+
+        // If a foreign (vanilla or other mod) message is currently displayed, do not overwrite it
+        boolean isForeignMessageActive = currentOverlayTime > 0
+                && (lastSentMessage == null || (currentOverlayMessage != null && !currentOverlayMessage.equals(lastSentMessage)));
+
+        if (isForeignMessageActive) {
             return;
         }
 
@@ -47,11 +61,19 @@ public class ItemActionBarClientHandler {
                         long now = mc.level.getGameTime();
                         long elapsed = data.getDisplayElapsed(now);
                         String sec = StopwatchData.formatSeconds(elapsed);
-                        mc.gui.setOverlayMessage(Component.translatable("onetoys.actionbar.stopwatch.ticking", elapsed, sec), false);
+                        Component message = Component.translatable("onetoys.actionbar.stopwatch.ticking", elapsed, sec);
+                        gui.setOverlayMessage(message, false);
+                        lastSentMessage = message;
                         return;
                     } else if (data.elapsedTicks() > 0L) {
-                        String sec = StopwatchData.formatSeconds(data.elapsedTicks());
-                        mc.gui.setOverlayMessage(Component.translatable("onetoys.actionbar.stopwatch.paused", data.elapsedTicks(), sec), false);
+                        long elapsed = data.elapsedTicks();
+                        String sec = StopwatchData.formatSeconds(elapsed);
+                        Component message = Component.translatable("onetoys.actionbar.stopwatch.paused", elapsed, sec);
+                        boolean isOurCurrentMessage = currentOverlayTime > 0 && lastSentMessage != null && lastSentMessage.equals(message);
+                        if (!isOurCurrentMessage || currentOverlayTime <= 10) {
+                            gui.setOverlayMessage(message, false);
+                            lastSentMessage = message;
+                        }
                         return;
                     }
                 }
@@ -75,8 +97,18 @@ public class ItemActionBarClientHandler {
                 } else {
                     message = Component.translatable("onetoys.actionbar.recovery_compass.no_death");
                 }
-                mc.gui.setOverlayMessage(message, false);
+                boolean isOurCurrentMessage = currentOverlayTime > 0 && lastSentMessage != null && lastSentMessage.equals(message);
+                if (!isOurCurrentMessage || currentOverlayTime <= 10) {
+                    gui.setOverlayMessage(message, false);
+                    lastSentMessage = message;
+                }
+                return;
             }
+        }
+
+        // If neither stopwatch nor compass is active, clear lastSentMessage once expired
+        if (currentOverlayTime <= 0) {
+            lastSentMessage = null;
         }
     }
 }

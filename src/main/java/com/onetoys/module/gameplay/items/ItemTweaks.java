@@ -7,6 +7,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class ItemTweaks {
     private final RecoveryCompassTweaks recoveryCompassTweaks = new RecoveryCompassTweaks(this);
     private final StopwatchTweaks stopwatchTweaks = new StopwatchTweaks(this);
+    private final SwordBlockingTweaks swordBlockingTweaks = new SwordBlockingTweaks(this);
     private ModConfigSpec.BooleanValue enabledConfig;
     private ModConfigSpec.BooleanValue disableCharcoalConfig;
 
@@ -27,6 +28,7 @@ public final class ItemTweaks {
 
         recoveryCompassTweaks.buildConfig(builder);
         stopwatchTweaks.buildConfig(builder);
+        swordBlockingTweaks.buildConfig(builder);
 
         builder.pop();
     }
@@ -47,6 +49,10 @@ public final class ItemTweaks {
         return stopwatchTweaks;
     }
 
+    public SwordBlockingTweaks getSwordBlockingTweaks() {
+        return swordBlockingTweaks;
+    }
+
     public boolean isStopwatchEnabled() {
         return isEnabled() && stopwatchTweaks.isEnabled();
     }
@@ -55,8 +61,13 @@ public final class ItemTweaks {
         return isStopwatchEnabled() && stopwatchTweaks.isHotbarDisplayEnabled();
     }
 
+    public boolean isSwordBlockingEnabled() {
+        return isEnabled() && swordBlockingTweaks.isEnabled();
+    }
+
     public void onConstruct(IEventBus modBus) {
         recoveryCompassTweaks.onConstruct(modBus);
+        swordBlockingTweaks.onConstruct(modBus);
     }
 
     public void onClientSetup(FMLClientSetupEvent event) {

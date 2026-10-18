@@ -37,9 +37,6 @@ public class ImmediateHungerCommand {
         // Register /onetoys immediate_hunger ...
         dispatcher.register(Commands.literal("onetoys").then(buildCommandTree("immediate_hunger")));
 
-        // Register alias /Onetoys immediate_hunger ...
-        dispatcher.register(Commands.literal("onetoys").then(buildCommandTree("immediate_hunger")));
-
         // Register top-level alias /immediatehunger ...
         dispatcher.register(buildCommandTree("immediatehunger"));
     }
@@ -121,4 +118,3 @@ public class ImmediateHungerCommand {
         return modifiedCount;
     }
 }
-

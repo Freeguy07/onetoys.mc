@@ -1,7 +1,7 @@
 package com.onetoys.registry;
 
 import com.onetoys.Onetoys;
-import com.onetoys.entity.SprinklerDropletEntity;
+import com.onetoys.entity.TangledThreadProjectile;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -14,13 +14,13 @@ public class OnetoysEntityTypes {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
             DeferredRegister.create(Registries.ENTITY_TYPE, Onetoys.MODID);
 
-    public static final DeferredHolder<EntityType<?>, EntityType<SprinklerDropletEntity>> SPRINKLER_DROPLET =
-            ENTITY_TYPES.register("sprinkler_droplet", () ->
-                    EntityType.Builder.<SprinklerDropletEntity>of(SprinklerDropletEntity::new, MobCategory.MISC)
+    public static final DeferredHolder<EntityType<?>, EntityType<TangledThreadProjectile>> TANGLED_THREAD =
+            ENTITY_TYPES.register("tangled_thread", () ->
+                    EntityType.Builder.<TangledThreadProjectile>of(TangledThreadProjectile::new, MobCategory.MISC)
                             .sized(0.25F, 0.25F)
-                            .clientTrackingRange(64)
-                            .updateInterval(1)
-                            .build("sprinkler_droplet")
+                            .clientTrackingRange(4)
+                            .updateInterval(10)
+                            .build("tangled_thread")
             );
 
     public static void register(IEventBus modBus) {

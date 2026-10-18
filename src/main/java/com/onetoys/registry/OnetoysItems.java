@@ -15,7 +15,6 @@ public class OnetoysItems {
     public static final DeferredItem<BlockItem> TUNGSTEN_ORE = ITEMS.registerSimpleBlockItem(OnetoysBlocks.TUNGSTEN_ORE);
     public static final DeferredItem<BlockItem> RAW_TUNGSTEN_BLOCK = ITEMS.registerSimpleBlockItem(OnetoysBlocks.RAW_TUNGSTEN_BLOCK);
     public static final DeferredItem<BlockItem> TUNGSTEN_BLOCK = ITEMS.registerSimpleBlockItem(OnetoysBlocks.TUNGSTEN_BLOCK);
-    public static final DeferredItem<BlockItem> SPRINKLER = ITEMS.registerSimpleBlockItem(OnetoysBlocks.SPRINKLER);
 
     public static final DeferredItem<Item> RAW_TUNGSTEN = ITEMS.registerSimpleItem("raw_tungsten");
     public static final DeferredItem<Item> TUNGSTEN_INGOT = ITEMS.registerSimpleItem("tungsten_ingot");
@@ -25,7 +24,11 @@ public class OnetoysItems {
     public static final DeferredItem<Item> DIAMOND_SHARD = ITEMS.registerSimpleItem("diamond_shard");
     public static final DeferredItem<Item> EMERALD_SHARD = ITEMS.registerSimpleItem("emerald_shard");
     public static final DeferredItem<Item> COAL_LUMP = ITEMS.registerSimpleItem("coal_lump");
-    public static final DeferredItem<Item> MATTED_WOOL = ITEMS.registerSimpleItem("matted_wool");
+    public static final DeferredItem<Item> MATTED_WOOL = ITEMS.registerItem(
+            "matted_wool",
+            com.onetoys.item.TangledThreadItem::new,
+            new Item.Properties()
+    );
     public static final DeferredItem<Item> STOPWATCH = ITEMS.registerItem(
             "stopwatch",
             com.onetoys.item.StopwatchItem::new,

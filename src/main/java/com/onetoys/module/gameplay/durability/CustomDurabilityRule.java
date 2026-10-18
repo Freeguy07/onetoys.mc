@@ -3,7 +3,9 @@ package com.onetoys.module.gameplay.durability;
 import java.util.regex.Pattern;
 
 import com.onetoys.Onetoys;
+import com.onetoys.mixin.ItemAccessor;
 
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -42,6 +44,24 @@ public sealed interface CustomDurabilityRule permits
 
     default void apply(ModifyDefaultComponentsEvent event, Item item, ResourceLocation id) {
         apply(event, item, id, true);
+    }
+
+    default void applyDirect(Item item, ResourceLocation id, boolean showInTooltip) {
+        final int target = durability();
+        var builder = DataComponentMap.builder().addAll(item.components());
+        if (target == -1) {
+            builder.set(DataComponents.UNBREAKABLE, new Unbreakable(showInTooltip));
+            builder.set(DataComponents.MAX_DAMAGE, null);
+            ((ItemAccessor) item).onetoys$setComponents(builder.build());
+            Onetoys.LOGGER.info("Applied direct unbreakable override [{}] for '{}'", this, id);
+            return;
+        }
+        int current = item.components().getOrDefault(DataComponents.MAX_DAMAGE, 0);
+        if (current != target) {
+            builder.set(DataComponents.MAX_DAMAGE, target);
+            ((ItemAccessor) item).onetoys$setComponents(builder.build());
+            Onetoys.LOGGER.info("Applied direct durability override [{}] for '{}': {} -> {}", this, id, current, target);
+        }
     }
 
     record Exact(ResourceLocation targetId, int durability) implements CustomDurabilityRule {

@@ -11,14 +11,11 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 /**
  * Client-only tooltip handler for the Stopwatch item matching the Recovery Compass UX pattern.
  */
-@OnlyIn(Dist.CLIENT)
 public class StopwatchTooltipHandler {
     private static final Component HOLD_SHIFT = Component.translatable("onetoys.tooltip.stopwatch.hold_shift").withStyle(ChatFormatting.DARK_GRAY);
     private static final Component NO_TIME = Component.translatable("onetoys.tooltip.stopwatch.no_time").withStyle(ChatFormatting.GRAY);

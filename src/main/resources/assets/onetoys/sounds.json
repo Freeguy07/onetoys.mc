@@ -1,11 +1,4 @@
 {
-    "block.sprinkler.activate":  {
-                                     "category":  "block",
-                                     "subtitle":  "subtitles.onetoys.block.sprinkler.activate",
-                                     "sounds":  [
-                                                    "onetoys:block/sprinkler_activate"
-                                                ]
-                                 },
     "water.tiny_splash":  {
                               "category":  "neutral",
                               "subtitle":  "subtitles.onetoys.water.tiny_splash",

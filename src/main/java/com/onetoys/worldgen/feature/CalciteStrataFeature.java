@@ -6,9 +6,13 @@ import com.mojang.serialization.Codec;
 import com.onetoys.module.content.ContentModule;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.BulkSectionAccess;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 
@@ -19,7 +23,7 @@ import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
  * - Exact spherical and column-based range culling (eliminates dead-space loop iterations).
  * - Linear coordinate accumulation in the innermost vertical loop (eliminates multiplications).
  * - Core-rejection noise optimization (skips 3D noise evaluation for ~75% of candidate blocks).
- * - Column invariant hoisting and L1-friendly chunk section traversal.
+ * - Column invariant hoisting and L1-friendly chunk section traversal via BulkSectionAccess.
  * - Zero-allocation fast smooth value noise and air-adjacency tests.
  */
 public class CalciteStrataFeature extends Feature<CalciteStrataConfiguration> {
@@ -146,97 +150,107 @@ public class CalciteStrataFeature extends Feature<CalciteStrataConfiguration> {
 
         // Feature-level air rejection: If selected (0.1 / 10% chance), abort if deposit touches cave air
         boolean discardOnAirContact = discardChance > 0.0F && random.nextFloat() < discardChance;
-        if (discardOnAirContact && checkAirContact(level, pos, neighborPos, originX, originY, originZ,
-                (int) rx, (int) ry, (int) rz, limitX, limitZ, rMaxSq, boundedMinY, boundedMaxY,
-                uxNorm, uzNorm, nxNorm, nyNorm, nzNorm, wxNorm, wyNorm, wzNorm, seedPerimeter)) {
-            return false;
-        }
 
-        int placedCount = 0;
+        try (BulkSectionAccess access = new BulkSectionAccess(level)) {
+            if (discardOnAirContact && checkAirContact(access, level, pos, neighborPos, originX, originY, originZ,
+                    (int) rx, (int) ry, (int) rz, limitX, limitZ, rMaxSq, boundedMinY, boundedMaxY,
+                    uxNorm, uzNorm, nxNorm, nyNorm, nzNorm, wxNorm, wyNorm, wzNorm, seedPerimeter)) {
+                return false;
+            }
 
-        // Main placement traversal: outer column (dx, dz) iteration for optimal chunk locality and invariant hoisting
-        for (int dx = -limitX; dx <= limitX; dx++) {
-            int dxSq = dx * dx;
-            if (dxSq > rMaxSq) continue;
-            int worldX = originX + dx;
-            float xNormX = dx * uxNorm;
-            float xNormY = dx * nxNorm;
-            float xNormZ = dx * wxNorm;
-            float xRawY = dx * nx;
+            int placedCount = 0;
 
-            float noiseX_warp = worldX * 0.20F;
-            float noiseX_weather = worldX * 0.24F;
+            // Main placement traversal: outer column (dx, dz) iteration for optimal chunk locality and invariant hoisting
+            for (int dx = -limitX; dx <= limitX; dx++) {
+                int dxSq = dx * dx;
+                if (dxSq > rMaxSq) continue;
+                int worldX = originX + dx;
+                float xNormX = dx * uxNorm;
+                float xNormY = dx * nxNorm;
+                float xNormZ = dx * wxNorm;
+                float xRawY = dx * nx;
 
-            for (int dz = -limitZ; dz <= limitZ; dz++) {
-                int dxDzSq = dxSq + dz * dz;
-                if (dxDzSq > rMaxSq) continue;
-                int worldZ = originZ + dz;
+                float noiseX_warp = worldX * 0.20F;
+                float noiseX_weather = worldX * 0.24F;
 
-                // Validate chunk writability once per (worldX, worldZ) column
-                pos.set(worldX, originY, worldZ);
-                if (!level.ensureCanWrite(pos)) continue;
+                for (int dz = -limitZ; dz <= limitZ; dz++) {
+                    int dxDzSq = dxSq + dz * dz;
+                    if (dxDzSq > rMaxSq) continue;
+                    int worldZ = originZ + dz;
 
-                // normX is constant for the entire vertical column because uy == 0
-                float normX = xNormX + dz * uzNorm;
-                float normXSq = normX * normX;
+                    // Validate chunk writability once per (worldX, worldZ) column
+                    pos.set(worldX, originY, worldZ);
+                    if (!level.ensureCanWrite(pos)) continue;
 
-                float xzNormY = xNormY + dz * nzNorm;
-                float xzNormZ = xNormZ + dz * wzNorm;
-                float xzRawY = xRawY + dz * nz;
+                    // normX is constant for the entire vertical column because uy == 0
+                    float normX = xNormX + dz * uzNorm;
+                    float normXSq = normX * normX;
 
-                float maxDyForCol = (float) Math.sqrt(rMaxSq - dxDzSq);
-                int colMinY = Math.max(boundedMinY, (int) (originY - maxDyForCol));
-                int colMaxY = Math.min(boundedMaxY, (int) (originY + maxDyForCol));
+                    float xzNormY = xNormY + dz * nzNorm;
+                    float xzNormZ = xNormZ + dz * wzNorm;
+                    float xzRawY = xRawY + dz * nz;
 
-                float noiseZ_warp = worldZ * 0.20F;
-                float noiseZ_weather = worldZ * 0.24F;
+                    float maxDyForCol = (float) Math.sqrt(rMaxSq - dxDzSq);
+                    int colMinY = Math.max(boundedMinY, (int) (originY - maxDyForCol));
+                    int colMaxY = Math.min(boundedMaxY, (int) (originY + maxDyForCol));
 
-                // Linear accumulation: initialize coordinates at colMinY, then step by constants per y
-                float dy0 = colMinY - originY;
-                float normY = xzNormY + dy0 * nyNorm;
-                float normZ = xzNormZ + dy0 * wyNorm;
-                float yLocal = xzRawY + dy0 * ny;
+                    float noiseZ_warp = worldZ * 0.20F;
+                    float noiseZ_weather = worldZ * 0.24F;
 
-                for (int y = colMinY; y <= colMaxY; y++, normY += nyNorm, normZ += wyNorm, yLocal += ny) {
-                    float distSq = normXSq + normY * normY + normZ * normZ;
+                    // Linear accumulation: initialize coordinates at colMinY, then step by constants per y
+                    float dy0 = colMinY - originY;
+                    float normY = xzNormY + dy0 * nyNorm;
+                    float normZ = xzNormZ + dy0 * wyNorm;
+                    float yLocal = xzRawY + dy0 * ny;
 
-                    // Core Rejection Optimization:
-                    // distSq > 1.30F is strictly outside the warped ellipsoid (warp max = +0.30F).
-                    // distSq <= 0.70F is strictly inside the core (warp min = -0.30F), skipping noise sampling!
-                    if (distSq > 1.30F) continue;
-                    if (distSq > 0.70F) {
-                        float warp = sampleSmoothNoise(noiseX_warp, y * 0.24F, noiseZ_warp, seedPerimeter);
-                        if (distSq > (1.0F + warp * 0.30F)) continue;
-                    }
+                    for (int y = colMinY; y <= colMaxY; y++, normY += nyNorm, normZ += wyNorm, yLocal += ny) {
+                        float distSq = normXSq + normY * normY + normZ * normZ;
 
-                    pos.set(worldX, y, worldZ);
-                    BlockState current = level.getBlockState(pos);
-                    if (config.target().test(current, random)) {
-                        // Coherent Cliffside Weathering / Exposure Masking on exposed cave surfaces
-                        if (discardChance > 0.0F && hasAdjacentAir(level, neighborPos, worldX, y, worldZ)) {
-                            float weather = sampleSmoothNoise(noiseX_weather, y * 0.16F, noiseZ_weather, seedWeathering);
-                            if (weather < weatherThreshold) {
-                                continue;
-                            }
+                        // Core Rejection Optimization:
+                        // distSq > 1.30F is strictly outside the warped ellipsoid (warp max = +0.30F).
+                        // distSq <= 0.70F is strictly inside the core (warp min = -0.30F), skipping noise sampling!
+                        if (distSq > 1.30F) continue;
+                        if (distSq > 0.70F) {
+                            float warp = sampleSmoothNoise(noiseX_warp, y * 0.24F, noiseZ_warp, seedPerimeter);
+                            if (distSq > (1.0F + warp * 0.30F)) continue;
                         }
 
-                        // Determine strata layer along rotated 25° normal axis
-                        int layerIndex = Math.floorMod(fastFloor(yLocal), layerCount);
-                        level.setBlock(pos, layers[layerIndex], 2);
-                        placedCount++;
+                        pos.set(worldX, y, worldZ);
+                        LevelChunkSection section = access.getSection(pos);
+                        if (section == null) continue;
+
+                        int relX = SectionPos.sectionRelative(worldX);
+                        int relY = SectionPos.sectionRelative(y);
+                        int relZ = SectionPos.sectionRelative(worldZ);
+
+                        BlockState current = section.getBlockState(relX, relY, relZ);
+                        if (config.target().test(current, random)) {
+                            // Coherent Cliffside Weathering / Exposure Masking on exposed cave surfaces
+                            if (discardChance > 0.0F && hasAdjacentAir(access, level, neighborPos, worldX, y, worldZ)) {
+                                float weather = sampleSmoothNoise(noiseX_weather, y * 0.16F, noiseZ_weather, seedWeathering);
+                                if (weather < weatherThreshold) {
+                                    continue;
+                                }
+                            }
+
+                            // Determine strata layer along rotated 25° normal axis
+                            int layerIndex = Math.floorMod(fastFloor(yLocal), layerCount);
+                            section.setBlockState(relX, relY, relZ, layers[layerIndex], false);
+                            placedCount++;
+                        }
                     }
                 }
             }
-        }
 
-        return placedCount > 0;
+            return placedCount > 0;
+        }
     }
 
     /**
      * Fast zero-allocation pre-scan testing if the deposit intersects cave air.
      * Evaluates extremity poles first, followed by column-culled boundary inspection.
      */
-    private static boolean checkAirContact(WorldGenLevel level, BlockPos.MutableBlockPos pos, BlockPos.MutableBlockPos neighborPos,
+    private static boolean checkAirContact(BulkSectionAccess access, WorldGenLevel level, BlockPos.MutableBlockPos pos, BlockPos.MutableBlockPos neighborPos,
                                           int originX, int originY, int originZ,
                                           int rx, int ry, int rz,
                                           int limitX, int limitZ, float rMaxSq,
@@ -246,16 +260,15 @@ public class CalciteStrataFeature extends Feature<CalciteStrataConfiguration> {
                                           float wxNorm, float wyNorm, float wzNorm,
                                           int seedPerimeter) {
         // Fast extremity checks (origin, top, bottom, cardinal poles)
-        pos.set(originX, originY, originZ);
-        if (level.getBlockState(pos).isAir()) {
+        if (getBlockState(access, level, pos, originX, originY, originZ).isAir()) {
             return true;
         }
-        if (isAirOrAdjacent(level, pos, originX, originY + ry, originZ)
-                || isAirOrAdjacent(level, pos, originX, originY - ry, originZ)
-                || isAirOrAdjacent(level, pos, originX + rx, originY, originZ)
-                || isAirOrAdjacent(level, pos, originX - rx, originY, originZ)
-                || isAirOrAdjacent(level, pos, originX, originY, originZ + rz)
-                || isAirOrAdjacent(level, pos, originX, originY, originZ - rz)) {
+        if (isAirOrAdjacent(access, level, pos, originX, originY + ry, originZ)
+                || isAirOrAdjacent(access, level, pos, originX, originY - ry, originZ)
+                || isAirOrAdjacent(access, level, pos, originX + rx, originY, originZ)
+                || isAirOrAdjacent(access, level, pos, originX - rx, originY, originZ)
+                || isAirOrAdjacent(access, level, pos, originX, originY, originZ + rz)
+                || isAirOrAdjacent(access, level, pos, originX, originY, originZ - rz)) {
             return true;
         }
 
@@ -301,9 +314,8 @@ public class CalciteStrataFeature extends Feature<CalciteStrataConfiguration> {
                         if (distSq > (1.0F + warp * 0.30F)) continue;
                     }
 
-                    pos.set(worldX, y, worldZ);
-                    BlockState state = level.getBlockState(pos);
-                    if (state.isAir() || hasAdjacentAir(level, neighborPos, worldX, y, worldZ)) {
+                    BlockState state = getBlockState(access, level, pos, worldX, y, worldZ);
+                    if (state.isAir() || hasAdjacentAir(access, level, neighborPos, worldX, y, worldZ)) {
                         return true;
                     }
                 }
@@ -313,31 +325,29 @@ public class CalciteStrataFeature extends Feature<CalciteStrataConfiguration> {
         return false;
     }
 
-    /**
-     * Checks if the given position is air or immediately adjacent to air without any heap allocations.
-     */
-    private static boolean isAirOrAdjacent(WorldGenLevel level, BlockPos.MutableBlockPos pos, int x, int y, int z) {
+    private static BlockState getBlockState(BulkSectionAccess access, WorldGenLevel level, BlockPos.MutableBlockPos pos, int x, int y, int z) {
+        if (level.isOutsideBuildHeight(y)) {
+            return Blocks.AIR.defaultBlockState();
+        }
         pos.set(x, y, z);
-        return level.getBlockState(pos).isAir() || hasAdjacentAir(level, pos, x, y, z);
+        LevelChunkSection section = access.getSection(pos);
+        if (section == null) {
+            return Blocks.AIR.defaultBlockState();
+        }
+        return section.getBlockState(SectionPos.sectionRelative(x), SectionPos.sectionRelative(y), SectionPos.sectionRelative(z));
     }
 
-    /**
-     * Checks the 6 face neighbors of (x, y, z) for air with zero heap allocations.
-     * Prioritizes vertical Y axis (ceilings and floors) where air contact is most common in the Nether.
-     */
-    private static boolean hasAdjacentAir(WorldGenLevel level, BlockPos.MutableBlockPos pos, int x, int y, int z) {
-        pos.set(x, y + 1, z);
-        if (level.getBlockState(pos).isAir()) return true;
-        pos.set(x, y - 1, z);
-        if (level.getBlockState(pos).isAir()) return true;
-        pos.set(x + 1, y, z);
-        if (level.getBlockState(pos).isAir()) return true;
-        pos.set(x - 1, y, z);
-        if (level.getBlockState(pos).isAir()) return true;
-        pos.set(x, y, z + 1);
-        if (level.getBlockState(pos).isAir()) return true;
-        pos.set(x, y, z - 1);
-        return level.getBlockState(pos).isAir();
+    private static boolean isAirOrAdjacent(BulkSectionAccess access, WorldGenLevel level, BlockPos.MutableBlockPos pos, int x, int y, int z) {
+        return getBlockState(access, level, pos, x, y, z).isAir() || hasAdjacentAir(access, level, pos, x, y, z);
+    }
+
+    private static boolean hasAdjacentAir(BulkSectionAccess access, WorldGenLevel level, BlockPos.MutableBlockPos pos, int x, int y, int z) {
+        if (getBlockState(access, level, pos, x, y + 1, z).isAir()) return true;
+        if (getBlockState(access, level, pos, x, y - 1, z).isAir()) return true;
+        if (getBlockState(access, level, pos, x + 1, y, z).isAir()) return true;
+        if (getBlockState(access, level, pos, x - 1, y, z).isAir()) return true;
+        if (getBlockState(access, level, pos, x, y, z + 1).isAir()) return true;
+        return getBlockState(access, level, pos, x, y, z - 1).isAir();
     }
 
     /**

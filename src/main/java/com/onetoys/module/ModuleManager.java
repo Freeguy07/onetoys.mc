@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.onetoys.module.content.ContentModule;
-import com.onetoys.module.content.SaltModule;
-import com.onetoys.module.gameplay.FoodOverhaulModule;
 import com.onetoys.module.gameplay.GameplayTweaksModule;
 import com.onetoys.module.recipetweaks.RecipeTweaksModule;
 import com.onetoys.module.worldgen.WorldgenTweaksModule;
@@ -32,10 +30,8 @@ public class ModuleManager {
         if (modules.isEmpty()) {
             register(new RecipeTweaksModule());
             register(new GameplayTweaksModule());
-            register(new FoodOverhaulModule());
             register(new WorldgenTweaksModule());
             register(new ContentModule());
-            register(new SaltModule());
         }
     }
 

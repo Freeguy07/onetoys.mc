@@ -3,13 +3,16 @@ package com.onetoys;
 import com.onetoys.client.gui.OnetoysConfigurationSectionScreen;
 import com.onetoys.client.particle.NetherLapisDripParticle;
 import com.onetoys.module.ModuleManager;
+import com.onetoys.registry.OnetoysEntityTypes;
 import com.onetoys.registry.OnetoysParticles;
 
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
@@ -25,17 +28,22 @@ public class OnetoysClient {
                 (cont, modListScreen) -> new ConfigurationScreen(cont, modListScreen, OnetoysConfigurationSectionScreen::new));
 
         modBus.addListener(OnetoysClient::onClientSetup);
+        modBus.addListener(OnetoysClient::onRegisterEntityRenderers);
         modBus.addListener(OnetoysClient::onRegisterParticleProviders);
-        modBus.addListener(OnetoysClient::onRegisterRenderers);
         modBus.addListener(OnetoysClient::registerBlockColors);
 
         com.onetoys.salt.client.SaltClientEvents.init(modBus);
 
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.onetoys.client.WetnessClientHelper::onClientEntityTick);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.onetoys.client.SpecialMobClientHelper::onClientEntityTick);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.onetoys.client.ItemActionBarClientHandler::onClientTick);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.onetoys.client.RecoveryCompassTooltipHandler::onItemTooltip);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.onetoys.client.CharcoalTooltipHandler::onItemTooltip);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.onetoys.client.StopwatchTooltipHandler::onItemTooltip);
+    }
+
+    private static void onRegisterEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(OnetoysEntityTypes.TANGLED_THREAD.get(), ThrownItemRenderer::new);
     }
 
     private static final float[] STOPWATCH_FRAMES = new float[32];
@@ -98,13 +106,6 @@ public class OnetoysClient {
         event.registerSprite(OnetoysParticles.LANDING_NETHER_LAPIS.get(),
                 (type, level, x, y, z, xSpeed, ySpeed, zSpeed) ->
                         new NetherLapisDripParticle.LandParticle(level, x, y, z));
-    }
-
-    private static void onRegisterRenderers(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(
-                com.onetoys.registry.OnetoysEntityTypes.SPRINKLER_DROPLET.get(),
-                com.onetoys.client.renderer.SprinklerDropletRenderer::new
-        );
     }
 
     private static void registerBlockColors(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Block event) {

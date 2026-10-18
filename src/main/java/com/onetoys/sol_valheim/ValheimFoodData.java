@@ -1,6 +1,9 @@
 package com.onetoys.sol_valheim;
 
 import com.onetoys.api.event.PerestroykaHungerEvent;
+import com.onetoys.salt.Salting;
+import com.onetoys.salt.Satiating;
+import com.onetoys.salt.Sweetening;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -26,16 +29,57 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
 
     public static final int MAX_ITEM_SLOTS = 3;
 
+    private static final Comparator<EatenFoodItem> TICKS_COMPARATOR = Comparator.comparingInt(a -> a.ticksLeft);
+
     public static final StreamCodec<RegistryFriendlyByteBuf, ValheimFoodData> STREAM_CODEC =
             StreamCodec.of(
                     (buffer, val) -> {
-                        CompoundTag tag = val.serializeNBT(buffer.registryAccess());
-                        ByteBufCodecs.COMPOUND_TAG.encode(buffer, tag);
+                        ByteBufCodecs.VAR_INT.encode(buffer, val.hungerCountdown);
+                        ByteBufCodecs.VAR_INT.encode(buffer, val.secondHungerCountdown);
+                        ByteBufCodecs.FLOAT.encode(buffer, val.hungerExhaustion);
+
+                        buffer.writeVarInt(val.ItemEntries.size());
+                        for (EatenFoodItem entry : val.ItemEntries) {
+                            ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, entry.item);
+                            buffer.writeVarInt(entry.ticksLeft);
+                            buffer.writeVarLong(entry.id);
+                        }
+
+                        if (val.DrinkSlot != null) {
+                            buffer.writeBoolean(true);
+                            ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, val.DrinkSlot.item);
+                            buffer.writeVarInt(val.DrinkSlot.ticksLeft);
+                            buffer.writeVarLong(val.DrinkSlot.id);
+                        } else {
+                            buffer.writeBoolean(false);
+                        }
                     },
                     buffer -> {
-                        CompoundTag tag = ByteBufCodecs.COMPOUND_TAG.decode(buffer);
                         ValheimFoodData data = new ValheimFoodData();
-                        data.deserializeNBT(buffer.registryAccess(), tag);
+                        data.hungerCountdown = ByteBufCodecs.VAR_INT.decode(buffer);
+                        data.secondHungerCountdown = ByteBufCodecs.VAR_INT.decode(buffer);
+                        data.hungerExhaustion = ByteBufCodecs.FLOAT.decode(buffer);
+
+                        int count = buffer.readVarInt();
+                        data.ItemEntries.clear();
+                        for (int i = 0; i < count; i++) {
+                            ItemStack stack = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
+                            int ticksLeft = buffer.readVarInt();
+                            long id = buffer.readVarLong();
+                            data.ItemEntries.add(new EatenFoodItem(stack, ticksLeft, id));
+                        }
+                        data.ItemEntries.sort(TICKS_COMPARATOR);
+
+                        boolean hasDrink = buffer.readBoolean();
+                        if (hasDrink) {
+                            ItemStack drinkStack = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
+                            int drinkTicks = buffer.readVarInt();
+                            long drinkId = buffer.readVarLong();
+                            data.DrinkSlot = new EatenFoodItem(drinkStack, drinkTicks, drinkId);
+                        } else {
+                            data.DrinkSlot = null;
+                        }
+
                         return data;
                     }
             );
@@ -45,12 +89,30 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
         return nextIdCounter++;
     }
 
+    public static boolean hasAnySeasoning(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        return Salting.isSalted(stack) || Sweetening.isSweetened(stack) || Satiating.isSatiating(stack);
+    }
+
+    public static boolean canReplaceWithSeasoned(ItemStack existingFood, ItemStack newFood) {
+        if (existingFood == null || existingFood.isEmpty() || newFood == null || newFood.isEmpty()) {
+            return false;
+        }
+        if (!ItemStack.isSameItem(existingFood, newFood)) {
+            return false;
+        }
+        return !hasAnySeasoning(existingFood) && hasAnySeasoning(newFood);
+    }
+
     public List<EatenFoodItem> ItemEntries = new ArrayList<>();
     public EatenFoodItem DrinkSlot;
     public int MaxItemSlots = MAX_ITEM_SLOTS;
     public int hungerCountdown;
     public int secondHungerCountdown;
     public float hungerExhaustion = 0f;
+    public transient long lastDamageGameTime = -1L;
     private boolean isDirty = false;
 
     private transient double lastPosX = Double.NaN;
@@ -332,6 +394,7 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
         copy.hungerCountdown = this.hungerCountdown;
         copy.secondHungerCountdown = this.secondHungerCountdown;
         copy.hungerExhaustion = this.hungerExhaustion;
+        copy.lastDamageGameTime = this.lastDamageGameTime;
         for (EatenFoodItem entry : this.ItemEntries) {
             copy.ItemEntries.add(new EatenFoodItem(entry));
         }
@@ -362,7 +425,7 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
         ItemStack singleFood = food.copyWithCount(1);
         var isDrink = singleFood.getUseAnimation() == UseAnim.DRINK;
         if (isDrink) {
-            if (DrinkSlot != null && !DrinkSlot.canEatEarly())
+            if (DrinkSlot != null && !DrinkSlot.canEatEarly() && !canReplaceWithSeasoned(DrinkSlot.item, singleFood))
                 return;
 
             if (DrinkSlot == null)
@@ -381,13 +444,13 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
 
         var existing = getEatenFood(singleFood);
         if (existing != null) {
-            if (!existing.canEatEarly())
+            if (!existing.canEatEarly() && !canReplaceWithSeasoned(existing.item, singleFood))
                 return;
 
             existing.ticksLeft = config.getTime();
             existing.item = singleFood;
             existing.id = getNextId();
-            ItemEntries.sort(Comparator.comparingInt(a -> a.ticksLeft));
+            ItemEntries.sort(TICKS_COMPARATOR);
             hungerCountdown = getMaxHungerTimer();
             secondHungerCountdown = getMaxSecondHungerTimer();
             hungerExhaustion = 0f;
@@ -397,7 +460,7 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
 
         if (ItemEntries.size() < MAX_ITEM_SLOTS) {
             ItemEntries.add(new EatenFoodItem(singleFood, config.getTime(), getNextId()));
-            ItemEntries.sort(Comparator.comparingInt(a -> a.ticksLeft));
+            ItemEntries.sort(TICKS_COMPARATOR);
             hungerCountdown = getMaxHungerTimer();
             secondHungerCountdown = getMaxSecondHungerTimer();
             hungerExhaustion = 0f;
@@ -410,7 +473,7 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
                 item.ticksLeft = config.getTime();
                 item.item = singleFood;
                 item.id = getNextId();
-                ItemEntries.sort(Comparator.comparingInt(a -> a.ticksLeft));
+                ItemEntries.sort(TICKS_COMPARATOR);
                 hungerCountdown = getMaxHungerTimer();
                 secondHungerCountdown = getMaxSecondHungerTimer();
                 hungerExhaustion = 0f;
@@ -428,11 +491,11 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
             return true;
 
         if (food.getUseAnimation() == UseAnim.DRINK)
-            return DrinkSlot == null || DrinkSlot.canEatEarly();
+            return DrinkSlot == null || DrinkSlot.canEatEarly() || canReplaceWithSeasoned(DrinkSlot.item, food);
 
         var existing = getEatenFood(food);
         if (existing != null)
-            return existing.canEatEarly();
+            return existing.canEatEarly() || canReplaceWithSeasoned(existing.item, food);
 
         if (ItemEntries.size() < MAX_ITEM_SLOTS)
             return true;
@@ -486,7 +549,7 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
         if (ItemEntries.size() != prevSize) {
             isDirty = true;
         }
-        ItemEntries.sort(Comparator.comparingInt(a -> a.ticksLeft));
+        ItemEntries.sort(TICKS_COMPARATOR);
 
         boolean active = !ItemEntries.isEmpty() || DrinkSlot != null;
         if (active) {
@@ -521,7 +584,7 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
             if (ItemEntries.size() != prevSize) {
                 isDirty = true;
             }
-            ItemEntries.sort(Comparator.comparingInt(a -> a.ticksLeft));
+            ItemEntries.sort(TICKS_COMPARATOR);
         }
 
         boolean active = !ItemEntries.isEmpty() || DrinkSlot != null;
@@ -560,28 +623,50 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
         return nutrition;
     }
 
-    public float getRegenSpeed() {
-        float regen = 0.25f;
-        for (var item : ItemEntries) {
-            ModConfig.Common.FoodConfig food = ModConfig.getFoodConfig(item.item);
-            if (food == null)
-                continue;
+    public float getTotalMaxHealthBonus() {
+        float maxHealthBonus = 0f;
+        float drinkBonus = (DrinkSlot != null && SOLValheim.Config.common != null && SOLValheim.Config.common.drinkSlotFoodEffectivenessBonus != null && ModConfig.isLoaded())
+                ? (float) (1.0 + SOLValheim.Config.common.drinkSlotFoodEffectivenessBonus.get()) : 1.0f;
 
-            regen += food.getHealthRegen();
+        for (var eaten : ItemEntries) {
+            var config = ModConfig.getFoodConfig(eaten.item);
+            if (config != null) {
+                maxHealthBonus += eaten.getHeartsBonus(config) * drinkBonus;
+            }
         }
 
         if (DrinkSlot != null) {
-            ModConfig.Common.FoodConfig food = ModConfig.getFoodConfig(DrinkSlot.item);
-            if (food != null) {
-                regen += food.getHealthRegen();
+            var config = ModConfig.getFoodConfig(DrinkSlot.item);
+            if (config != null) {
+                maxHealthBonus += DrinkSlot.getHeartsBonus(config);
             }
+        }
+        return maxHealthBonus;
+    }
 
-            double bonus = (SOLValheim.Config.common != null && SOLValheim.Config.common.drinkSlotFoodEffectivenessBonus != null && ModConfig.isLoaded())
-                    ? SOLValheim.Config.common.drinkSlotFoodEffectivenessBonus.get() : 0.10;
-            regen = (float) (regen * (1.0 + bonus));
+    public float getTotalHealPerSecond() {
+        float healPerSecond = 0f;
+        float drinkBonus = (DrinkSlot != null && SOLValheim.Config.common != null && SOLValheim.Config.common.drinkSlotFoodEffectivenessBonus != null && ModConfig.isLoaded())
+                ? (float) (1.0 + SOLValheim.Config.common.drinkSlotFoodEffectivenessBonus.get()) : 1.0f;
+
+        for (var eaten : ItemEntries) {
+            var config = ModConfig.getFoodConfig(eaten.item);
+            if (config != null) {
+                healPerSecond += eaten.getHealAmount(config) * drinkBonus;
+            }
         }
 
-        return regen;
+        if (DrinkSlot != null) {
+            var config = ModConfig.getFoodConfig(DrinkSlot.item);
+            if (config != null) {
+                healPerSecond += DrinkSlot.getHealAmount(config);
+            }
+        }
+        return healPerSecond;
+    }
+
+    public float getRegenSpeed() {
+        return 0.25f + getTotalHealPerSecond();
     }
 
     @Override
@@ -662,7 +747,7 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
                 ItemEntries.add(new EatenFoodItem(stack, ticks, id));
             }
         }
-        ItemEntries.sort(Comparator.comparingInt(a -> a.ticksLeft));
+        ItemEntries.sort(TICKS_COMPARATOR);
 
         var drink = tag.getString("drink");
         var drinkTicks = tag.getInt("drinkticks");

@@ -15,6 +15,8 @@ public class MobTweaks {
     private final GoatTweaks goatTweaks = new GoatTweaks();
     private final CowTweaks cowTweaks = new CowTweaks();
     private final MooshroomTweaks mooshroomTweaks = new MooshroomTweaks();
+    private final MobAiTweaks aiTweaks = new MobAiTweaks();
+    private final SpecialMobTweaks specialMobTweaks = new SpecialMobTweaks();
     private ModConfigSpec.BooleanValue enabledConfig;
 
     public void buildConfig(ModConfigSpec.Builder builder) {
@@ -27,6 +29,8 @@ public class MobTweaks {
                 .translation("onetoys.configuration.gameplay_tweaks.mob_tweaks.enabled")
                 .define("enabled", true);
 
+        aiTweaks.buildConfig(builder);
+        specialMobTweaks.buildConfig(builder);
         goatTweaks.buildConfig(builder);
         cowTweaks.buildConfig(builder);
         mooshroomTweaks.buildConfig(builder);
@@ -36,6 +40,14 @@ public class MobTweaks {
 
     public boolean isEnabled() {
         return enabledConfig == null || enabledConfig.get();
+    }
+
+    public MobAiTweaks getAiTweaks() {
+        return aiTweaks;
+    }
+
+    public SpecialMobTweaks getSpecialMobTweaks() {
+        return specialMobTweaks;
     }
 
     public GoatTweaks getGoatTweaks() {
@@ -51,6 +63,8 @@ public class MobTweaks {
     }
 
     public void onConstruct(IEventBus modBus) {
+        aiTweaks.onConstruct(modBus);
+        specialMobTweaks.onConstruct(modBus);
         goatTweaks.onConstruct(modBus);
         cowTweaks.onConstruct(modBus);
         mooshroomTweaks.onConstruct(modBus);
