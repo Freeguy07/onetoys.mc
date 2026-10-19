@@ -31,6 +31,7 @@ import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.TagsUpdatedEvent;
 
@@ -40,7 +41,13 @@ public class RecipeTweaksModule extends OnetoysModule {
     private static final ResourceKey<Item> FLINT_KEY =
             ResourceKey.create(Registries.ITEM, ResourceLocation.withDefaultNamespace("flint"));
 
-    private ModConfigSpec.BooleanValue flintInStoneToolMaterialsConfig;
+    private static final Set<ResourceLocation> VANILLA_STONE_TOOL_MATERIALS = Set.of(
+            ResourceLocation.withDefaultNamespace("cobblestone"),
+            ResourceLocation.withDefaultNamespace("blackstone"),
+            ResourceLocation.withDefaultNamespace("cobbled_deepslate")
+    );
+
+    private ModConfigSpec.BooleanValue handyStoneMaterialsConfig;
     private final Map<String, ModConfigSpec.BooleanValue> replacementConfigs = new LinkedHashMap<>();
     private final Map<String, ModConfigSpec.BooleanValue> utilityConfigs = new LinkedHashMap<>();
 
@@ -83,29 +90,29 @@ public class RecipeTweaksModule extends OnetoysModule {
 
     private void onTagsUpdated(TagsUpdatedEvent event) {
         if (isEnabled()) {
-            updateRuntimeFlintTag(isFlintInStoneToolMaterialsActive());
+            updateRuntimeHandyStoneMaterialsTag(isHandyStoneMaterialsActive());
         }
     }
 
     private void onModConfigEvent(ModConfigEvent event) {
         if (event.getConfig().getModId().equals(Onetoys.MODID)) {
-            updateRuntimeFlintTag(isFlintInStoneToolMaterialsActive());
+            updateRuntimeHandyStoneMaterialsTag(isHandyStoneMaterialsActive());
         }
     }
 
     @Override
     public void onCommonSetup(FMLCommonSetupEvent event) {
         if (isEnabled()) {
-            event.enqueueWork(() -> updateRuntimeFlintTag(isFlintInStoneToolMaterialsActive()));
+            event.enqueueWork(() -> updateRuntimeHandyStoneMaterialsTag(isHandyStoneMaterialsActive()));
         }
     }
 
     @Override
     public void buildConfig(ModConfigSpec.Builder builder) {
-        flintInStoneToolMaterialsConfig = builder
-                .comment("When enabled, adds flint to the stone tool materials tag (#minecraft:stone_tool_materials), allowing stone tools to be crafted with flint.")
-                .translation("onetoys.configuration.recipe_tweaks.flint_in_stone_tool_materials")
-                .define("flint_in_stone_tool_materials", true);
+        handyStoneMaterialsConfig = builder
+                .comment("When enabled, adds flint and #c:stones to the stone tool materials tag (#minecraft:stone_tool_materials), allowing stone tools to be crafted with flint and common stones.")
+                .translation("onetoys.configuration.recipe_tweaks.handy_stone_materials")
+                .define("handy_stone_materials", true);
 
         builder.comment("Recipes that replace vanilla crafting recipes when enabled.")
                 .translation("onetoys.configuration.recipe_tweaks.replacement_recipes")
@@ -137,27 +144,38 @@ public class RecipeTweaksModule extends OnetoysModule {
     }
 
     /**
-     * Checks whether flint is configured to be added into stone tool materials.
+     * Checks whether handy stone materials (flint and #c:stones) are configured to be added into stone tool materials.
      */
+    public boolean isHandyStoneMaterialsEnabled() {
+        return handyStoneMaterialsConfig == null || handyStoneMaterialsConfig.get();
+    }
+
+    @Deprecated
     public boolean isFlintInStoneToolMaterialsEnabled() {
-        return flintInStoneToolMaterialsConfig == null || flintInStoneToolMaterialsConfig.get();
+        return isHandyStoneMaterialsEnabled();
     }
 
     /**
-     * Helper to check if both the Recipe Tweaks module and the flint stone tools toggle are active.
+     * Helper to check if both the Recipe Tweaks module and the handy stone materials toggle are active.
      */
-    public static boolean isFlintInStoneToolMaterialsActive() {
+    public static boolean isHandyStoneMaterialsActive() {
         return ModuleManager.get().getModule(RecipeTweaksModule.class)
-                .map(m -> m.isEnabled() && m.isFlintInStoneToolMaterialsEnabled())
+                .map(m -> m.isEnabled() && m.isHandyStoneMaterialsEnabled())
                 .orElse(false);
+    }
+
+    @Deprecated
+    public static boolean isFlintInStoneToolMaterialsActive() {
+        return isHandyStoneMaterialsActive();
     }
 
     /**
      * Dynamically updates the in-memory #minecraft:stone_tool_materials tag in BuiltInRegistries.ITEM.
+     * Adds flint and all items in #c:stones when enabled, and removes them when disabled.
      * Fires tag rebinding invalidation callbacks so recipe ingredient caches update immediately.
      */
     @SuppressWarnings("unchecked")
-    public static synchronized void updateRuntimeFlintTag(boolean enabled) {
+    public static synchronized void updateRuntimeHandyStoneMaterialsTag(boolean enabled) {
         try {
             Optional<HolderSet.Named<Item>> tagOpt = BuiltInRegistries.ITEM.getTag(ItemTags.STONE_TOOL_MATERIALS);
             if (tagOpt.isEmpty()) {
@@ -167,32 +185,79 @@ public class RecipeTweaksModule extends OnetoysModule {
             HolderSet.Named<Item> namedSet = tagOpt.get();
             Holder.Reference<Item> flintHolder = BuiltInRegistries.ITEM.getHolderOrThrow(FLINT_KEY);
 
-            boolean containsFlint = flintHolder.is(ItemTags.STONE_TOOL_MATERIALS);
-            if (enabled == containsFlint) {
-                return;
+            List<Holder.Reference<Item>> stonesHolders = new ArrayList<>();
+            Optional<HolderSet.Named<Item>> cStonesOpt = BuiltInRegistries.ITEM.getTag(Tags.Items.STONES);
+            if (cStonesOpt.isPresent()) {
+                for (Holder<Item> holder : cStonesOpt.get()) {
+                    if (holder instanceof Holder.Reference<Item> ref) {
+                        stonesHolders.add(ref);
+                    }
+                }
             }
 
             List<Holder<Item>> currentContents = new ArrayList<>(namedSet.stream().toList());
+            boolean modified = false;
 
             if (enabled) {
-                currentContents.add(flintHolder);
-                ((HolderSetNamedAccessor<Item>) (Object) namedSet).Onetoys$bind(currentContents);
+                if (!currentContents.contains(flintHolder)) {
+                    currentContents.add(flintHolder);
+                    modified = true;
+                }
+                bindTagToHolder(flintHolder, ItemTags.STONE_TOOL_MATERIALS, true);
 
-                Set<TagKey<Item>> tags = flintHolder.tags().collect(Collectors.toCollection(HashSet::new));
-                tags.add(ItemTags.STONE_TOOL_MATERIALS);
-                ((HolderReferenceAccessor<Item>) (Object) flintHolder).Onetoys$bindTags(tags);
-                Onetoys.LOGGER.debug("Dynamic Tag: Added flint to stone_tool_materials tag.");
+                for (Holder.Reference<Item> stoneRef : stonesHolders) {
+                    if (!currentContents.contains(stoneRef)) {
+                        currentContents.add(stoneRef);
+                        modified = true;
+                    }
+                    bindTagToHolder(stoneRef, ItemTags.STONE_TOOL_MATERIALS, true);
+                }
+
+                if (modified) {
+                    ((HolderSetNamedAccessor<Item>) (Object) namedSet).Onetoys$bind(currentContents);
+                    Onetoys.LOGGER.debug("Dynamic Tag: Added flint and c:stones to stone_tool_materials tag.");
+                }
             } else {
-                currentContents.remove(flintHolder);
-                ((HolderSetNamedAccessor<Item>) (Object) namedSet).Onetoys$bind(currentContents);
+                if (currentContents.remove(flintHolder)) {
+                    modified = true;
+                }
+                bindTagToHolder(flintHolder, ItemTags.STONE_TOOL_MATERIALS, false);
 
-                Set<TagKey<Item>> tags = flintHolder.tags().collect(Collectors.toCollection(HashSet::new));
-                tags.remove(ItemTags.STONE_TOOL_MATERIALS);
-                ((HolderReferenceAccessor<Item>) (Object) flintHolder).Onetoys$bindTags(tags);
-                Onetoys.LOGGER.debug("Dynamic Tag: Removed flint from stone_tool_materials tag.");
+                for (Holder.Reference<Item> stoneRef : stonesHolders) {
+                    if (!VANILLA_STONE_TOOL_MATERIALS.contains(stoneRef.key().location())) {
+                        if (currentContents.remove(stoneRef)) {
+                            modified = true;
+                        }
+                        bindTagToHolder(stoneRef, ItemTags.STONE_TOOL_MATERIALS, false);
+                    }
+                }
+
+                if (modified) {
+                    ((HolderSetNamedAccessor<Item>) (Object) namedSet).Onetoys$bind(currentContents);
+                    Onetoys.LOGGER.debug("Dynamic Tag: Removed flint and c:stones from stone_tool_materials tag.");
+                }
             }
         } catch (Exception e) {
-            Onetoys.LOGGER.debug("Could not update runtime flint tag: {}", e.getMessage());
+            Onetoys.LOGGER.debug("Could not update runtime stone tool materials tag: {}", e.getMessage());
+        }
+    }
+
+    @Deprecated
+    public static void updateRuntimeFlintTag(boolean enabled) {
+        updateRuntimeHandyStoneMaterialsTag(enabled);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void bindTagToHolder(Holder.Reference<Item> holder, TagKey<Item> tag, boolean add) {
+        Set<TagKey<Item>> tags = holder.tags().collect(Collectors.toCollection(HashSet::new));
+        if (add) {
+            if (tags.add(tag)) {
+                ((HolderReferenceAccessor<Item>) (Object) holder).Onetoys$bindTags(tags);
+            }
+        } else {
+            if (tags.remove(tag)) {
+                ((HolderReferenceAccessor<Item>) (Object) holder).Onetoys$bindTags(tags);
+            }
         }
     }
 
@@ -204,8 +269,8 @@ public class RecipeTweaksModule extends OnetoysModule {
         if (!isEnabled()) {
             return false;
         }
-        if ("flint_in_stone_tool_materials".equals(recipePath)) {
-            return isFlintInStoneToolMaterialsEnabled();
+        if ("handy_stone_materials".equals(recipePath) || "flint_in_stone_tool_materials".equals(recipePath)) {
+            return isHandyStoneMaterialsEnabled();
         }
         ModConfigSpec.BooleanValue config = replacementConfigs.get(recipePath);
         if (config != null) {
@@ -240,4 +305,3 @@ public class RecipeTweaksModule extends OnetoysModule {
         return Collections.unmodifiableMap(active);
     }
 }
-

@@ -10,7 +10,6 @@ public class TungstenTweaks {
     private final ContentModule parent;
     private ModConfigSpec.BooleanValue enabledConfig;
     private ModConfigSpec.BooleanValue oreGenerationConfig;
-    private ModConfigSpec.BooleanValue calciteStripesConfig;
     private ModConfigSpec.BooleanValue dumbbellEnabledConfig;
     private ModConfigSpec.DoubleValue dumbbellGravityConfig;
     private ModConfigSpec.BooleanValue wateringCanEnabledConfig;
@@ -30,14 +29,9 @@ public class TungstenTweaks {
                 .define("enabled", true);
 
         oreGenerationConfig = builder
-                .comment("When enabled, tungsten ore generates strictly replacing calcite in the Overworld (geodes, stony peaks) and Nether.")
+                .comment("When enabled, tungsten ore generates in The End (common blobs of 8) and upper Nether layers (blobs of 4).")
                 .translation("onetoys.configuration.content.tungsten_tweaks.ore_generation")
                 .define("ore_generation", true);
-
-        calciteStripesConfig = builder
-                .comment("When enabled, rare stratified geological blobs composed of layered discs (calcite, gravel, and tuff) generate throughout Nether terrain.")
-                .translation("onetoys.configuration.content.tungsten_tweaks.calcite_stripes")
-                .define("calcite_stripes", true);
 
         dumbbellEnabledConfig = builder
                 .comment("When enabled, adds the Dumbbell item and placeable falling block.")
@@ -63,10 +57,6 @@ public class TungstenTweaks {
 
     public boolean isOreGenerationEnabled() {
         return isEnabled() && (oreGenerationConfig == null || oreGenerationConfig.get());
-    }
-
-    public boolean isCalciteStripesEnabled() {
-        return isEnabled() && (calciteStripesConfig == null || calciteStripesConfig.get());
     }
 
     public boolean isDumbbellEnabled() {

@@ -1,9 +1,9 @@
 {
-  "feature": "onetoys:calcite_strata",
+  "feature": "onetoys:ore_tungsten_end",
   "placement": [
     {
-      "type": "minecraft:rarity_filter",
-      "chance": 12
+      "type": "minecraft:count",
+      "count": 12
     },
     {
       "type": "minecraft:in_square"
@@ -13,10 +13,10 @@
       "height": {
         "type": "minecraft:uniform",
         "max_inclusive": {
-          "below_top": 12
+          "absolute": 80
         },
         "min_inclusive": {
-          "above_bottom": 12
+          "absolute": 10
         }
       }
     },

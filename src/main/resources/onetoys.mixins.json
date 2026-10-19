@@ -45,6 +45,7 @@
     "client.GuiAccessor",
     "client.ItemInHandLayerMixin",
     "client.ItemInHandRendererMixin",
+    "client.LevelRendererMixin",
     "client.LivingEntityRendererMixin",
     "client.RenderLayerMixin",
     "client.SlimeRendererMixin",

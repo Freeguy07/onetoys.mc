@@ -22,7 +22,6 @@ public record OreTweakEnabledCondition(String tweak) implements ICondition {
             case "salt" -> ContentModule.isSaltEnabled();
             case "nether_locked_lapis", "nether_lapis_ore" -> WorldgenTweaksModule.isNetherLockedLapisEnabled();
             case "tungsten_ore" -> ContentModule.isTungstenOreGenerationEnabled();
-            case "calcite_stripes" -> ContentModule.isCalciteStripesEnabled();
             case "tungsten" -> ContentModule.isTungstenTweaksEnabled();
             case "nuggets_and_shards", "content" -> ContentModule.isNuggetsAndShardsEnabled();
             case "wetness" -> GameplayTweaksModule.isWetnessEnabled();

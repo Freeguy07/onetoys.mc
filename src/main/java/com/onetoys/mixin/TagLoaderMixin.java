@@ -18,12 +18,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagLoader;
+import net.neoforged.neoforge.common.Tags;
 
 @Mixin(TagLoader.class)
 public class TagLoaderMixin {
     private static final String ITEM_TAGS_DIR = Registries.tagsDirPath(Registries.ITEM);
     private static final ResourceLocation STONE_TOOL_MATERIALS_ID = ResourceLocation.withDefaultNamespace("stone_tool_materials");
     private static final ResourceLocation FLINT_ID = ResourceLocation.withDefaultNamespace("flint");
+    private static final ResourceLocation C_STONES_ID = Tags.Items.STONES.location();
 
     @Shadow
     @Final
@@ -32,15 +34,20 @@ public class TagLoaderMixin {
     @Inject(method = "load", at = @At("RETURN"))
     private void Onetoys$injectDynamicTags(ResourceManager resourceManager, CallbackInfoReturnable<Map<ResourceLocation, List<TagLoader.EntryWithSource>>> cir) {
         if (ITEM_TAGS_DIR.equals(this.directory) || "tags/item".equals(this.directory)) {
-            if (RecipeTweaksModule.isFlintInStoneToolMaterialsActive()) {
+            if (RecipeTweaksModule.isHandyStoneMaterialsActive()) {
                 Map<ResourceLocation, List<TagLoader.EntryWithSource>> map = cir.getReturnValue();
                 List<TagLoader.EntryWithSource> entries = map.computeIfAbsent(STONE_TOOL_MATERIALS_ID, k -> new ArrayList<>());
-                boolean alreadyPresent = entries.stream().anyMatch(e -> !e.remove() && FLINT_ID.equals(e.entry().getId()));
-                if (!alreadyPresent) {
+
+                boolean flintAlreadyPresent = entries.stream().anyMatch(e -> !e.remove() && !e.entry().isTag() && FLINT_ID.equals(e.entry().getId()));
+                if (!flintAlreadyPresent) {
                     entries.add(new TagLoader.EntryWithSource(TagEntry.element(FLINT_ID), "onetoys"));
+                }
+
+                boolean stonesAlreadyPresent = entries.stream().anyMatch(e -> !e.remove() && e.entry().isTag() && C_STONES_ID.equals(e.entry().getId()));
+                if (!stonesAlreadyPresent) {
+                    entries.add(new TagLoader.EntryWithSource(TagEntry.optionalTag(C_STONES_ID), "onetoys"));
                 }
             }
         }
     }
 }
-

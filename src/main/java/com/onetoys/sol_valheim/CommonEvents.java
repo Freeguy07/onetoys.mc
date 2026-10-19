@@ -346,15 +346,35 @@ public class CommonEvents {
         Player player = event.getEntity();
         ValheimFoodData foodData = player.getData(SOLValheim.FOOD_DATA);
         if (event.isWasDeath()) {
-            if (PerestroykaHungerAPI.isImmediateHungerActive()) {
-                foodData.hungerCountdown = 0;
-            } else {
-                int graceSeconds = (SOLValheim.Config.common != null && SOLValheim.Config.common.respawnGracePeriod != null)
-                        ? SOLValheim.Config.common.respawnGracePeriod.get() : 300;
-                int graceTicks = Math.max(200, graceSeconds * 20);
-                foodData.hungerCountdown = Math.max(foodData.hungerCountdown, graceTicks);
+            if (foodData != null) {
+                foodData.clear();
+                foodData.hungerExhaustion = 0f;
+                if (PerestroykaHungerAPI.isImmediateHungerActive()) {
+                    foodData.hungerCountdown = 0;
+                } else {
+                    int graceSeconds = (SOLValheim.Config.common != null && SOLValheim.Config.common.respawnGracePeriod != null)
+                            ? SOLValheim.Config.common.respawnGracePeriod.get() : 300;
+                    int graceTicks = Math.max(200, graceSeconds * 20);
+                    foodData.hungerCountdown = graceTicks;
+                }
+                foodData.secondHungerCountdown = foodData.getMaxSecondHungerTimer();
+                foodData.lastDamageGameTime = -1L;
             }
-            foodData.secondHungerCountdown = foodData.getMaxSecondHungerTimer();
+
+            var maxHealth = player.getAttribute(Attributes.MAX_HEALTH);
+            if (maxHealth != null) {
+                double baseStartingHealth = (SOLValheim.Config.common != null && SOLValheim.Config.common.startingHealth != null)
+                        ? SOLValheim.Config.common.startingHealth.get() * 2.0 : 6.0;
+                maxHealth.setBaseValue(baseStartingHealth);
+                player.setHealth((float) baseStartingHealth);
+            }
+
+            var movementSpeed = player.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (movementSpeed != null && movementSpeed.hasModifier(SOLValheim.SPEED_BUFF_ID)) {
+                movementSpeed.removeModifier(SOLValheim.SPEED_BUFF_ID);
+            }
+
+            player.syncData(SOLValheim.FOOD_DATA);
         } else {
             Player original = event.getOriginal();
             var originalMaxHealth = original.getAttribute(Attributes.MAX_HEALTH);
@@ -363,9 +383,11 @@ public class CommonEvents {
                 newMaxHealth.setBaseValue(originalMaxHealth.getBaseValue());
             }
             player.setHealth(original.getHealth());
+            if (foodData != null) {
+                foodData.lastDamageGameTime = -1L;
+            }
+            player.syncData(SOLValheim.FOOD_DATA);
         }
-        foodData.lastDamageGameTime = -1L;
-        player.syncData(SOLValheim.FOOD_DATA);
     }
 
     @SubscribeEvent

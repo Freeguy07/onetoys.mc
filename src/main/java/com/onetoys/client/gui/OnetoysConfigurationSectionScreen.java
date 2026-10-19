@@ -150,6 +150,7 @@ public class OnetoysConfigurationSectionScreen extends ConfigurationSectionScree
             case "onetoys" -> new ItemStack(Items.RAW_IRON);
 
             case "recipe_tweaks" -> new ItemStack(Items.CRAFTING_TABLE);
+            case "handy_stone_materials", "flint_in_stone_tool_materials" -> new ItemStack(Items.FLINT);
             case "replacement_recipes" -> new ItemStack(Items.ANVIL);
             case "utility" -> new ItemStack(Items.CHEST);
 

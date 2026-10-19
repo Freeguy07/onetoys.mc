@@ -34,11 +34,6 @@ public class ContentModule extends OnetoysModule {
         return mod != null && mod.isEnabled() && mod.getTungstenTweaks().isOreGenerationEnabled();
     }
 
-    public static boolean isCalciteStripesEnabled() {
-        ContentModule mod = instance;
-        return mod != null && mod.isEnabled() && mod.getTungstenTweaks().isCalciteStripesEnabled();
-    }
-
     public static boolean isTungstenTweaksEnabled() {
         ContentModule mod = instance;
         return mod != null && mod.isEnabled() && mod.getTungstenTweaks().isEnabled();

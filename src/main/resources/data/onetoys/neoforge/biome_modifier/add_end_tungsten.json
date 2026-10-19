@@ -6,7 +6,7 @@
     }
   ],
   "type": "neoforge:add_features",
-  "biomes": "#minecraft:is_overworld",
-  "features": "onetoys:ore_tungsten_overworld",
+  "biomes": "#minecraft:is_end",
+  "features": "onetoys:ore_tungsten_end",
   "step": "underground_ores"
 }
