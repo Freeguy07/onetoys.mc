@@ -42,11 +42,11 @@ public abstract class ItemInHandLayerMixin {
             if (livingEntity.getUsedItemHand() == hand
                     && itemStack.getUseAnimation() == UseAnim.BLOCK
                     && SwordBlockingTweaks.isSword(itemStack)) {
-                int sign = arm == HumanoidArm.LEFT ? -1 : 1;
-                poseStack.translate(sign * -0.05F, 0.0F, -0.1F);
-                poseStack.mulPose(Axis.YP.rotationDegrees(sign * -50.0F));
-                poseStack.mulPose(Axis.XP.rotationDegrees(-10.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(sign * -60.0F));
+                float sign = arm == HumanoidArm.LEFT ? -1.0F : 1.0F;
+                poseStack.translate(sign * -0.15F, 0.1F, -0.1F);
+                poseStack.mulPose(Axis.XP.rotationDegrees(-20.0F));
+                poseStack.mulPose(Axis.YP.rotationDegrees(sign * 40.0F));
+                poseStack.mulPose(Axis.ZP.rotationDegrees(sign * -35.0F));
             }
         }
     }

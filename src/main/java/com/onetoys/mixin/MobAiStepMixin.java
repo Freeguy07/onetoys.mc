@@ -2,16 +2,23 @@ package com.onetoys.mixin;
 
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.onetoys.module.gameplay.mobs.MobAiTweaks;
+import javax.annotation.Nullable;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.raid.Raider;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(Mob.class)
 public abstract class MobAiStepMixin {
+
+    @Shadow
+    @Nullable
+    public abstract LivingEntity getTarget();
 
     @Unique
     private int Onetoys$lastSelectorCheckTick = -1;

@@ -6,6 +6,7 @@ import com.onetoys.module.ModuleManager;
 import com.onetoys.module.OnetoysModule;
 import com.onetoys.module.gameplay.durability.DurabilityTweaks;
 import com.onetoys.module.gameplay.items.ItemTweaks;
+import com.onetoys.module.gameplay.mining.MiningTweaks;
 import com.onetoys.module.gameplay.mobs.MobTweaks;
 import com.onetoys.module.gameplay.sleep.SleepingTweaks;
 import com.onetoys.module.gameplay.stack.StackTweaks;
@@ -28,6 +29,7 @@ public class GameplayTweaksModule extends OnetoysModule {
     private final DurabilityTweaks durabilityTweaks = new DurabilityTweaks();
     private final MobTweaks mobTweaks = new MobTweaks(this);
     private final ItemTweaks itemTweaks = new ItemTweaks(this);
+    private final MiningTweaks miningTweaks = new MiningTweaks();
     private final SleepingTweaks sleepingTweaks = new SleepingTweaks();
     private final StackTweaks stackTweaks = new StackTweaks();
     private final WetnessTweaks wetnessTweaks = new WetnessTweaks(this);
@@ -44,6 +46,7 @@ public class GameplayTweaksModule extends OnetoysModule {
         durabilityTweaks.buildConfig(builder);
         mobTweaks.buildConfig(builder);
         itemTweaks.buildConfig(builder);
+        miningTweaks.buildConfig(builder);
         sleepingTweaks.buildConfig(builder);
         stackTweaks.buildConfig(builder);
         wetnessTweaks.buildConfig(builder);
@@ -102,6 +105,10 @@ public class GameplayTweaksModule extends OnetoysModule {
 
     public ItemTweaks getItemTweaks() {
         return itemTweaks;
+    }
+
+    public MiningTweaks getMiningTweaks() {
+        return miningTweaks;
     }
 
     public SleepingTweaks getSleepingTweaks() {

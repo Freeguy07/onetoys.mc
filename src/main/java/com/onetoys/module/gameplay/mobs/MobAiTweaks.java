@@ -13,9 +13,11 @@ public class MobAiTweaks {
     private ModConfigSpec.BooleanValue fixTargetLossAndCombatPauseConfig;
     private ModConfigSpec.BooleanValue fixLeapAttackAndHeadSnapConfig;
     private ModConfigSpec.BooleanValue fixSpinningAndStuckNavigationConfig;
-    private ModConfigSpec.BooleanValue allowWalkingOnRailsAndSpecialBlocksConfig;
-    private ModConfigSpec.BooleanValue enablePathfindingBackoffConfig;
-    private ModConfigSpec.IntValue sensingCacheIntervalConfig;
+    private ModConfigSpec.BooleanValue allowWalkingOnRailsConfig;
+    private ModConfigSpec.BooleanValue enableGapJumpingConfig;
+    private ModConfigSpec.BooleanValue allowWalkingOnSpecialBlocksConfig;
+    private ModConfigSpec.BooleanValue reducePlayerNoSpawnRadiusConfig;
+    private ModConfigSpec.DoubleValue playerNoSpawnDistanceConfig;
     private ModConfigSpec.BooleanValue limitBlockUpdatePathRecomputeConfig;
     private ModConfigSpec.BooleanValue throttleZombieEggScanConfig;
     private ModConfigSpec.BooleanValue enableDistanceAiThrottlingConfig;
@@ -58,20 +60,30 @@ public class MobAiTweaks {
                 .translation("onetoys.configuration.gameplay_tweaks.mob_tweaks.ai_tweaks.fix_spinning_and_stuck_navigation")
                 .define("fix_spinning_and_stuck_navigation", true);
 
-        allowWalkingOnRailsAndSpecialBlocksConfig = builder
-                .comment("Allows mobs to freely pathfind and walk across rails, lily pads, dripleaves, and leaves instead of treating them as impassable barriers.")
-                .translation("onetoys.configuration.gameplay_tweaks.mob_tweaks.ai_tweaks.allow_walking_on_rails_and_special_blocks")
-                .define("allow_walking_on_rails_and_special_blocks", true);
+        allowWalkingOnRailsConfig = builder
+                .comment("Allows mobs to freely pathfind and walk across rails instead of treating them as impassable barriers.")
+                .translation("onetoys.configuration.gameplay_tweaks.mob_tweaks.ai_tweaks.allow_walking_on_rails")
+                .define("allow_walking_on_rails", true);
 
-        enablePathfindingBackoffConfig = builder
-                .comment("Enables dynamic backoff penalties when A* pathfinding fails repeatedly against unreachable targets (MC-17630, MC-182325) and allows direct movement when already close without invoking A*.")
-                .translation("onetoys.configuration.gameplay_tweaks.mob_tweaks.ai_tweaks.enable_pathfinding_backoff")
-                .define("enable_pathfinding_backoff", true);
+        enableGapJumpingConfig = builder
+                .comment("Allows mobs to leap across 1-block empty spaces and gaps between platforms (parkour traversal).")
+                .translation("onetoys.configuration.gameplay_tweaks.mob_tweaks.ai_tweaks.enable_gap_jumping")
+                .define("enable_gap_jumping", true);
 
-        sensingCacheIntervalConfig = builder
-                .comment("Interval in ticks between Sensing line-of-sight cache flushes (1 = vanilla behavior every tick, 4 = reduces raycast overhead by 75%).")
-                .translation("onetoys.configuration.gameplay_tweaks.mob_tweaks.ai_tweaks.sensing_cache_interval")
-                .defineInRange("sensing_cache_interval", 4, 1, 20);
+        allowWalkingOnSpecialBlocksConfig = builder
+                .comment("Allows mobs to walk across leaves, lily pads, and big dripleaves.")
+                .translation("onetoys.configuration.gameplay_tweaks.mob_tweaks.ai_tweaks.allow_walking_on_special_blocks")
+                .define("allow_walking_on_special_blocks", true);
+
+        reducePlayerNoSpawnRadiusConfig = builder
+                .comment("Reduces the minimum no-spawn perimeter around players from vanilla's 24 blocks (576 blocks^2) to a tight 3x3 block perimeter.")
+                .translation("onetoys.configuration.gameplay_tweaks.mob_tweaks.ai_tweaks.reduce_player_no_spawn_radius")
+                .define("reduce_player_no_spawn_radius", true);
+
+        playerNoSpawnDistanceConfig = builder
+                .comment("Minimum spawn distance in blocks from players when reduced no-spawn radius is enabled (1.5 blocks = 3x3 block box).")
+                .translation("onetoys.configuration.gameplay_tweaks.mob_tweaks.ai_tweaks.player_no_spawn_distance")
+                .defineInRange("player_no_spawn_distance", 1.5D, 0.0D, 24.0D);
 
         limitBlockUpdatePathRecomputeConfig = builder
                 .comment("Limits reactive path recalculations in ServerLevel#sendBlockUpdated to mobs within 8 blocks of the modified block.")
@@ -120,23 +132,28 @@ public class MobAiTweaks {
         return isTweakEnabled() && (instance.fixSpinningAndStuckNavigationConfig == null || instance.fixSpinningAndStuckNavigationConfig.get());
     }
 
-    public static boolean isAllowWalkingOnRailsAndSpecialBlocks() {
-        return isTweakEnabled() && (instance.allowWalkingOnRailsAndSpecialBlocksConfig == null || instance.allowWalkingOnRailsAndSpecialBlocksConfig.get());
+    public static boolean isAllowWalkingOnRails() {
+        return isTweakEnabled() && (instance.allowWalkingOnRailsConfig == null || instance.allowWalkingOnRailsConfig.get());
     }
 
-    public static boolean isEnablePathfindingBackoff() {
-        return isTweakEnabled() && (instance.enablePathfindingBackoffConfig == null || instance.enablePathfindingBackoffConfig.get());
+    public static boolean isEnableGapJumping() {
+        return isTweakEnabled() && (instance.enableGapJumpingConfig == null || instance.enableGapJumpingConfig.get());
     }
 
-    public static boolean isPathfindingBackoffEnabled() {
-        return isEnablePathfindingBackoff();
+    public static boolean isAllowWalkingOnSpecialBlocks() {
+        return isTweakEnabled() && (instance.allowWalkingOnSpecialBlocksConfig == null || instance.allowWalkingOnSpecialBlocksConfig.get());
     }
 
-    public static int getSensingCacheInterval() {
-        if (!isTweakEnabled()) {
-            return 1;
+    public static boolean isReducePlayerNoSpawnRadius() {
+        return isTweakEnabled() && (instance.reducePlayerNoSpawnRadiusConfig == null || instance.reducePlayerNoSpawnRadiusConfig.get());
+    }
+
+    public static double getPlayerNoSpawnDistanceSquared() {
+        if (!isReducePlayerNoSpawnRadius()) {
+            return 576.0D;
         }
-        return instance.sensingCacheIntervalConfig != null ? instance.sensingCacheIntervalConfig.get() : 4;
+        double dist = instance.playerNoSpawnDistanceConfig != null ? instance.playerNoSpawnDistanceConfig.get() : 1.5D;
+        return dist * dist;
     }
 
     public static boolean isLimitBlockUpdatePathRecompute() {

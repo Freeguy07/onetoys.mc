@@ -265,17 +265,19 @@ public class SpecialMobTweaks {
             }
             case TYPE_SMART_SKELETON -> {
                 if (isSmartSkeletonEnabled() && mob instanceof AbstractSkeleton skeleton) {
+                    skeleton.removeAllGoals(goal -> goal instanceof SmartSkeletonGoal);
                     skeleton.goalSelector.addGoal(1, new SmartSkeletonGoal(skeleton));
                 }
             }
             case TYPE_SLIPPERY_SLIME -> {
                 if (isSlipperySlimeEnabled() && mob instanceof Slime slime) {
+                    slime.removeAllGoals(goal -> goal instanceof SlipperySlimeDashGoal);
                     slime.goalSelector.addGoal(1, new SlipperySlimeDashGoal(slime));
                 }
             }
             case TYPE_SPITTING_SPIDER -> {
                 if (isSpittingSpiderEnabled() && mob instanceof Spider spider) {
-                    spider.removeAllGoals(goal -> goal instanceof MeleeAttackGoal || goal instanceof LeapAtTargetGoal);
+                    spider.removeAllGoals(goal -> goal instanceof MeleeAttackGoal || goal instanceof LeapAtTargetGoal || goal instanceof SpittingSpiderGoal);
                     spider.goalSelector.addGoal(1, new SpittingSpiderGoal(spider));
                 }
             }
@@ -283,7 +285,7 @@ public class SpecialMobTweaks {
                 if (isWarlockWitherSkeletonEnabled() && mob instanceof WitherSkeleton witherSkeleton) {
                     witherSkeleton.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                     witherSkeleton.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
-                    witherSkeleton.removeAllGoals(goal -> goal instanceof MeleeAttackGoal);
+                    witherSkeleton.removeAllGoals(goal -> goal instanceof MeleeAttackGoal || goal instanceof WitherSkeletonWarlockGoal);
                     witherSkeleton.goalSelector.addGoal(1, new WitherSkeletonWarlockGoal(witherSkeleton));
                 }
             }

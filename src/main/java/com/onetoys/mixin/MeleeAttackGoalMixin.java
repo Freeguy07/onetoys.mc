@@ -5,7 +5,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.pathfinder.Path;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -37,12 +36,6 @@ public abstract class MeleeAttackGoalMixin {
 
     @Unique
     private long Onetoys$nextAttackGameTime = 0L;
-
-    @Unique
-    private int Onetoys$failedPathPenalty = 0;
-
-    @Unique
-    private boolean Onetoys$wasReadyToRecalculate = false;
 
     @Inject(method = "canUse", at = @At("HEAD"), cancellable = true)
     private void Onetoys$onCanUse(CallbackInfoReturnable<Boolean> cir) {
@@ -94,11 +87,6 @@ public abstract class MeleeAttackGoalMixin {
         this.Onetoys$nextAttackGameTime = this.mob.level().getGameTime() + this.ticksUntilNextAttack;
     }
 
-    @Inject(method = "tick", at = @At("HEAD"))
-    private void Onetoys$onTickHead(CallbackInfo ci) {
-        this.Onetoys$wasReadyToRecalculate = this.ticksUntilNextPathRecalculation <= 1;
-    }
-
     @Inject(method = "tick", at = @At("TAIL"))
     private void Onetoys$onTick(CallbackInfo ci) {
         LivingEntity target = this.mob.getTarget();
@@ -107,23 +95,19 @@ public abstract class MeleeAttackGoalMixin {
         }
 
         if (MobAiTweaks.isFixTargetLossAndCombatPause()) {
-            if (this.mob.distanceToSqr(target) <= 6.25D
-                    && Math.abs(target.getY() - this.mob.getY()) <= 1.5D
+            // When the mob is hurt (e.g. knocked back after taking damage), immediately prompt
+            // a fast path recalculation so the mob reacts instantly instead of standing still.
+            if (this.mob.hurtTime > 0 && this.ticksUntilNextPathRecalculation > 2) {
+                this.ticksUntilNextPathRecalculation = 2;
+            }
+
+            // If navigation finished or was interrupted (e.g. knockback) while in combat reach,
+            // step directly towards the target using MoveControl so the mob never freezes.
+            if (this.mob.distanceToSqr(target) <= 16.0D
+                    && Math.abs(target.getY() - this.mob.getY()) <= 2.0D
                     && this.mob.getNavigation().isDone()
                     && this.mob.getSensing().hasLineOfSight(target)) {
                 this.mob.getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), this.speedModifier);
-            }
-        }
-
-        if (MobAiTweaks.isEnablePathfindingBackoff()) {
-            if (this.Onetoys$wasReadyToRecalculate && this.ticksUntilNextPathRecalculation > 0) {
-                Path path = this.mob.getNavigation().getPath();
-                if (path == null || !path.canReach()) {
-                    this.Onetoys$failedPathPenalty = Math.min(60, this.Onetoys$failedPathPenalty + 10);
-                    this.ticksUntilNextPathRecalculation += this.Onetoys$failedPathPenalty + (this.mob.getId() & 3);
-                } else {
-                    this.Onetoys$failedPathPenalty = 0;
-                }
             }
         }
     }
