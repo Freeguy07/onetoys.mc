@@ -44,6 +44,11 @@ public class OnetoysItems {
             com.onetoys.item.WateringCanItem::new,
             new Item.Properties().stacksTo(1)
     );
+    public static final DeferredItem<com.onetoys.item.SpearItem> SPEAR = ITEMS.registerItem(
+            "spear",
+            com.onetoys.item.SpearItem::new,
+            new Item.Properties().durability(128).attributes(com.onetoys.item.SpearItem.createAttributes())
+    );
 
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);

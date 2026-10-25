@@ -4,7 +4,8 @@ public enum ModuleCategory {
     RECIPE_TWEAKS("recipe_tweaks", "Recipe Tweaks"),
     GAMEPLAY("gameplay", "Gameplay"),
     WORLDGEN("worldgen", "Worldgen Tweaks"),
-    CONTENT("content", "Content");
+    CONTENT("content", "Content"),
+    MOD_INTEGRATION("mod_integration", "Mod Integration");
 
     private final String id;
     private final String displayName;

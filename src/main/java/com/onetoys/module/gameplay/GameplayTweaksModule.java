@@ -203,6 +203,30 @@ public class GameplayTweaksModule extends OnetoysModule {
         return itemTweaks != null && itemTweaks.isSwordBlockingEnabled();
     }
 
+    public static boolean isSpearEnabled() {
+        GameplayTweaksModule mod = instance;
+        if (mod == null) {
+            mod = ModuleManager.get().getModule(GameplayTweaksModule.class).orElse(null);
+        }
+        if (mod == null || !mod.isEnabled()) {
+            return false;
+        }
+        ItemTweaks itemTweaks = mod.getItemTweaks();
+        return itemTweaks != null && itemTweaks.isSpearEnabled();
+    }
+
+    public static double getSpearMobSpawnChance() {
+        GameplayTweaksModule mod = instance;
+        if (mod == null) {
+            mod = ModuleManager.get().getModule(GameplayTweaksModule.class).orElse(null);
+        }
+        if (mod == null || !mod.isEnabled()) {
+            return 0.0D;
+        }
+        ItemTweaks itemTweaks = mod.getItemTweaks();
+        return itemTweaks != null ? itemTweaks.getSpearTweaks().getMobSpawnChance() : 0.0D;
+    }
+
     public static boolean isFoodOverhaulEnabled() {
         GameplayTweaksModule mod = instance;
         if (mod == null) {

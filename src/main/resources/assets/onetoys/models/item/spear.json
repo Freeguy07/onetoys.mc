@@ -1,0 +1,17 @@
+{
+  "loader": "neoforge:separate_transforms",
+  "base": {
+    "parent": "onetoys:item/spear_in_hand"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "onetoys:item/spear_gui"
+    },
+    "ground": {
+      "parent": "onetoys:item/spear_gui"
+    },
+    "fixed": {
+      "parent": "onetoys:item/spear_gui"
+    }
+  }
+}

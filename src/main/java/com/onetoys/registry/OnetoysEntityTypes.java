@@ -2,6 +2,7 @@ package com.onetoys.registry;
 
 import com.onetoys.Onetoys;
 import com.onetoys.entity.TangledThreadProjectile;
+import com.onetoys.entity.ThrownSpear;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -21,6 +22,15 @@ public class OnetoysEntityTypes {
                             .clientTrackingRange(4)
                             .updateInterval(10)
                             .build("tangled_thread")
+            );
+
+    public static final DeferredHolder<EntityType<?>, EntityType<ThrownSpear>> SPEAR =
+            ENTITY_TYPES.register("spear", () ->
+                    EntityType.Builder.<ThrownSpear>of(ThrownSpear::new, MobCategory.MISC)
+                            .sized(0.5F, 0.5F)
+                            .clientTrackingRange(4)
+                            .updateInterval(20)
+                            .build("spear")
             );
 
     public static void register(IEventBus modBus) {

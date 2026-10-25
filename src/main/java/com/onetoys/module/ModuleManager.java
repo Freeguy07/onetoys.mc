@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import com.onetoys.module.content.ContentModule;
 import com.onetoys.module.gameplay.GameplayTweaksModule;
+import com.onetoys.module.integration.ModIntegrationModule;
 import com.onetoys.module.recipetweaks.RecipeTweaksModule;
 import com.onetoys.module.worldgen.WorldgenTweaksModule;
 
@@ -32,6 +33,7 @@ public class ModuleManager {
             register(new GameplayTweaksModule());
             register(new WorldgenTweaksModule());
             register(new ContentModule());
+            register(new ModIntegrationModule());
         }
     }
 

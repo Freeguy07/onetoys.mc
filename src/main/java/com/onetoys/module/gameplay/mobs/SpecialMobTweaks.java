@@ -7,7 +7,11 @@ import com.onetoys.module.gameplay.mobs.goal.SmartSkeletonGoal;
 import com.onetoys.module.gameplay.mobs.goal.SpittingSpiderGoal;
 import com.onetoys.module.gameplay.mobs.goal.WitherSkeletonWarlockGoal;
 import com.onetoys.registry.OnetoysAttachments;
+import com.onetoys.registry.OnetoysItems;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -23,7 +27,11 @@ import net.minecraft.world.entity.monster.Spider;
 import net.minecraft.world.entity.monster.WitherSkeleton;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.providers.VanillaEnchantmentProviders;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
@@ -68,6 +76,7 @@ public class SpecialMobTweaks {
     private ModConfigSpec.BooleanValue runningZombieConfig;
     private ModConfigSpec.BooleanValue slowBabyZombieConfig;
     private ModConfigSpec.BooleanValue smartSkeletonConfig;
+    private ModConfigSpec.DoubleValue smartSkeletonCrossbowChanceConfig;
     private ModConfigSpec.BooleanValue slipperySlimeConfig;
     private ModConfigSpec.BooleanValue spittingSpiderConfig;
     private ModConfigSpec.BooleanValue warlockWitherSkeletonConfig;
@@ -106,9 +115,14 @@ public class SpecialMobTweaks {
                 .define("slow_baby_zombie", true);
 
         smartSkeletonConfig = builder
-                .comment("Smart Skeleton: switches its bow for a bone at close range (dealing stone sword damage) and switches back to its bow when the target retreats.")
+                .comment("Smart Skeleton: switches its bow or crossbow for a bone at close range (dealing stone sword damage) and switches back when the target retreats.")
                 .translation("onetoys.configuration.gameplay_tweaks.mob_tweaks.special_mobs.smart_skeleton")
                 .define("smart_skeleton", true);
+
+        smartSkeletonCrossbowChanceConfig = builder
+                .comment("Chance (0.0 - 1.0) for a Smart Skeleton to spawn with a crossbow instead of a bow (0.20 = 20%).")
+                .translation("onetoys.configuration.gameplay_tweaks.mob_tweaks.special_mobs.smart_skeleton_crossbow_chance")
+                .defineInRange("smart_skeleton_crossbow_chance", 0.20D, 0.0D, 1.0D);
 
         slipperySlimeConfig = builder
                 .comment("Slippery Slime: moves in short ground slides instead of jumping, and stops to swell up before launching a strong forward ground dash that can step up 1 block.")
@@ -157,6 +171,15 @@ public class SpecialMobTweaks {
 
     public static boolean isSmartSkeletonEnabled() {
         return isTweakEnabled() && (instance.smartSkeletonConfig == null || instance.smartSkeletonConfig.get());
+    }
+
+    public static double getSmartSkeletonCrossbowChance() {
+        if (!isSmartSkeletonEnabled()) {
+            return 0.0D;
+        }
+        return instance.smartSkeletonCrossbowChanceConfig != null
+                ? instance.smartSkeletonCrossbowChanceConfig.get()
+                : 0.20D;
     }
 
     public static boolean isSlipperySlimeEnabled() {
@@ -210,6 +233,9 @@ public class SpecialMobTweaks {
                 String assignedType = determineSpecialTypeForMob(mob);
                 if (!assignedType.isEmpty()) {
                     mob.setData(OnetoysAttachments.SPECIAL_MOB_TYPE, assignedType);
+                    if (TYPE_SMART_SKELETON.equals(assignedType) && mob instanceof AbstractSkeleton skeleton) {
+                        maybeEquipSmartSkeletonCrossbow(skeleton);
+                    }
                 }
             }
         }
@@ -218,6 +244,41 @@ public class SpecialMobTweaks {
         if (!currentType.isEmpty()) {
             applySpecialBehaviorToMob(mob, currentType);
         }
+    }
+
+    private void maybeEquipSmartSkeletonCrossbow(AbstractSkeleton skeleton) {
+        double crossbowChance = getSmartSkeletonCrossbowChance();
+        if (crossbowChance <= 0.0D || !(skeleton.getMainHandItem().getItem() instanceof BowItem)) {
+            return;
+        }
+        RandomSource random = skeleton.getRandom();
+        if (random.nextDouble() >= crossbowChance) {
+            return;
+        }
+
+        ItemStack crossbow = new ItemStack(Items.CROSSBOW);
+        if (skeleton.level() instanceof ServerLevel serverLevel) {
+            DifficultyInstance difficulty = serverLevel.getCurrentDifficultyAt(skeleton.blockPosition());
+            if (random.nextFloat() < 0.25F * difficulty.getSpecialMultiplier()) {
+                EnchantmentHelper.enchantItemFromProvider(
+                        crossbow,
+                        serverLevel.registryAccess(),
+                        VanillaEnchantmentProviders.MOB_SPAWN_EQUIPMENT,
+                        difficulty,
+                        random
+                );
+            }
+            if (random.nextInt(300) == 0) {
+                EnchantmentHelper.enchantItemFromProvider(
+                        crossbow,
+                        serverLevel.registryAccess(),
+                        VanillaEnchantmentProviders.PILLAGER_SPAWN_CROSSBOW,
+                        difficulty,
+                        random
+                );
+            }
+        }
+        skeleton.setItemSlot(EquipmentSlot.MAINHAND, crossbow);
     }
 
     private String determineSpecialTypeForMob(Mob mob) {
@@ -232,9 +293,10 @@ public class SpecialMobTweaks {
             return isWarlockWitherSkeletonEnabled() ? TYPE_WARLOCK_WITHER_SKELETON : TYPE_NONE;
         }
         if (mob instanceof AbstractSkeleton skeleton) {
-            boolean hasBow = skeleton.getMainHandItem().getItem() instanceof BowItem
-                    || skeleton.getOffhandItem().getItem() instanceof BowItem;
-            return (hasBow && isSmartSkeletonEnabled()) ? TYPE_SMART_SKELETON : TYPE_NONE;
+            boolean hasRangedWeapon = isBowOrCrossbow(skeleton.getMainHandItem())
+                    || isBowOrCrossbow(skeleton.getOffhandItem())
+                    || skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get());
+            return (hasRangedWeapon && isSmartSkeletonEnabled()) ? TYPE_SMART_SKELETON : TYPE_NONE;
         }
         if (mob instanceof Slime && !(mob instanceof MagmaCube)) {
             return isSlipperySlimeEnabled() ? TYPE_SLIPPERY_SLIME : TYPE_NONE;
@@ -243,6 +305,10 @@ public class SpecialMobTweaks {
             return isSpittingSpiderEnabled() ? TYPE_SPITTING_SPIDER : TYPE_NONE;
         }
         return TYPE_NONE;
+    }
+
+    private static boolean isBowOrCrossbow(ItemStack stack) {
+        return stack.getItem() instanceof BowItem || stack.getItem() instanceof CrossbowItem;
     }
 
     private void applySpecialBehaviorToMob(Mob mob, String type) {
@@ -267,6 +333,7 @@ public class SpecialMobTweaks {
                 if (isSmartSkeletonEnabled() && mob instanceof AbstractSkeleton skeleton) {
                     skeleton.removeAllGoals(goal -> goal instanceof SmartSkeletonGoal);
                     skeleton.goalSelector.addGoal(1, new SmartSkeletonGoal(skeleton));
+                    skeleton.reassessWeaponGoal();
                 }
             }
             case TYPE_SLIPPERY_SLIME -> {

@@ -79,6 +79,13 @@ public class OnetoysAttachments {
                             .build()
             );
 
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> SPEAR_SPAWN_ROLLED =
+            ATTACHMENT_TYPES.register("spear_spawn_rolled", () ->
+                    AttachmentType.builder(() -> false)
+                            .serialize(Codec.BOOL)
+                            .build()
+            );
+
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<String>> SPECIAL_MOB_TYPE =
             ATTACHMENT_TYPES.register("special_mob_type", () ->
                     AttachmentType.builder(() -> "")
@@ -91,6 +98,13 @@ public class OnetoysAttachments {
             ATTACHMENT_TYPES.register("smart_skeleton_stored_bow", () ->
                     AttachmentType.builder(() -> ItemStack.EMPTY)
                             .serialize(ItemStack.OPTIONAL_CODEC)
+                            .build()
+            );
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> SKELETON_CHARGING_CROSSBOW =
+            ATTACHMENT_TYPES.register("skeleton_charging_crossbow", () ->
+                    AttachmentType.builder(() -> false)
+                            .sync(ByteBufCodecs.BOOL)
                             .build()
             );
 

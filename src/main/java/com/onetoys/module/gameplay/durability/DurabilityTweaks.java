@@ -70,7 +70,13 @@ public class DurabilityTweaks {
                 .comment("List of item IDs, tags (starting with '#'), or wildcard patterns that will be made completely unbreakable.",
                         "Examples: ['minecraft:elytra', '#c:tools/netherite', '*golden_*']")
                 .translation("onetoys.configuration.gameplay_tweaks.durability_tweaks.unbreakable_items")
-                .defineListAllowEmpty("unbreakable_items", List.of(), () -> "", obj -> obj instanceof String);
+                .defineListAllowEmpty("unbreakable_items", List.of(
+                        "minecraft:wooden_sword",
+                        "minecraft:wooden_shovel",
+                        "minecraft:wooden_pickaxe",
+                        "minecraft:wooden_axe",
+                        "minecraft:wooden_hoe"
+                ), () -> "", obj -> obj instanceof String);
 
         showUnbreakableTooltipConfig = builder
                 .comment("When enabled, items made unbreakable display the 'Unbreakable' line in their tooltip.")

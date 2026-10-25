@@ -226,6 +226,9 @@ public class Onetoys {
         if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS) {
             event.accept(BLUESTONE);
         }
+        if (event.getTabKey() == CreativeModeTabs.COMBAT && GameplayTweaksModule.isSpearEnabled()) {
+            event.accept(OnetoysItems.SPEAR);
+        }
     }
 
     private void onFurnaceFuelBurnTime(FurnaceFuelBurnTimeEvent event) {

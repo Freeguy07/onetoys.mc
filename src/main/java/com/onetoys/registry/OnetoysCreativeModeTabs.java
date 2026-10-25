@@ -43,6 +43,9 @@ public class OnetoysCreativeModeTabs {
                             output.accept(OnetoysItems.WATERING_CAN.get());
                             output.accept(createFilledWateringCan());
                         }
+                        if (GameplayTweaksModule.isSpearEnabled()) {
+                            output.accept(OnetoysItems.SPEAR.get());
+                        }
                         if (ContentModule.isNuggetsAndShardsEnabled()) {
                             output.accept(OnetoysItems.COPPER_NUGGET.get());
                             output.accept(OnetoysItems.DIAMOND_SHARD.get());

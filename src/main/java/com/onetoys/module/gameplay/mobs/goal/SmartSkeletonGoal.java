@@ -3,6 +3,7 @@ package com.onetoys.module.gameplay.mobs.goal;
 import com.onetoys.Onetoys;
 import com.onetoys.module.gameplay.mobs.SpecialMobTweaks;
 import com.onetoys.registry.OnetoysAttachments;
+import com.onetoys.registry.OnetoysItems;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,7 +12,9 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.monster.AbstractSkeleton;
+import net.minecraft.world.entity.monster.CrossbowAttackMob;
 import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -41,6 +44,12 @@ public class SmartSkeletonGoal extends Goal {
     @Override
     public boolean canUse() {
         if (!SpecialMobTweaks.isSmartSkeletonEnabled()) {
+            if (isHoldingTemporaryBone()) {
+                restoreBow();
+            }
+            return false;
+        }
+        if (this.skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get())) {
             if (isHoldingTemporaryBone()) {
                 restoreBow();
             }
@@ -77,12 +86,12 @@ public class SmartSkeletonGoal extends Goal {
 
         double distSqr = this.skeleton.distanceToSqr(target);
         if (isHoldingTemporaryBone()) {
-            // Ensure residual bow strafing is completely cleared while fighting in melee
+            // Ensure residual bow/crossbow strafing is completely cleared while fighting in melee
             if (this.skeleton.xxa != 0.0F) {
                 this.skeleton.setXxa(0.0F);
             }
 
-            // Switch back to bow when target retreats beyond 7.0 blocks
+            // Switch back to ranged weapon when target retreats beyond 7.0 blocks
             if (distSqr >= RANGED_RESUME_DIST_SQR && this.switchCooldown <= 0) {
                 restoreBow();
                 this.switchCooldown = MIN_SWITCH_COOLDOWN_TICKS;
@@ -90,10 +99,10 @@ public class SmartSkeletonGoal extends Goal {
                 ensureBoneDamageModifier(true);
             }
         } else {
-            // Switch from bow to bone when target closes in within 4.0 blocks
+            // Switch from bow/crossbow to bone when target closes in within 4.0 blocks
             if (distSqr <= MELEE_ENGAGE_DIST_SQR
                     && this.switchCooldown <= 0
-                    && this.skeleton.getMainHandItem().getItem() instanceof BowItem) {
+                    && isRangedWeapon(this.skeleton.getMainHandItem())) {
                 switchToBone(target);
                 this.switchCooldown = MIN_SWITCH_COOLDOWN_TICKS;
             }
@@ -107,6 +116,10 @@ public class SmartSkeletonGoal extends Goal {
         }
     }
 
+    private static boolean isRangedWeapon(ItemStack stack) {
+        return stack.getItem() instanceof BowItem || stack.getItem() instanceof CrossbowItem;
+    }
+
     private boolean isHoldingTemporaryBone() {
         ItemStack storedBow = this.skeleton.getData(OnetoysAttachments.SMART_SKELETON_STORED_BOW);
         return !storedBow.isEmpty() && this.skeleton.getMainHandItem().is(Items.BONE);
@@ -114,9 +127,12 @@ public class SmartSkeletonGoal extends Goal {
 
     private void switchToBone(LivingEntity target) {
         ItemStack currentMainHand = this.skeleton.getMainHandItem();
-        if (currentMainHand.getItem() instanceof BowItem) {
-            // Stop bow drawing and clear residual RangedBowAttackGoal strafing state
+        if (isRangedWeapon(currentMainHand)) {
+            // Stop bow/crossbow drawing and clear residual ranged strafing state
             this.skeleton.stopUsingItem();
+            if (this.skeleton instanceof CrossbowAttackMob crossbowMob) {
+                crossbowMob.setChargingCrossbow(false);
+            }
             this.skeleton.getMoveControl().strafe(0.0F, 0.0F);
             this.skeleton.setXxa(0.0F);
             this.skeleton.setZza(0.0F);
@@ -137,6 +153,9 @@ public class SmartSkeletonGoal extends Goal {
         ensureBoneDamageModifier(false);
         if (!storedBow.isEmpty()) {
             this.skeleton.stopUsingItem();
+            if (this.skeleton instanceof CrossbowAttackMob crossbowMob) {
+                crossbowMob.setChargingCrossbow(false);
+            }
             this.skeleton.getNavigation().stop();
             this.skeleton.setXxa(0.0F);
             this.skeleton.setZza(0.0F);

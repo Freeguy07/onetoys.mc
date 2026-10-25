@@ -2,11 +2,14 @@ package com.onetoys;
 
 import com.onetoys.client.gui.OnetoysConfigurationSectionScreen;
 import com.onetoys.client.particle.NetherLapisDripParticle;
+import com.onetoys.client.renderer.entity.ThrownSpearRenderer;
 import com.onetoys.module.ModuleManager;
 import com.onetoys.registry.OnetoysEntityTypes;
+import com.onetoys.registry.OnetoysItems;
 import com.onetoys.registry.OnetoysParticles;
 
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -44,6 +47,7 @@ public class OnetoysClient {
 
     private static void onRegisterEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(OnetoysEntityTypes.TANGLED_THREAD.get(), ThrownItemRenderer::new);
+        event.registerEntityRenderer(OnetoysEntityTypes.SPEAR.get(), ThrownSpearRenderer::new);
     }
 
     private static void onClientSetup(FMLClientSetupEvent event) {
@@ -54,7 +58,7 @@ public class OnetoysClient {
             var componentHolder = com.onetoys.registry.OnetoysDataComponents.STOPWATCH;
             net.minecraft.client.renderer.item.ItemProperties.register(
                     com.onetoys.registry.OnetoysItems.STOPWATCH.get(),
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(Onetoys.MODID, "frame"),
+                    ResourceLocation.fromNamespaceAndPath(Onetoys.MODID, "frame"),
                     (stack, level, entity, seed) -> {
                         com.onetoys.item.StopwatchData data = stack.get(componentHolder.get());
                         if (data == null || (!data.active() && data.elapsedTicks() <= 0L)) {
@@ -77,8 +81,14 @@ public class OnetoysClient {
 
             net.minecraft.client.renderer.item.ItemProperties.register(
                     com.onetoys.registry.OnetoysItems.WATERING_CAN.get(),
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(Onetoys.MODID, "watered"),
+                    ResourceLocation.fromNamespaceAndPath(Onetoys.MODID, "watered"),
                     (stack, level, entity, seed) -> com.onetoys.item.WateringCanItem.getWaterLevel(stack) > 0 ? 1.0F : 0.0F
+            );
+
+            net.minecraft.client.renderer.item.ItemProperties.register(
+                    OnetoysItems.SPEAR.get(),
+                    ResourceLocation.fromNamespaceAndPath(Onetoys.MODID, "throwing"),
+                    (stack, level, entity, seed) -> (entity != null && entity.isUsingItem() && entity.getUseItem() == stack) ? 1.0F : 0.0F
             );
         });
     }
