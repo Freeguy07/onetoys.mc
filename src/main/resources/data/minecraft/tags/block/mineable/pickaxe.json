@@ -1,19 +1,39 @@
 {
-    "replace":  false,
-    "values":  [
-                   "onetoys:nether_lapis_ore",
-                   "onetoys:tungsten_ore",
-                   "onetoys:raw_tungsten_block",
-                   "onetoys:tungsten_block",
-                   "onetoys:dumbbell",
-                   "onetoys:rock_salt_ore",
-                   "onetoys:deepslate_rock_salt_ore",
-                   "onetoys:raw_rock_salt_block",
-                   "onetoys:salt_cluster",
-                   "onetoys:large_salt_bud",
-                   "onetoys:medium_salt_bud",
-                   "onetoys:small_salt_bud",
-                   "onetoys:salt_cauldron",
-                   "onetoys:salt_lamp"
-               ]
+    "replace": false,
+    "values": [
+        "onetoys:nether_lapis_ore",
+        "onetoys:tungsten_ore",
+        "onetoys:raw_tungsten_block",
+        "onetoys:tungsten_block",
+        "onetoys:dumbbell",
+        "onetoys:rock_salt_ore",
+        "onetoys:deepslate_rock_salt_ore",
+        "onetoys:raw_rock_salt_block",
+        "onetoys:salt_cluster",
+        "onetoys:large_salt_bud",
+        "onetoys:medium_salt_bud",
+        "onetoys:small_salt_bud",
+        "onetoys:salt_cauldron",
+        "onetoys:salt_lamp",
+        {
+            "id": "#c:glass_blocks",
+            "required": false
+        },
+        {
+            "id": "#c:glass_panes",
+            "required": false
+        },
+        {
+            "id": "#c:glass",
+            "required": false
+        },
+        {
+            "id": "#forge:glass",
+            "required": false
+        },
+        {
+            "id": "#forge:glass_panes",
+            "required": false
+        }
+    ]
 }

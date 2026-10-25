@@ -2,6 +2,7 @@ package com.onetoys.registry;
 
 import com.onetoys.Onetoys;
 import com.onetoys.block.NetherLapisOreBlock;
+import com.onetoys.block.QuartzGlassBlock;
 
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.level.block.Block;
@@ -80,6 +81,20 @@ public class OnetoysBlocks {
                             .requiresCorrectToolForDrops()
                             .strength(5.0F, 1200.0F)
                             .sound(SoundType.ANVIL)
+            )
+    );
+
+    public static final DeferredBlock<Block> QUARTZ_GLASS = BLOCKS.register(
+            "quartz_glass",
+            () -> new QuartzGlassBlock(
+                    BlockBehaviour.Properties.of()
+                            .noOcclusion()
+                            .isSuffocating((state, level, pos) -> false)
+                            .isViewBlocking((state, level, pos) -> false)
+                            .isRedstoneConductor((state, level, pos) -> false)
+                            .mapColor(MapColor.QUARTZ)
+                            .strength(0.3F)
+                            .sound(SoundType.GLASS)
             )
     );
 

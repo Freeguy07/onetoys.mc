@@ -1,6 +1,7 @@
 package com.onetoys.mixin;
 
 import com.onetoys.entity.ThrownSpear;
+import com.onetoys.module.gameplay.GameplayTweaksModule;
 import com.onetoys.module.gameplay.mobs.SpecialMobTweaks;
 import com.onetoys.module.gameplay.mobs.goal.SkeletonSpearAttackGoal;
 import com.onetoys.module.gameplay.mobs.goal.SmartSkeletonSpearMeleeGoal;
@@ -52,8 +53,31 @@ public abstract class AbstractSkeletonMixin extends Monster implements RangedAtt
     @Unique
     private SmartSkeletonSpearMeleeGoal onetoys$spearMeleeGoal;
 
+    @Unique
+    private int onetoys$aiStepDepth = 0;
+
+    @Unique
+    private boolean onetoys$needsWeaponReassessment = false;
+
     protected AbstractSkeletonMixin(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
+    }
+
+    @Inject(method = "aiStep", at = @At("HEAD"))
+    private void onetoys$onAiStepHead(CallbackInfo ci) {
+        this.onetoys$aiStepDepth++;
+    }
+
+    @Inject(method = "aiStep", at = @At("RETURN"))
+    private void onetoys$onAiStepReturn(CallbackInfo ci) {
+        this.onetoys$aiStepDepth--;
+        if (this.onetoys$aiStepDepth <= 0) {
+            this.onetoys$aiStepDepth = 0;
+            if (this.onetoys$needsWeaponReassessment) {
+                this.onetoys$needsWeaponReassessment = false;
+                ((AbstractSkeleton) (Object) this).reassessWeaponGoal();
+            }
+        }
     }
 
     @Override
@@ -69,7 +93,15 @@ public abstract class AbstractSkeletonMixin extends Monster implements RangedAtt
     @Inject(method = "reassessWeaponGoal", at = @At("HEAD"), cancellable = true)
     private void Onetoys$handleCustomWeaponGoals(CallbackInfo ci) {
         AbstractSkeleton skeleton = (AbstractSkeleton) (Object) this;
-        if (skeleton.level() == null || skeleton.level().isClientSide) {
+        if (skeleton.level() == null || skeleton.level().isClientSide || skeleton.isRemoved() || skeleton.isDeadOrDying()) {
+            ci.cancel();
+            return;
+        }
+
+        // Defer reassessment if we are actively executing AI/goal ticking to avoid concurrent modification of GoalSelector availableGoals
+        if (this.onetoys$aiStepDepth > 0) {
+            this.onetoys$needsWeaponReassessment = true;
+            ci.cancel();
             return;
         }
 
@@ -91,17 +123,17 @@ public abstract class AbstractSkeletonMixin extends Monster implements RangedAtt
             return;
         }
 
-        if (skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get())) {
+        if (GameplayTweaksModule.isSpearEnabled() && skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get())) {
             this.goalSelector.removeGoal(this.meleeGoal);
             this.goalSelector.removeGoal(this.bowGoal);
+            if (this.onetoys$spearMeleeGoal == null) {
+                this.onetoys$spearMeleeGoal = new SmartSkeletonSpearMeleeGoal(skeleton, 1.2D, false);
+            }
+            this.goalSelector.addGoal(3, this.onetoys$spearMeleeGoal);
             if (this.onetoys$spearGoal == null) {
                 this.onetoys$spearGoal = new SkeletonSpearAttackGoal(skeleton, 1.0D, 40, 10.0F);
             }
             this.goalSelector.addGoal(4, this.onetoys$spearGoal);
-            if (this.onetoys$spearMeleeGoal == null) {
-                this.onetoys$spearMeleeGoal = new SmartSkeletonSpearMeleeGoal(skeleton, 1.2D, false);
-            }
-            this.goalSelector.addGoal(4, this.onetoys$spearMeleeGoal);
             ci.cancel();
             return;
         }
@@ -142,7 +174,7 @@ public abstract class AbstractSkeletonMixin extends Monster implements RangedAtt
             return;
         }
 
-        if (skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get())) {
+        if (GameplayTweaksModule.isSpearEnabled() && skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get())) {
             onetoys$performSpearAttack(skeleton, target);
             ci.cancel();
         }
@@ -150,7 +182,9 @@ public abstract class AbstractSkeletonMixin extends Monster implements RangedAtt
 
     @Unique
     private static void onetoys$performSpearAttack(AbstractSkeleton skeleton, LivingEntity target) {
-        ThrownSpear thrownSpear = new ThrownSpear(skeleton.level(), skeleton, new ItemStack(OnetoysItems.SPEAR.get()));
+        ItemStack spearStack = skeleton.getMainHandItem();
+        ItemStack pickupStack = spearStack.isEmpty() ? new ItemStack(OnetoysItems.SPEAR.get()) : spearStack.copyWithCount(1);
+        ThrownSpear thrownSpear = new ThrownSpear(skeleton.level(), skeleton, pickupStack);
         thrownSpear.pickup = AbstractArrow.Pickup.DISALLOWED;
         double d0 = target.getX() - skeleton.getX();
         double d1 = target.getY(0.3333333333333333D) - thrownSpear.getY();

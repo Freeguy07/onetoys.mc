@@ -40,10 +40,6 @@ public class WitherSkeletonWarlockGoal extends Goal {
                 || !SpecialMobTweaks.isSpecialMob(this.witherSkeleton, SpecialMobTweaks.TYPE_WARLOCK_WITHER_SKELETON)) {
             return false;
         }
-        // Ensure warlock wither skeleton has no weapon in hands
-        if (!this.witherSkeleton.getMainHandItem().isEmpty()) {
-            this.witherSkeleton.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
-        }
         LivingEntity target = this.witherSkeleton.getTarget();
         return target != null && target.isAlive();
     }
@@ -82,6 +78,10 @@ public class WitherSkeletonWarlockGoal extends Goal {
 
     @Override
     public void tick() {
+        if (!this.witherSkeleton.getMainHandItem().isEmpty()) {
+            this.witherSkeleton.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+        }
+
         LivingEntity target = this.witherSkeleton.getTarget();
         if (target == null) {
             return;

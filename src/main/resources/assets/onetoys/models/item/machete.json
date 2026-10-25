@@ -1,0 +1,18 @@
+{
+  "loader": "neoforge:separate_transforms",
+  "gui_light": "front",
+  "base": {
+    "parent": "onetoys:item/machete_in_hand"
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "onetoys:item/machete_gui"
+    },
+    "ground": {
+      "parent": "onetoys:item/machete_gui"
+    },
+    "fixed": {
+      "parent": "onetoys:item/machete_gui"
+    }
+  }
+}

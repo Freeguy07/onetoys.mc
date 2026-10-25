@@ -4,6 +4,7 @@ import com.onetoys.module.gameplay.items.SwordBlockingTweaks;
 import net.minecraft.client.model.AgeableListModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,6 +16,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(HumanoidModel.class)
 public abstract class HumanoidModelMixin<T extends LivingEntity> extends AgeableListModel<T> {
+
+    @Shadow
+    public ModelPart head;
 
     @Shadow
     public ModelPart rightArm;
@@ -39,16 +43,15 @@ public abstract class HumanoidModelMixin<T extends LivingEntity> extends Ageable
             CallbackInfo ci
     ) {
         if (SwordBlockingTweaks.isBlockingWithSword(entity)) {
-            InteractionHand rightHand = entity.getMainArm() == HumanoidArm.RIGHT
-                    ? InteractionHand.MAIN_HAND
-                    : InteractionHand.OFF_HAND;
-            if (entity.getUsedItemHand() == rightHand) {
-                this.rightArm.xRot = this.rightArm.xRot - ((float) Math.PI * 2.0F) / 10.0F;
-                this.rightArm.yRot = -((float) Math.PI / 6.0F);
-            } else {
-                this.leftArm.xRot = this.leftArm.xRot - ((float) Math.PI * 2.0F) / 10.0F;
-                this.leftArm.yRot = (float) Math.PI / 6.0F;
-            }
+            boolean isRightArm = (entity.getMainArm() == HumanoidArm.RIGHT)
+                    ? (entity.getUsedItemHand() == InteractionHand.MAIN_HAND)
+                    : (entity.getUsedItemHand() == InteractionHand.OFF_HAND);
+            ModelPart arm = isRightArm ? this.rightArm : this.leftArm;
+            float walkSwing = Mth.cos(limbSwing * 0.6662F + (isRightArm ? (float) Math.PI : 0.0F)) * limbSwingAmount * 0.5F;
+            float headPitchOffset = Mth.clamp(this.head.xRot, -0.4F, 0.4F) * 0.25F;
+            arm.xRot = walkSwing * 0.3F - 0.58F + headPitchOffset;
+            arm.yRot = isRightArm ? -((float) Math.PI / 6.0F) : ((float) Math.PI / 6.0F);
+            arm.zRot = 0.0F;
         }
     }
 }

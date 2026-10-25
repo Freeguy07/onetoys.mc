@@ -64,7 +64,7 @@ public abstract class ItemInHandRendererMixin {
                 && player.getUseItemRemainingTicks() > 0
                 && player.getUsedItemHand() == hand
                 && stack.getUseAnimation() == UseAnim.BLOCK
-                && SwordBlockingTweaks.isSword(stack)) {
+                && SwordBlockingTweaks.canBlock(stack)) {
             HumanoidArm humanoidArm = hand == InteractionHand.MAIN_HAND ? player.getMainArm() : player.getMainArm().getOpposite();
             int horizontalSign = humanoidArm == HumanoidArm.RIGHT ? 1 : -1;
             this.applyItemArmAttackTransform(poseStack, humanoidArm, swingProgress);

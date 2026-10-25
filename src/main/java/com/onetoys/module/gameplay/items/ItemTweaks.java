@@ -10,6 +10,8 @@ public final class ItemTweaks {
     private final StopwatchTweaks stopwatchTweaks = new StopwatchTweaks(this);
     private final SwordBlockingTweaks swordBlockingTweaks = new SwordBlockingTweaks(this);
     private final SpearTweaks spearTweaks = new SpearTweaks(this);
+    private final MacheteTweaks macheteTweaks = new MacheteTweaks(this);
+    private final ClubTweaks clubTweaks = new ClubTweaks(this);
     private ModConfigSpec.BooleanValue enabledConfig;
     private ModConfigSpec.BooleanValue disableCharcoalConfig;
 
@@ -40,6 +42,8 @@ public final class ItemTweaks {
         stopwatchTweaks.buildConfig(builder);
         swordBlockingTweaks.buildConfig(builder);
         spearTweaks.buildConfig(builder);
+        macheteTweaks.buildConfig(builder);
+        clubTweaks.buildConfig(builder);
 
         builder.pop();
     }
@@ -68,6 +72,14 @@ public final class ItemTweaks {
         return spearTweaks;
     }
 
+    public MacheteTweaks getMacheteTweaks() {
+        return macheteTweaks;
+    }
+
+    public ClubTweaks getClubTweaks() {
+        return clubTweaks;
+    }
+
     public boolean isStopwatchEnabled() {
         return isEnabled() && stopwatchTweaks.isEnabled();
     }
@@ -84,9 +96,19 @@ public final class ItemTweaks {
         return isEnabled() && spearTweaks.isEnabled();
     }
 
+    public boolean isMacheteEnabled() {
+        return isEnabled() && macheteTweaks.isEnabled();
+    }
+
+    public boolean isClubEnabled() {
+        return isEnabled() && clubTweaks.isEnabled();
+    }
+
     public void onConstruct(IEventBus modBus) {
         recoveryCompassTweaks.onConstruct(modBus);
         swordBlockingTweaks.onConstruct(modBus);
         spearTweaks.onConstruct(modBus);
+        macheteTweaks.onConstruct(modBus);
+        clubTweaks.onConstruct(modBus);
     }
 }

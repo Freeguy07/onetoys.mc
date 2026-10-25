@@ -86,6 +86,20 @@ public class OnetoysAttachments {
                             .build()
             );
 
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> MACHETE_SPAWN_ROLLED =
+            ATTACHMENT_TYPES.register("machete_spawn_rolled", () ->
+                    AttachmentType.builder(() -> false)
+                            .serialize(Codec.BOOL)
+                            .build()
+            );
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> CLUB_SPAWN_ROLLED =
+            ATTACHMENT_TYPES.register("club_spawn_rolled", () ->
+                    AttachmentType.builder(() -> false)
+                            .serialize(Codec.BOOL)
+                            .build()
+            );
+
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<String>> SPECIAL_MOB_TYPE =
             ATTACHMENT_TYPES.register("special_mob_type", () ->
                     AttachmentType.builder(() -> "")

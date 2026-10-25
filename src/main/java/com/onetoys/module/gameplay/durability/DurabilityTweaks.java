@@ -15,6 +15,7 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.WritingMode;
 import com.onetoys.Onetoys;
 import com.onetoys.mixin.ItemAccessor;
+import com.onetoys.registry.OnetoysTags;
 
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
@@ -71,6 +72,7 @@ public class DurabilityTweaks {
                         "Examples: ['minecraft:elytra', '#c:tools/netherite', '*golden_*']")
                 .translation("onetoys.configuration.gameplay_tweaks.durability_tweaks.unbreakable_items")
                 .defineListAllowEmpty("unbreakable_items", List.of(
+                        "#onetoys:unbreakable",
                         "minecraft:wooden_sword",
                         "minecraft:wooden_shovel",
                         "minecraft:wooden_pickaxe",
@@ -330,9 +332,22 @@ public class DurabilityTweaks {
             }
         }
 
+        // 5. Always include built-in unbreakable tags as rules
+        CustomDurabilityRule unbreakableTag = new CustomDurabilityRule.Tag("#onetoys:unbreakable", OnetoysTags.Items.UNBREAKABLE, -1);
+        overrideRules.add(unbreakableTag);
+        cachedTagRules.add((CustomDurabilityRule.Tag) unbreakableTag);
+
+        CustomDurabilityRule unbreakableItemsTag = new CustomDurabilityRule.Tag("#onetoys:unbreakable_items", OnetoysTags.Items.UNBREAKABLE_ITEMS, -1);
+        overrideRules.add(unbreakableItemsTag);
+        cachedTagRules.add((CustomDurabilityRule.Tag) unbreakableItemsTag);
+
+        CustomDurabilityRule commonUnbreakableTag = new CustomDurabilityRule.Tag("#c:unbreakable", OnetoysTags.Items.COMMON_UNBREAKABLE, -1);
+        overrideRules.add(commonUnbreakableTag);
+        cachedTagRules.add((CustomDurabilityRule.Tag) commonUnbreakableTag);
+
         cachedOverrideRules.addAll(overrideRules);
 
-        // 5. Apply modifiers to registered items
+        // 6. Apply modifiers to registered items
         boolean showTooltip = shouldShowUnbreakableTooltip();
         for (Item item : BuiltInRegistries.ITEM) {
             ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);

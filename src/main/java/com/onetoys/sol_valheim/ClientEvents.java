@@ -19,6 +19,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
@@ -80,6 +81,34 @@ public class ClientEvents {
     private static final List<ClientFoodAnimationState> foodAnimStates = new ArrayList<>();
     private static final List<ClientFoodAnimationState> reusableActiveStates = new ArrayList<>(4);
 
+    public static void resetClientHudState() {
+        foodAnimStates.clear();
+        reusableActiveStates.clear();
+        drinkShiftProgress = 0.0f;
+        drinkAlpha = 0.0f;
+        cachedDrinkItem = ItemStack.EMPTY;
+        cachedDrinkTicksLeft = 0;
+        starvationAlpha = 1.0f;
+        hunger1Alpha = 1.0f;
+        hunger2Alpha = 0.0f;
+    }
+
+    @SubscribeEvent
+    public static void onClientPlayerClone(ClientPlayerNetworkEvent.Clone event) {
+        resetClientHudState();
+        if (event.getNewPlayer() != null && (event.getOldPlayer() == null || event.getOldPlayer().isDeadOrDying())) {
+            ValheimFoodData foodData = event.getNewPlayer().getData(SOLValheim.FOOD_DATA);
+            if (foodData != null) {
+                foodData.resetForRespawn();
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onClientPlayerLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        resetClientHudState();
+    }
+
     @SubscribeEvent
     public static void onRenderGuiPost(RenderGuiLayerEvent.Post event) {
         if (!com.onetoys.module.gameplay.FoodOverhaulModule.isFoodOverhaulEnabled()) return;
@@ -131,6 +160,7 @@ public class ClientEvents {
             if (foodData != null) {
                 boolean slowDigestion = client.player.hasEffect(Onetoys.SLOW_DIGESTION);
                 foodData.tick(slowDigestion);
+                foodData.clearDirty();
             }
         }
     }
@@ -238,7 +268,7 @@ public class ClientEvents {
         //   Food bar (beneath): foodBarY = baseY + 6, foodIconY = baseY + 3
         int foodBarY = Math.round(Mth.lerp(drinkShiftProgress, (float) (baseY + 4), (float) (baseY + 6)));
         int foodIconY = Math.round(Mth.lerp(drinkShiftProgress, (float) (baseY + 1), (float) (baseY + 3)));
-        boolean useLargeIcons = ModConfig.CLIENT.useLargeIcons != null ? ModConfig.CLIENT.useLargeIcons.get() : true;
+        boolean useLargeIcons = ModConfig.CLIENT.useLargeIcons != null && ModConfig.isLoaded() ? ModConfig.CLIENT.useLargeIcons.get() : true;
         float baseScale = useLargeIcons ? 0.625f : 0.5f;
         float sharedScale = useLargeIcons ? 0.5f : 0.4375f;
         float foodIconScale = Mth.lerp(drinkShiftProgress, baseScale, sharedScale);

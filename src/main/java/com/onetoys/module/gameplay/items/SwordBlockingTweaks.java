@@ -4,11 +4,14 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import com.onetoys.item.MacheteItem;
 import com.onetoys.module.ModuleManager;
 import com.onetoys.module.gameplay.GameplayTweaksModule;
+import com.onetoys.registry.OnetoysTags;
 
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
@@ -32,6 +35,7 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 public final class SwordBlockingTweaks {
     public static final int SWORD_DISABLE_COOLDOWN_TICKS = 50;
+    public static final TagKey<Item> CANNOT_BLOCK_SWORDS = OnetoysTags.Items.CANNOT_BLOCK_SWORDS;
 
     private static SwordBlockingTweaks instance;
 
@@ -113,7 +117,16 @@ public final class SwordBlockingTweaks {
     }
 
     public static boolean isSword(ItemStack stack) {
-        return !stack.isEmpty() && stack.getItem() instanceof SwordItem;
+        return !stack.isEmpty() && (stack.getItem() instanceof SwordItem || stack.getItem() instanceof MacheteItem);
+    }
+
+    public static boolean canBlock(ItemStack stack) {
+        if (!isTweakEnabled() || !isSword(stack)) {
+            return false;
+        }
+        return !stack.is(OnetoysTags.Items.CANNOT_BLOCK_SWORDS)
+                && !stack.is(OnetoysTags.Items.CANNOT_BLOCK)
+                && !stack.is(OnetoysTags.Items.COMMON_CANNOT_BLOCK_SWORDS);
     }
 
     public static boolean isBlockingWithSword(LivingEntity entity) {
@@ -121,7 +134,7 @@ public final class SwordBlockingTweaks {
             return false;
         }
         ItemStack useItem = entity.getUseItem();
-        return isSword(useItem) && useItem.getUseAnimation() == UseAnim.BLOCK;
+        return canBlock(useItem) && useItem.getUseAnimation() == UseAnim.BLOCK;
     }
 
     public static boolean canBlockDamageSource(LivingEntity entity, DamageSource damageSource) {

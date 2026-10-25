@@ -2,11 +2,18 @@ package com.onetoys.module.gameplay.items;
 
 import com.onetoys.registry.OnetoysAttachments;
 import com.onetoys.registry.OnetoysItems;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.AbstractSkeleton;
+import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.providers.VanillaEnchantmentProviders;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
@@ -36,9 +43,9 @@ public final class SpearTweaks {
                 .define("enabled", true);
 
         mobSpawnChanceConfig = builder
-                .comment("Chance (0.0 - 1.0) for humanoid monsters (zombies, skeletons) to spawn with spears.")
+                .comment("Chance (0.0 - 1.0) for skeletons (skeleton, stray, bogged) to spawn with a spear (0.05 = 5%).")
                 .translation("onetoys.configuration.gameplay_tweaks.item_tweaks.spear.mob_spawn_chance")
-                .defineInRange("mob_spawn_chance", 0.15D, 0.0D, 1.0D);
+                .defineInRange("mob_spawn_chance", 0.05D, 0.0D, 1.0D);
 
         builder.pop();
     }
@@ -51,11 +58,11 @@ public final class SpearTweaks {
         if (!isEnabled()) {
             return 0.0D;
         }
-        return mobSpawnChanceConfig != null ? mobSpawnChanceConfig.get() : 0.15D;
+        return mobSpawnChanceConfig != null ? mobSpawnChanceConfig.get() : 0.05D;
     }
 
     public void onConstruct(IEventBus modBus) {
-        NeoForge.EVENT_BUS.addListener(this::onEntityJoinLevel);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, this::onEntityJoinLevel);
     }
 
     private void onEntityJoinLevel(EntityJoinLevelEvent event) {
@@ -78,17 +85,31 @@ public final class SpearTweaks {
     }
 
     public static boolean isEligibleMob(Mob mob) {
+        if (mob.getMainHandItem().getItem() instanceof CrossbowItem) {
+            return false;
+        }
         EntityType<?> type = mob.getType();
-        return type == EntityType.ZOMBIE
-                || type == EntityType.HUSK
-                || type == EntityType.ZOMBIE_VILLAGER
-                || type == EntityType.SKELETON
+        return type == EntityType.SKELETON
                 || type == EntityType.STRAY
                 || type == EntityType.BOGGED;
     }
 
     public static void equipSpear(Mob mob) {
-        mob.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(OnetoysItems.SPEAR.get()));
+        ItemStack spear = new ItemStack(OnetoysItems.SPEAR.get());
+        if (mob.level() instanceof ServerLevel serverLevel) {
+            DifficultyInstance difficulty = serverLevel.getCurrentDifficultyAt(mob.blockPosition());
+            RandomSource random = mob.getRandom();
+            if (random.nextFloat() < 0.25F * difficulty.getSpecialMultiplier()) {
+                EnchantmentHelper.enchantItemFromProvider(
+                        spear,
+                        serverLevel.registryAccess(),
+                        VanillaEnchantmentProviders.MOB_SPAWN_EQUIPMENT,
+                        difficulty,
+                        random
+                );
+            }
+        }
+        mob.setItemSlot(EquipmentSlot.MAINHAND, spear);
         mob.setDropChance(EquipmentSlot.MAINHAND, 0.085F);
         if (mob instanceof AbstractSkeleton skeleton) {
             skeleton.reassessWeaponGoal();

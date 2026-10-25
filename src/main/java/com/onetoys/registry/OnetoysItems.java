@@ -2,6 +2,7 @@ package com.onetoys.registry;
 
 import com.onetoys.Onetoys;
 
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -15,6 +16,7 @@ public class OnetoysItems {
     public static final DeferredItem<BlockItem> TUNGSTEN_ORE = ITEMS.registerSimpleBlockItem(OnetoysBlocks.TUNGSTEN_ORE);
     public static final DeferredItem<BlockItem> RAW_TUNGSTEN_BLOCK = ITEMS.registerSimpleBlockItem(OnetoysBlocks.RAW_TUNGSTEN_BLOCK);
     public static final DeferredItem<BlockItem> TUNGSTEN_BLOCK = ITEMS.registerSimpleBlockItem(OnetoysBlocks.TUNGSTEN_BLOCK);
+    public static final DeferredItem<BlockItem> QUARTZ_GLASS = ITEMS.registerSimpleBlockItem(OnetoysBlocks.QUARTZ_GLASS);
 
     public static final DeferredItem<Item> RAW_TUNGSTEN = ITEMS.registerSimpleItem("raw_tungsten");
     public static final DeferredItem<Item> TUNGSTEN_INGOT = ITEMS.registerSimpleItem("tungsten_ingot");
@@ -47,7 +49,26 @@ public class OnetoysItems {
     public static final DeferredItem<com.onetoys.item.SpearItem> SPEAR = ITEMS.registerItem(
             "spear",
             com.onetoys.item.SpearItem::new,
-            new Item.Properties().durability(128).attributes(com.onetoys.item.SpearItem.createAttributes())
+            new Item.Properties()
+                    .durability(128)
+                    .attributes(com.onetoys.item.SpearItem.createAttributes())
+                    .component(DataComponents.TOOL, com.onetoys.item.SpearItem.createToolProperties())
+    );
+    public static final DeferredItem<com.onetoys.item.MacheteItem> MACHETE = ITEMS.registerItem(
+            "machete",
+            com.onetoys.item.MacheteItem::new,
+            new Item.Properties()
+                    .durability(128)
+                    .attributes(com.onetoys.item.MacheteItem.createAttributes())
+                    .component(DataComponents.TOOL, com.onetoys.item.MacheteItem.createToolProperties())
+    );
+    public static final DeferredItem<com.onetoys.item.ClubItem> CLUB = ITEMS.registerItem(
+            "club",
+            com.onetoys.item.ClubItem::new,
+            new Item.Properties()
+                    .durability(128)
+                    .attributes(com.onetoys.item.ClubItem.createAttributes())
+                    .component(DataComponents.TOOL, com.onetoys.item.ClubItem.createToolProperties())
     );
 
     public static void register(IEventBus modBus) {

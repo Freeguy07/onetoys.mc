@@ -129,6 +129,8 @@ public class SlipperySlimeDashGoal extends Goal {
                 this.slime.targetSquish = 0.85F;
                 this.slime.playSound(SoundEvents.SLIME_ATTACK, 1.2F, 0.85F);
                 applyForwardSlideDash(1.15D);
+            } else {
+                this.slime.setData(OnetoysAttachments.SLIME_SWELL_TICKS, this.swellTicks);
             }
         } else if (this.dashTicks > 0) {
             this.slime.setYRot(this.lockedDashYaw);

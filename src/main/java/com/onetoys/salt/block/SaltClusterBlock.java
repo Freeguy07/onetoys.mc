@@ -71,7 +71,7 @@ public class SaltClusterBlock extends Block implements ISaltBlock {
                 && !player.isCreative()
                 && SaltConfiguration.SALT_CLUSTER_GROWING_ENABLED.get()
                 && state.is(SaltBlocks.SALT_CLUSTER.get())
-                && level.getBlockState(pos.below()).is(SaltTags.Blocks.SALT_CLUSTER_GROWABLES)
+                && level.getBlockState(pos.relative(state.getValue(FACING).getOpposite())).is(SaltTags.Blocks.SALT_CLUSTER_GROWABLES)
                 && ISaltBlock.getFluidDrippingOn(serverLevel, pos) == Fluids.WATER) {
             SaltCriteriaTriggers.HARVEST_SALT_CRYSTAL.get().trigger(serverPlayer);
         }

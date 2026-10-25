@@ -1,5 +1,6 @@
 package com.onetoys.module.gameplay.mobs.goal;
 
+import com.onetoys.module.gameplay.GameplayTweaksModule;
 import com.onetoys.module.gameplay.mobs.SpecialMobTweaks;
 import com.onetoys.registry.OnetoysItems;
 import net.minecraft.world.entity.LivingEntity;
@@ -16,9 +17,13 @@ public class SmartSkeletonSpearMeleeGoal extends MeleeAttackGoal {
 
     @Override
     public boolean canUse() {
-        if (!SpecialMobTweaks.isSmartSkeletonEnabled()
-                || !SpecialMobTweaks.isSpecialMob(this.skeleton, SpecialMobTweaks.TYPE_SMART_SKELETON)
-                || !this.skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get())) {
+        if (!GameplayTweaksModule.isSpearEnabled()) {
+            return false;
+        }
+        if (!SpecialMobTweaks.isSmartSkeletonEnabled() || !SpecialMobTweaks.isSpecialMob(this.skeleton, SpecialMobTweaks.TYPE_SMART_SKELETON)) {
+            return false;
+        }
+        if (!this.skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get())) {
             return false;
         }
         LivingEntity target = this.skeleton.getTarget();
@@ -30,9 +35,13 @@ public class SmartSkeletonSpearMeleeGoal extends MeleeAttackGoal {
 
     @Override
     public boolean canContinueToUse() {
-        if (!SpecialMobTweaks.isSmartSkeletonEnabled()
-                || !SpecialMobTweaks.isSpecialMob(this.skeleton, SpecialMobTweaks.TYPE_SMART_SKELETON)
-                || !this.skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get())) {
+        if (!GameplayTweaksModule.isSpearEnabled()) {
+            return false;
+        }
+        if (!SpecialMobTweaks.isSmartSkeletonEnabled() || !SpecialMobTweaks.isSpecialMob(this.skeleton, SpecialMobTweaks.TYPE_SMART_SKELETON)) {
+            return false;
+        }
+        if (!this.skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get())) {
             return false;
         }
         LivingEntity target = this.skeleton.getTarget();

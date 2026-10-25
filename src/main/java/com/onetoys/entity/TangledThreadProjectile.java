@@ -10,6 +10,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -19,6 +20,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.neoforged.neoforge.event.EventHooks;
 
 public class TangledThreadProjectile extends ThrowableItemProjectile {
 
@@ -60,7 +62,7 @@ public class TangledThreadProjectile extends ThrowableItemProjectile {
         Entity target = result.getEntity();
         target.hurt(this.damageSources().thrown(this, this.getOwner()), 0.1F);
 
-        if (!this.level().isClientSide) {
+        if (!this.level().isClientSide && canPlaceCobwebs()) {
             tryPlaceCobweb(target.blockPosition());
         }
     }
@@ -68,7 +70,7 @@ public class TangledThreadProjectile extends ThrowableItemProjectile {
     @Override
     protected void onHitBlock(BlockHitResult result) {
         super.onHitBlock(result);
-        if (!this.level().isClientSide) {
+        if (!this.level().isClientSide && canPlaceCobwebs()) {
             BlockPos hitPos = result.getBlockPos();
             BlockState hitState = this.level().getBlockState(hitPos);
             if (canPlaceCobwebAt(hitPos, hitState)) {
@@ -88,6 +90,14 @@ public class TangledThreadProjectile extends ThrowableItemProjectile {
             this.level().broadcastEntityEvent(this, (byte) 3);
             this.discard();
         }
+    }
+
+    private boolean canPlaceCobwebs() {
+        Entity owner = this.getOwner();
+        if (owner instanceof Mob mob) {
+            return EventHooks.canEntityGrief(this.level(), mob);
+        }
+        return true;
     }
 
     private boolean canPlaceCobwebAt(BlockPos pos, BlockState state) {

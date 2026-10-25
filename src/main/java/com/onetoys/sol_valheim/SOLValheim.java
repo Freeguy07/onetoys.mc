@@ -29,7 +29,14 @@ public class SOLValheim {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, com.onetoys.Onetoys.MODID);
     public static final Supplier<AttachmentType<ValheimFoodData>> FOOD_DATA = ATTACHMENT_TYPES.register(
             "valheim_food_data", () -> AttachmentType.serializable(ValheimFoodData::new)
-                    .copyOnDeath()
+                    .copyHandler((data, holder, provider) -> {
+                        if (holder instanceof net.minecraft.world.entity.LivingEntity living && living.isDeadOrDying()) {
+                            ValheimFoodData fresh = new ValheimFoodData();
+                            fresh.resetForRespawn();
+                            return fresh;
+                        }
+                        return data.copy();
+                    })
                     .sync(ValheimFoodData.STREAM_CODEC)
                     .build()
     );
@@ -74,12 +81,15 @@ public class SOLValheim {
             return;
         }
 
-        float healthVal = config.getHeartsBonus();
+        // Convert HP bonus to Hearts (2.0 HP = 1.0 Heart)
+        float healthVal = config.getHeartsBonus() / 2.0f;
         String healthStr;
         if (Math.abs(healthVal - Math.round(healthVal)) < 0.005f) {
             healthStr = Integer.toString(Math.round(healthVal));
-        } else {
+        } else if (Math.abs(healthVal * 10.0f - Math.round(healthVal * 10.0f)) < 0.005f) {
             healthStr = String.format(Locale.ROOT, "%.1f", healthVal);
+        } else {
+            healthStr = String.format(Locale.ROOT, "%.2f", healthVal);
         }
         list.add(Component.translatable("onetoys.tooltip.food.health", healthStr).withStyle(ChatFormatting.RED));
 
@@ -105,11 +115,6 @@ public class SOLValheim {
                 ? Config.common.displayEffects.get()
                 : true;
 
-        if (item.is(Items.GLOW_LICHEN) && displayEffects) {
-            var effectName = Component.translatable("effect.minecraft.glowing");
-            var text = Component.literal("  \u2726 ").append(effectName).append(" (0:15)");
-            list.add(text.withStyle(ChatFormatting.YELLOW));
-        }
         if (!config.extraEffects.isEmpty() && displayEffects) {
             for (var effectCfg : config.extraEffects) {
                 var effectHolder = effectCfg.getEffect();

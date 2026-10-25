@@ -46,6 +46,12 @@ public class OnetoysCreativeModeTabs {
                         if (GameplayTweaksModule.isSpearEnabled()) {
                             output.accept(OnetoysItems.SPEAR.get());
                         }
+                        if (GameplayTweaksModule.isMacheteEnabled()) {
+                            output.accept(OnetoysItems.MACHETE.get());
+                        }
+                        if (GameplayTweaksModule.isClubEnabled()) {
+                            output.accept(OnetoysItems.CLUB.get());
+                        }
                         if (ContentModule.isNuggetsAndShardsEnabled()) {
                             output.accept(OnetoysItems.COPPER_NUGGET.get());
                             output.accept(OnetoysItems.DIAMOND_SHARD.get());
@@ -62,6 +68,7 @@ public class OnetoysCreativeModeTabs {
                             output.accept(Onetoys.BARK.get());
                             output.accept(Onetoys.COPPER_PATINA.get());
                             output.accept(Onetoys.BLUESTONE.get());
+                            output.accept(OnetoysBlocks.QUARTZ_GLASS.get());
                         }
                         output.accept(Onetoys.CHRYSANTHEMUM.get());
                         if (ContentModule.isSaltEnabled()) {

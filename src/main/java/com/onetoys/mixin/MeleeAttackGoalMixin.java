@@ -65,7 +65,10 @@ public abstract class MeleeAttackGoalMixin {
                 return;
             }
             // Fix MC-198068 / MC-278596: keep goal active at close range even if navigation finishes
-            if (this.mob.distanceToSqr(target) <= 36.0D && this.mob.isWithinRestriction(target.blockPosition())) {
+            if (this.mob.distanceToSqr(target) <= 16.0D
+                    && Math.abs(target.getY() - this.mob.getY()) <= 2.5D
+                    && this.mob.isWithinRestriction(target.blockPosition())
+                    && this.mob.getSensing().hasLineOfSight(target)) {
                 cir.setReturnValue(true);
             }
         }

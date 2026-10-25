@@ -8,6 +8,7 @@ import com.onetoys.module.gameplay.mobs.goal.SpittingSpiderGoal;
 import com.onetoys.module.gameplay.mobs.goal.WitherSkeletonWarlockGoal;
 import com.onetoys.registry.OnetoysAttachments;
 import com.onetoys.registry.OnetoysItems;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
@@ -21,15 +22,19 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.LeapAtTargetGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.monster.AbstractSkeleton;
+import net.minecraft.world.entity.monster.Bogged;
 import net.minecraft.world.entity.monster.MagmaCube;
 import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.entity.monster.Spider;
+import net.minecraft.world.entity.monster.Stray;
 import net.minecraft.world.entity.monster.WitherSkeleton;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.providers.VanillaEnchantmentProviders;
 import net.neoforged.bus.api.IEventBus;
@@ -279,6 +284,18 @@ public class SpecialMobTweaks {
             }
         }
         skeleton.setItemSlot(EquipmentSlot.MAINHAND, crossbow);
+
+        if (skeleton instanceof Stray) {
+            ItemStack slownessArrow = new ItemStack(Items.TIPPED_ARROW);
+            slownessArrow.set(DataComponents.POTION_CONTENTS, new PotionContents(Potions.SLOWNESS));
+            skeleton.setItemSlot(EquipmentSlot.OFFHAND, slownessArrow);
+            skeleton.setDropChance(EquipmentSlot.OFFHAND, 0.0F);
+        } else if (skeleton instanceof Bogged) {
+            ItemStack poisonArrow = new ItemStack(Items.TIPPED_ARROW);
+            poisonArrow.set(DataComponents.POTION_CONTENTS, new PotionContents(Potions.POISON));
+            skeleton.setItemSlot(EquipmentSlot.OFFHAND, poisonArrow);
+            skeleton.setDropChance(EquipmentSlot.OFFHAND, 0.0F);
+        }
     }
 
     private String determineSpecialTypeForMob(Mob mob) {
@@ -295,7 +312,7 @@ public class SpecialMobTweaks {
         if (mob instanceof AbstractSkeleton skeleton) {
             boolean hasRangedWeapon = isBowOrCrossbow(skeleton.getMainHandItem())
                     || isBowOrCrossbow(skeleton.getOffhandItem())
-                    || skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get());
+                    || (GameplayTweaksModule.isSpearEnabled() && skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get()));
             return (hasRangedWeapon && isSmartSkeletonEnabled()) ? TYPE_SMART_SKELETON : TYPE_NONE;
         }
         if (mob instanceof Slime && !(mob instanceof MagmaCube)) {
@@ -331,6 +348,7 @@ public class SpecialMobTweaks {
             }
             case TYPE_SMART_SKELETON -> {
                 if (isSmartSkeletonEnabled() && mob instanceof AbstractSkeleton skeleton) {
+                    skeleton.setCanPickUpLoot(false);
                     skeleton.removeAllGoals(goal -> goal instanceof SmartSkeletonGoal);
                     skeleton.goalSelector.addGoal(1, new SmartSkeletonGoal(skeleton));
                     skeleton.reassessWeaponGoal();
@@ -350,6 +368,7 @@ public class SpecialMobTweaks {
             }
             case TYPE_WARLOCK_WITHER_SKELETON -> {
                 if (isWarlockWitherSkeletonEnabled() && mob instanceof WitherSkeleton witherSkeleton) {
+                    witherSkeleton.setCanPickUpLoot(false);
                     witherSkeleton.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
                     witherSkeleton.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
                     witherSkeleton.removeAllGoals(goal -> goal instanceof MeleeAttackGoal || goal instanceof WitherSkeletonWarlockGoal);

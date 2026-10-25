@@ -1,5 +1,6 @@
 package com.onetoys.module.gameplay.mobs.goal;
 
+import com.onetoys.module.gameplay.GameplayTweaksModule;
 import com.onetoys.module.gameplay.mobs.SpecialMobTweaks;
 import com.onetoys.registry.OnetoysItems;
 import net.minecraft.world.InteractionHand;
@@ -18,11 +19,13 @@ public class SkeletonSpearAttackGoal extends RangedAttackGoal {
 
     @Override
     public boolean canUse() {
+        if (!GameplayTweaksModule.isSpearEnabled()) {
+            return false;
+        }
         if (!super.canUse() || !this.skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get())) {
             return false;
         }
-        if (SpecialMobTweaks.isSmartSkeletonEnabled()
-                && SpecialMobTweaks.isSpecialMob(this.skeleton, SpecialMobTweaks.TYPE_SMART_SKELETON)) {
+        if (SpecialMobTweaks.isSmartSkeletonEnabled() && SpecialMobTweaks.isSpecialMob(this.skeleton, SpecialMobTweaks.TYPE_SMART_SKELETON)) {
             LivingEntity target = this.skeleton.getTarget();
             if (target != null && this.skeleton.distanceToSqr(target) <= 16.0D) {
                 return false;
@@ -33,11 +36,13 @@ public class SkeletonSpearAttackGoal extends RangedAttackGoal {
 
     @Override
     public boolean canContinueToUse() {
+        if (!GameplayTweaksModule.isSpearEnabled()) {
+            return false;
+        }
         if (!super.canContinueToUse() || !this.skeleton.getMainHandItem().is(OnetoysItems.SPEAR.get())) {
             return false;
         }
-        if (SpecialMobTweaks.isSmartSkeletonEnabled()
-                && SpecialMobTweaks.isSpecialMob(this.skeleton, SpecialMobTweaks.TYPE_SMART_SKELETON)) {
+        if (SpecialMobTweaks.isSmartSkeletonEnabled() && SpecialMobTweaks.isSpecialMob(this.skeleton, SpecialMobTweaks.TYPE_SMART_SKELETON)) {
             LivingEntity target = this.skeleton.getTarget();
             if (target != null && this.skeleton.distanceToSqr(target) <= 16.0D) {
                 return false;
@@ -58,5 +63,13 @@ public class SkeletonSpearAttackGoal extends RangedAttackGoal {
         super.stop();
         this.skeleton.stopUsingItem();
         this.skeleton.setAggressive(false);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (!this.skeleton.isUsingItem() && this.skeleton.getTarget() != null) {
+            this.skeleton.startUsingItem(InteractionHand.MAIN_HAND);
+        }
     }
 }

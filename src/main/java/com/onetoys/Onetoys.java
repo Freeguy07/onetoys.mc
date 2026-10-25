@@ -10,6 +10,7 @@ import com.onetoys.module.ModuleManager;
 import com.onetoys.module.content.ContentModule;
 import com.onetoys.module.gameplay.GameplayTweaksModule;
 import com.onetoys.registry.OnetoysAttachments;
+import com.onetoys.registry.OnetoysBlockEntityTypes;
 import com.onetoys.registry.OnetoysBlocks;
 import com.onetoys.registry.OnetoysCreativeModeTabs;
 import com.onetoys.registry.OnetoysFeatures;
@@ -36,6 +37,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
@@ -144,8 +146,9 @@ public class Onetoys {
         // Register features
         OnetoysFeatures.register(modEventBus);
         com.onetoys.registry.OnetoysDensityFunctions.register(modEventBus);
-        // Register blocks, items, effects, potions, and creative tabs
+        // Register blocks, items, block entities, effects, potions, and creative tabs
         OnetoysBlocks.register(modEventBus);
+        OnetoysBlockEntityTypes.register(modEventBus);
         OnetoysItems.register(modEventBus);
         MOB_EFFECTS.register(modEventBus);
         POTIONS.register(modEventBus);
@@ -188,6 +191,8 @@ public class Onetoys {
         ModuleManager.get().onCommonSetup(event);
         event.enqueueWork(() -> {
             Salt.registerDispenserBehaviors();
+            DispenserBlock.registerProjectileBehavior(OnetoysItems.SPEAR.get());
+            DispenserBlock.registerProjectileBehavior(OnetoysItems.MATTED_WOOL.get());
             MobEffects.HUNGER.value().addAttributeModifier(
                     Attributes.ATTACK_SPEED,
                     ResourceLocation.fromNamespaceAndPath(MODID, "hunger_attack_speed"),
@@ -225,9 +230,24 @@ public class Onetoys {
         }
         if (event.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS) {
             event.accept(BLUESTONE);
+            event.accept(OnetoysBlocks.QUARTZ_GLASS);
         }
-        if (event.getTabKey() == CreativeModeTabs.COMBAT && GameplayTweaksModule.isSpearEnabled()) {
-            event.accept(OnetoysItems.SPEAR);
+        if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS) {
+            event.accept(OnetoysBlocks.QUARTZ_GLASS);
+        }
+        if (event.getTabKey() == CreativeModeTabs.COMBAT) {
+            if (GameplayTweaksModule.isSpearEnabled()) {
+                event.accept(OnetoysItems.SPEAR);
+            }
+            if (GameplayTweaksModule.isMacheteEnabled()) {
+                event.accept(OnetoysItems.MACHETE);
+            }
+            if (GameplayTweaksModule.isClubEnabled()) {
+                event.accept(OnetoysItems.CLUB);
+            }
+        }
+        if (event.getTabKey() == CreativeModeTabs.TOOLS_AND_UTILITIES && GameplayTweaksModule.isClubEnabled()) {
+            event.accept(OnetoysItems.CLUB);
         }
     }
 

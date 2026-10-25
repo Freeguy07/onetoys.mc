@@ -1,0 +1,4 @@
+{
+  "parent": "onetoys:block/quartz_glass",
+  "render_type": "minecraft:translucent"
+}

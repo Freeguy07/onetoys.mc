@@ -92,4 +92,12 @@ public abstract class MobAiStepMixin {
     private boolean Onetoys$throttleSelectorTick(GoalSelector instance) {
         return this.Onetoys$shouldTickSelectors((Mob) (Object) this);
     }
+
+    @WrapWithCondition(
+            method = "serverAiStep",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/goal/GoalSelector;tickRunningGoals(Z)V")
+    )
+    private boolean Onetoys$throttleRunningGoalsTick(GoalSelector instance, boolean tickAllRunning) {
+        return this.Onetoys$shouldTickSelectors((Mob) (Object) this);
+    }
 }

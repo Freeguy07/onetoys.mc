@@ -55,8 +55,7 @@ public abstract class ItemInHandLayerMixin<T extends LivingEntity, M extends Ent
             InteractionHand hand = arm == livingEntity.getMainArm() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
             if (livingEntity.getUsedItemHand() == hand
                     && itemStack.getUseAnimation() == UseAnim.BLOCK
-                    && SwordBlockingTweaks.isSword(itemStack)
-                    && SwordBlockingTweaks.isTweakEnabled()) {
+                    && SwordBlockingTweaks.canBlock(itemStack)) {
                 poseStack.pushPose();
                 this.getParentModel().translateToHand(arm, poseStack);
                 boolean leftHand = arm == HumanoidArm.LEFT;

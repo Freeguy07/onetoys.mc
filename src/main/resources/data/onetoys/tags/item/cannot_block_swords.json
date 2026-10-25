@@ -1,0 +1,21 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#c:cannot_block_swords",
+      "required": false
+    },
+    {
+      "id": "#onetoys:cannot_block",
+      "required": false
+    },
+    {
+      "id": "nomansland:ancestral_oath_sword",
+      "required": false
+    },
+    {
+      "id": "nomansland:ancestral_oath_blade",
+      "required": false
+    }
+  ]
+}

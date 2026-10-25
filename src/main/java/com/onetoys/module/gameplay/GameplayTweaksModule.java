@@ -29,7 +29,7 @@ public class GameplayTweaksModule extends OnetoysModule {
     private final DurabilityTweaks durabilityTweaks = new DurabilityTweaks();
     private final MobTweaks mobTweaks = new MobTweaks(this);
     private final ItemTweaks itemTweaks = new ItemTweaks(this);
-    private final MiningTweaks miningTweaks = new MiningTweaks();
+    private final MiningTweaks miningTweaks = new MiningTweaks(this);
     private final SleepingTweaks sleepingTweaks = new SleepingTweaks();
     private final StackTweaks stackTweaks = new StackTweaks();
     private final WetnessTweaks wetnessTweaks = new WetnessTweaks(this);
@@ -60,6 +60,7 @@ public class GameplayTweaksModule extends OnetoysModule {
         NeoForge.EVENT_BUS.addListener(this::onTagsUpdated);
         mobTweaks.onConstruct(modBus);
         itemTweaks.onConstruct(modBus);
+        miningTweaks.onConstruct(modBus);
         sleepingTweaks.onConstruct(modBus);
         wetnessTweaks.onConstruct(modBus);
     }
@@ -227,6 +228,54 @@ public class GameplayTweaksModule extends OnetoysModule {
         return itemTweaks != null ? itemTweaks.getSpearTweaks().getMobSpawnChance() : 0.0D;
     }
 
+    public static boolean isMacheteEnabled() {
+        GameplayTweaksModule mod = instance;
+        if (mod == null) {
+            mod = ModuleManager.get().getModule(GameplayTweaksModule.class).orElse(null);
+        }
+        if (mod == null || !mod.isEnabled()) {
+            return false;
+        }
+        ItemTweaks itemTweaks = mod.getItemTweaks();
+        return itemTweaks != null && itemTweaks.isMacheteEnabled();
+    }
+
+    public static double getMacheteMobSpawnChance() {
+        GameplayTweaksModule mod = instance;
+        if (mod == null) {
+            mod = ModuleManager.get().getModule(GameplayTweaksModule.class).orElse(null);
+        }
+        if (mod == null || !mod.isEnabled()) {
+            return 0.0D;
+        }
+        ItemTweaks itemTweaks = mod.getItemTweaks();
+        return itemTweaks != null ? itemTweaks.getMacheteTweaks().getMobSpawnChance() : 0.0D;
+    }
+
+    public static boolean isClubEnabled() {
+        GameplayTweaksModule mod = instance;
+        if (mod == null) {
+            mod = ModuleManager.get().getModule(GameplayTweaksModule.class).orElse(null);
+        }
+        if (mod == null || !mod.isEnabled()) {
+            return false;
+        }
+        ItemTweaks itemTweaks = mod.getItemTweaks();
+        return itemTweaks != null && itemTweaks.isClubEnabled();
+    }
+
+    public static double getClubMobSpawnChance() {
+        GameplayTweaksModule mod = instance;
+        if (mod == null) {
+            mod = ModuleManager.get().getModule(GameplayTweaksModule.class).orElse(null);
+        }
+        if (mod == null || !mod.isEnabled()) {
+            return 0.0D;
+        }
+        ItemTweaks itemTweaks = mod.getItemTweaks();
+        return itemTweaks != null ? itemTweaks.getClubTweaks().getMobSpawnChance() : 0.0D;
+    }
+
     public static boolean isFoodOverhaulEnabled() {
         GameplayTweaksModule mod = instance;
         if (mod == null) {
@@ -236,5 +285,17 @@ public class GameplayTweaksModule extends OnetoysModule {
             return false;
         }
         return mod.getFoodOverhaulTweaks().isEnabled();
+    }
+
+    public static boolean isRebalanceTierSpeedsEnabled() {
+        GameplayTweaksModule mod = instance;
+        if (mod == null) {
+            mod = ModuleManager.get().getModule(GameplayTweaksModule.class).orElse(null);
+        }
+        if (mod == null || !mod.isEnabled()) {
+            return false;
+        }
+        MiningTweaks miningTweaks = mod.getMiningTweaks();
+        return miningTweaks != null && miningTweaks.isRebalanceTierSpeeds();
     }
 }

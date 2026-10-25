@@ -25,7 +25,7 @@ public abstract class SwordItemMixin extends TieredItem {
 
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        if (SwordBlockingTweaks.isTweakEnabled()) {
+        if (SwordBlockingTweaks.canBlock(stack)) {
             return UseAnim.BLOCK;
         }
         return super.getUseAnimation(stack);
@@ -33,7 +33,7 @@ public abstract class SwordItemMixin extends TieredItem {
 
     @Override
     public int getUseDuration(ItemStack stack, LivingEntity entity) {
-        if (SwordBlockingTweaks.isTweakEnabled()) {
+        if (SwordBlockingTweaks.canBlock(stack)) {
             return 72000;
         }
         return super.getUseDuration(stack, entity);
@@ -41,8 +41,8 @@ public abstract class SwordItemMixin extends TieredItem {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
-        if (SwordBlockingTweaks.isTweakEnabled()) {
-            ItemStack stack = player.getItemInHand(usedHand);
+        ItemStack stack = player.getItemInHand(usedHand);
+        if (SwordBlockingTweaks.canBlock(stack)) {
             if (player.getCooldowns().isOnCooldown(this)) {
                 return InteractionResultHolder.pass(stack);
             }

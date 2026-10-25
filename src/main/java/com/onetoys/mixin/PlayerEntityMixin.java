@@ -1,6 +1,8 @@
 package com.onetoys.mixin;
 
 import com.onetoys.Onetoys;
+import com.onetoys.item.MacheteItem;
+import com.onetoys.module.gameplay.GameplayTweaksModule;
 import com.onetoys.module.gameplay.items.SwordBlockingTweaks;
 import com.onetoys.sol_valheim.SOLValheim;
 import com.onetoys.sol_valheim.ValheimFoodData;
@@ -35,7 +37,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
             return;
         }
         ci.cancel();
-        if (!this.useItem.canPerformAction(ItemAbilities.SHIELD_BLOCK) || SwordBlockingTweaks.isSword(this.useItem)) {
+        if (!this.useItem.canPerformAction(ItemAbilities.SHIELD_BLOCK) || SwordBlockingTweaks.canBlock(this.useItem)) {
             return;
         }
         Player player = (Player) (Object) this;
@@ -61,6 +63,13 @@ public abstract class PlayerEntityMixin extends LivingEntity {
                 this.useItem = ItemStack.EMPTY;
                 this.playSound(SoundEvents.SHIELD_BREAK, 0.8F, 0.8F + this.level().random.nextFloat() * 0.4F);
             }
+        }
+    }
+
+    @Inject(method = "getAttackStrengthScale(F)F", at = @At("HEAD"), cancellable = true)
+    private void onetoys$macheteNoCooldown(float adjustTicks, CallbackInfoReturnable<Float> cir) {
+        if (GameplayTweaksModule.isMacheteEnabled() && this.getMainHandItem().getItem() instanceof MacheteItem) {
+            cir.setReturnValue(1.0F);
         }
     }
 

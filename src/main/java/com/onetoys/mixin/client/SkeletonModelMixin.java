@@ -1,5 +1,6 @@
 package com.onetoys.mixin.client;
 
+import com.onetoys.module.gameplay.GameplayTweaksModule;
 import com.onetoys.registry.OnetoysAttachments;
 import com.onetoys.registry.OnetoysItems;
 import net.minecraft.client.model.HumanoidModel;
@@ -35,7 +36,7 @@ public abstract class SkeletonModelMixin<T extends Mob & RangedAttackMob> extend
         ItemStack mainHand = entity.getItemInHand(InteractionHand.MAIN_HAND);
         ItemStack offHand = entity.getItemInHand(InteractionHand.OFF_HAND);
 
-        if (mainHand.is(OnetoysItems.SPEAR.get()) || offHand.is(OnetoysItems.SPEAR.get())) {
+        if (GameplayTweaksModule.isSpearEnabled() && (mainHand.is(OnetoysItems.SPEAR.get()) || offHand.is(OnetoysItems.SPEAR.get()))) {
             if (entity.isUsingItem()) {
                 boolean mainSpear = mainHand.is(OnetoysItems.SPEAR.get());
                 boolean rightHanded = entity.getMainArm() == HumanoidArm.RIGHT;
@@ -106,6 +107,9 @@ public abstract class SkeletonModelMixin<T extends Mob & RangedAttackMob> extend
 
     @Unique
     private static boolean onetoys$isHoldingSpear(Mob entity) {
+        if (!GameplayTweaksModule.isSpearEnabled()) {
+            return false;
+        }
         return entity.getMainHandItem().is(OnetoysItems.SPEAR.get())
                 || entity.getOffhandItem().is(OnetoysItems.SPEAR.get());
     }

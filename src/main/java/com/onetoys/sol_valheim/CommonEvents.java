@@ -16,9 +16,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -102,8 +104,8 @@ public class CommonEvents {
 
         boolean wasDirty = foodData.isDirty();
 
-        // Sync immediately if all items expired, if dirty (e.g. item expired or phase change), or on periodic interval (0.5s during hunger, 5s when full)
-        if ((hadItems && !hasItems) || wasDirty || player.tickCount % (hasItems ? 100 : 10) == 0) {
+        // Sync immediately if all items expired, if dirty (e.g. item expired or phase change), or on periodic interval (2s during hunger, 5s when full)
+        if ((hadItems && !hasItems) || wasDirty || player.tickCount % (hasItems ? 100 : 40) == 0) {
             foodData.clearDirty();
             player.syncData(SOLValheim.FOOD_DATA);
         }
@@ -158,9 +160,9 @@ public class CommonEvents {
                 float maxHealthBonus = foodData.getTotalMaxHealthBonus();
                 float healPerSecond = foodData.getTotalHealPerSecond();
 
-                double baseStartingHealth = (SOLValheim.Config.common != null && SOLValheim.Config.common.startingHealth != null)
+                double baseStartingHealth = (SOLValheim.Config.common != null && SOLValheim.Config.common.startingHealth != null && ModConfig.isLoaded())
                         ? SOLValheim.Config.common.startingHealth.get() * 2.0 : 6.0;
-                double maxAllowedBonus = (SOLValheim.Config.common != null && SOLValheim.Config.common.maxFoodHealth != null)
+                double maxAllowedBonus = (SOLValheim.Config.common != null && SOLValheim.Config.common.maxFoodHealth != null && ModConfig.isLoaded())
                         ? SOLValheim.Config.common.maxFoodHealth.get() * 2.0 : 200.0;
 
                 // Check if player has Hunger 2 effect (starving)
@@ -180,6 +182,11 @@ public class CommonEvents {
                     if (maxHealth.getBaseValue() != targetMaxHealth) {
                         maxHealth.setBaseValue(targetMaxHealth);
                     }
+                    // Cap current health when food expires and max health drops
+                    float actualMax = player.getMaxHealth();
+                    if (player.getHealth() > actualMax) {
+                        player.setHealth(actualMax);
+                    }
                 }
 
                 // Health regeneration from food buffs (every 10 ticks = 0.5s)
@@ -187,13 +194,13 @@ public class CommonEvents {
                 if (checkPeriodic) {
                     long lastDamageTime = foodData.lastDamageGameTime;
                     long gameTime = player.level().getGameTime();
-                    int delay = (SOLValheim.Config.common != null && SOLValheim.Config.common.regenDelay != null)
-                            ? SOLValheim.Config.common.regenDelay.get() : 80;
+                    int delay = (SOLValheim.Config.common != null && SOLValheim.Config.common.regenDelay != null && ModConfig.isLoaded())
+                            ? SOLValheim.Config.common.regenDelay.get() : 200;
                     boolean inCombat = lastDamageTime >= 0L && lastDamageTime <= gameTime && (gameTime - lastDamageTime) < delay;
 
                     if (!inCombat && player.getHealth() < maxHealth.getValue() && player.getHealth() > 0) {
                         if (healPerSecond > 0f) {
-                            float speedMod = (SOLValheim.Config.common != null && SOLValheim.Config.common.regenSpeedModifier != null)
+                            float speedMod = (SOLValheim.Config.common != null && SOLValheim.Config.common.regenSpeedModifier != null && ModConfig.isLoaded())
                                     ? SOLValheim.Config.common.regenSpeedModifier.get().floatValue() : 1.0f;
                             player.heal(healPerSecond * 0.5f * speedMod); // 10 ticks = 0.5s
                         }
@@ -203,7 +210,7 @@ public class CommonEvents {
 
             var movementSpeed = player.getAttribute(Attributes.MOVEMENT_SPEED);
             if (movementSpeed != null) {
-                double speedConfig = (SOLValheim.Config.common != null && SOLValheim.Config.common.speedBoost != null)
+                double speedConfig = (SOLValheim.Config.common != null && SOLValheim.Config.common.speedBoost != null && ModConfig.isLoaded())
                         ? SOLValheim.Config.common.speedBoost.get() : 0.0;
                 if (speedConfig > 0.0 && player.getHealth() >= player.getMaxHealth() && player.getMaxHealth() >= 20.0f) {
                     if (!movementSpeed.hasModifier(SOLValheim.SPEED_BUFF_ID)) {
@@ -326,6 +333,24 @@ public class CommonEvents {
         }
     }
 
+    private static void resetFoodDataForDeath(Player player, ValheimFoodData foodData) {
+        if (foodData != null) {
+            foodData.resetForRespawn();
+        }
+        player.removeEffect(MobEffects.HUNGER);
+        player.removeEffect(Onetoys.HUNGER_2);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onPlayerDeath(LivingDeathEvent event) {
+        if (!FoodOverhaulModule.isFoodOverhaulEnabled()) return;
+        if (event.getEntity() instanceof Player player && !player.level().isClientSide) {
+            ValheimFoodData foodData = player.getData(SOLValheim.FOOD_DATA);
+            resetFoodDataForDeath(player, foodData);
+            player.syncData(SOLValheim.FOOD_DATA);
+        }
+    }
+
     @SubscribeEvent
     public static void onPlayerLoggedIn(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
         if (!FoodOverhaulModule.isFoodOverhaulEnabled()) return;
@@ -341,29 +366,16 @@ public class CommonEvents {
     }
 
     @SubscribeEvent
-    public static void onPlayerRespawn(net.neoforged.neoforge.event.entity.player.PlayerEvent.Clone event) {
+    public static void onPlayerClone(net.neoforged.neoforge.event.entity.player.PlayerEvent.Clone event) {
         if (!FoodOverhaulModule.isFoodOverhaulEnabled()) return;
         Player player = event.getEntity();
         ValheimFoodData foodData = player.getData(SOLValheim.FOOD_DATA);
         if (event.isWasDeath()) {
-            if (foodData != null) {
-                foodData.clear();
-                foodData.hungerExhaustion = 0f;
-                if (PerestroykaHungerAPI.isImmediateHungerActive()) {
-                    foodData.hungerCountdown = 0;
-                } else {
-                    int graceSeconds = (SOLValheim.Config.common != null && SOLValheim.Config.common.respawnGracePeriod != null)
-                            ? SOLValheim.Config.common.respawnGracePeriod.get() : 300;
-                    int graceTicks = Math.max(200, graceSeconds * 20);
-                    foodData.hungerCountdown = graceTicks;
-                }
-                foodData.secondHungerCountdown = foodData.getMaxSecondHungerTimer();
-                foodData.lastDamageGameTime = -1L;
-            }
+            resetFoodDataForDeath(player, foodData);
 
             var maxHealth = player.getAttribute(Attributes.MAX_HEALTH);
             if (maxHealth != null) {
-                double baseStartingHealth = (SOLValheim.Config.common != null && SOLValheim.Config.common.startingHealth != null)
+                double baseStartingHealth = (SOLValheim.Config.common != null && SOLValheim.Config.common.startingHealth != null && ModConfig.isLoaded())
                         ? SOLValheim.Config.common.startingHealth.get() * 2.0 : 6.0;
                 maxHealth.setBaseValue(baseStartingHealth);
                 player.setHealth((float) baseStartingHealth);
@@ -374,7 +386,9 @@ public class CommonEvents {
                 movementSpeed.removeModifier(SOLValheim.SPEED_BUFF_ID);
             }
 
-            player.syncData(SOLValheim.FOOD_DATA);
+            if (!player.level().isClientSide) {
+                player.syncData(SOLValheim.FOOD_DATA);
+            }
         } else {
             Player original = event.getOriginal();
             var originalMaxHealth = original.getAttribute(Attributes.MAX_HEALTH);
@@ -386,8 +400,37 @@ public class CommonEvents {
             if (foodData != null) {
                 foodData.lastDamageGameTime = -1L;
             }
-            player.syncData(SOLValheim.FOOD_DATA);
+            if (!player.level().isClientSide) {
+                player.syncData(SOLValheim.FOOD_DATA);
+            }
         }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerRespawnEvent event) {
+        if (!FoodOverhaulModule.isFoodOverhaulEnabled()) return;
+        Player player = event.getEntity();
+        if (player.level().isClientSide) return;
+
+        ValheimFoodData foodData = player.getData(SOLValheim.FOOD_DATA);
+        if (!event.isEndConquered()) {
+            resetFoodDataForDeath(player, foodData);
+
+            var maxHealth = player.getAttribute(Attributes.MAX_HEALTH);
+            if (maxHealth != null) {
+                double baseStartingHealth = (SOLValheim.Config.common != null && SOLValheim.Config.common.startingHealth != null && ModConfig.isLoaded())
+                        ? SOLValheim.Config.common.startingHealth.get() * 2.0 : 6.0;
+                maxHealth.setBaseValue(baseStartingHealth);
+                player.setHealth((float) baseStartingHealth);
+            }
+
+            var movementSpeed = player.getAttribute(Attributes.MOVEMENT_SPEED);
+            if (movementSpeed != null && movementSpeed.hasModifier(SOLValheim.SPEED_BUFF_ID)) {
+                movementSpeed.removeModifier(SOLValheim.SPEED_BUFF_ID);
+            }
+        }
+
+        player.syncData(SOLValheim.FOOD_DATA);
     }
 
     @SubscribeEvent
@@ -420,7 +463,9 @@ public class CommonEvents {
         for (var player : event.getLevel().players()) {
             if (player.isCreative()) continue;
             boolean slowDigestion = player.hasEffect(Onetoys.SLOW_DIGESTION);
-            player.getData(SOLValheim.FOOD_DATA).onWakeUp(slowDigestion);
+            ValheimFoodData foodData = player.getData(SOLValheim.FOOD_DATA);
+            foodData.onWakeUp(player, slowDigestion);
+            foodData.clearDirty();
             player.syncData(SOLValheim.FOOD_DATA);
         }
     }

@@ -2,8 +2,10 @@ package com.onetoys;
 
 import com.onetoys.client.gui.OnetoysConfigurationSectionScreen;
 import com.onetoys.client.particle.NetherLapisDripParticle;
+import com.onetoys.client.renderer.blockentity.QuartzGlassBlockEntityRenderer;
 import com.onetoys.client.renderer.entity.ThrownSpearRenderer;
 import com.onetoys.module.ModuleManager;
+import com.onetoys.registry.OnetoysBlockEntityTypes;
 import com.onetoys.registry.OnetoysEntityTypes;
 import com.onetoys.registry.OnetoysItems;
 import com.onetoys.registry.OnetoysParticles;
@@ -43,11 +45,14 @@ public class OnetoysClient {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.onetoys.client.RecoveryCompassTooltipHandler::onItemTooltip);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.onetoys.client.CharcoalTooltipHandler::onItemTooltip);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.onetoys.client.StopwatchTooltipHandler::onItemTooltip);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.onetoys.client.QuartzGlassClientTracker::onClientTick);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.onetoys.client.QuartzGlassClientTracker::onRenderHighlight);
     }
 
     private static void onRegisterEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(OnetoysEntityTypes.TANGLED_THREAD.get(), ThrownItemRenderer::new);
         event.registerEntityRenderer(OnetoysEntityTypes.SPEAR.get(), ThrownSpearRenderer::new);
+        event.registerBlockEntityRenderer(OnetoysBlockEntityTypes.QUARTZ_GLASS.get(), QuartzGlassBlockEntityRenderer::new);
     }
 
     private static void onClientSetup(FMLClientSetupEvent event) {

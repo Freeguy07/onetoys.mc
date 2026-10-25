@@ -1,5 +1,6 @@
 package com.onetoys.sol_valheim;
 
+import com.onetoys.api.PerestroykaHungerAPI;
 import com.onetoys.api.event.PerestroykaHungerEvent;
 import com.onetoys.salt.Salting;
 import com.onetoys.salt.Satiating;
@@ -24,6 +25,7 @@ import net.neoforged.neoforge.common.util.INBTSerializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ValheimFoodData implements INBTSerializable<CompoundTag> {
 
@@ -84,9 +86,9 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
                     }
             );
 
-    private static long nextIdCounter = 1L;
-    public static synchronized long getNextId() {
-        return nextIdCounter++;
+    private static final AtomicLong NEXT_ID_COUNTER = new AtomicLong(1L);
+    public static long getNextId() {
+        return NEXT_ID_COUNTER.getAndIncrement();
     }
 
     public static boolean hasAnySeasoning(ItemStack stack) {
@@ -195,6 +197,24 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
         this.isDirty = true;
     }
 
+    /**
+     * Resets all stomach contents, exhaustion, and restores both hunger and starvation
+     * timers back to full capacity (100%) on respawn (unless Immediate Hunger mode is active).
+     */
+    public void resetForRespawn() {
+        this.ItemEntries.clear();
+        this.DrinkSlot = null;
+        this.hungerExhaustion = 0f;
+        this.hungerCountdown = PerestroykaHungerAPI.isImmediateHungerActive() ? 0 : getMaxHungerTimer();
+        this.secondHungerCountdown = getMaxSecondHungerTimer();
+        this.lastDamageGameTime = -1L;
+        this.lastPosX = Double.NaN;
+        this.lastPosY = Double.NaN;
+        this.lastPosZ = Double.NaN;
+        this.lastDimension = null;
+        this.isDirty = false;
+    }
+
     public int getMaxHungerTimer() {
         if (SOLValheim.Config.common != null && SOLValheim.Config.common.hungerTimerSeconds != null && ModConfig.isLoaded()) {
             return Math.max(200, SOLValheim.Config.common.hungerTimerSeconds.get() * 20);
@@ -262,8 +282,11 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
 
     public void drainHungerPoints(Player player, int points) {
         if (hasActiveFoods() || points <= 0) return;
+        int remaining = points;
+
         if (hungerCountdown > 0) {
-            int target = Math.max(0, hungerCountdown - points);
+            int drainFromFirst = Math.min(hungerCountdown, remaining);
+            int target = hungerCountdown - drainFromFirst;
             if (player != null) {
                 PerestroykaHungerEvent.TimerChange event = new PerestroykaHungerEvent.TimerChange(
                         player, PerestroykaHungerEvent.TimerType.HUNGER_TIMER, hungerCountdown, target
@@ -271,15 +294,18 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
                 if (NeoForge.EVENT_BUS.post(event).isCanceled()) {
                     return;
                 }
-                target = event.getNewTimer();
+                target = Mth.clamp(event.getNewTimer(), 0, getMaxHungerTimer());
             }
+            remaining -= (hungerCountdown - target);
             hungerCountdown = target;
             if (hungerCountdown <= 0) {
                 hungerCountdown = 0;
                 isDirty = true;
             }
-        } else if (secondHungerCountdown > 0) {
-            int target = Math.max(0, secondHungerCountdown - points);
+        }
+
+        if (hungerCountdown <= 0 && remaining > 0 && secondHungerCountdown > 0) {
+            int target = Math.max(0, secondHungerCountdown - remaining);
             if (player != null) {
                 PerestroykaHungerEvent.TimerChange event = new PerestroykaHungerEvent.TimerChange(
                         player, PerestroykaHungerEvent.TimerType.STARVATION_TIMER, secondHungerCountdown, target
@@ -287,7 +313,7 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
                 if (NeoForge.EVENT_BUS.post(event).isCanceled()) {
                     return;
                 }
-                target = event.getNewTimer();
+                target = Mth.clamp(event.getNewTimer(), 0, getMaxSecondHungerTimer());
             }
             secondHungerCountdown = target;
             if (secondHungerCountdown <= 0) {
@@ -409,7 +435,7 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
         if (config == null)
             return;
 
-        // If second hunger timer is active (or depleted):
+        // If first hunger timer is depleted (starving):
         // Eating food only resets both of the hunger timers, without applying any other bonuses.
         if (hungerCountdown <= 0) {
             hungerCountdown = getMaxHungerTimer();
@@ -542,11 +568,15 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
         }
 
         int prevSize = ItemEntries.size();
-        ItemEntries.removeIf(item -> item.ticksLeft <= 0);
-        if (ItemEntries.size() != prevSize) {
-            isDirty = true;
+        if (prevSize > 0) {
+            ItemEntries.removeIf(item -> item.ticksLeft <= 0);
+            if (ItemEntries.size() != prevSize) {
+                isDirty = true;
+                if (ItemEntries.size() > 1) {
+                    ItemEntries.sort(TICKS_COMPARATOR);
+                }
+            }
         }
-        ItemEntries.sort(TICKS_COMPARATOR);
 
         boolean active = !ItemEntries.isEmpty() || DrinkSlot != null;
         if (active) {
@@ -557,15 +587,28 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
     }
 
     public void onWakeUp(boolean pauseFoodTimers) {
+        onWakeUp(null, pauseFoodTimers);
+    }
+
+    public void onWakeUp(Player player, boolean pauseFoodTimers) {
         if (SOLValheim.Config.common != null && SOLValheim.Config.common.passTicksDuringNight != null && ModConfig.isLoaded() && !SOLValheim.Config.common.passTicksDuringNight.get()) {
             return;
         }
+        int sleepTicks = 6000;
+        boolean hadActive = hasActiveFoods();
+        int maxRemainingTicks = 0;
+
         if (!pauseFoodTimers) {
-            int sleepTicks = 6000;
             for (var item : ItemEntries) {
+                if (item.ticksLeft > maxRemainingTicks) {
+                    maxRemainingTicks = item.ticksLeft;
+                }
                 item.ticksLeft -= sleepTicks;
             }
             if (DrinkSlot != null) {
+                if (DrinkSlot.ticksLeft > maxRemainingTicks) {
+                    maxRemainingTicks = DrinkSlot.ticksLeft;
+                }
                 DrinkSlot.ticksLeft -= sleepTicks;
                 if (DrinkSlot.ticksLeft <= 0) {
                     DrinkSlot = null;
@@ -573,11 +616,15 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
                 }
             }
             int prevSize = ItemEntries.size();
-            ItemEntries.removeIf(item -> item.ticksLeft <= 0);
-            if (ItemEntries.size() != prevSize) {
-                isDirty = true;
+            if (prevSize > 0) {
+                ItemEntries.removeIf(item -> item.ticksLeft <= 0);
+                if (ItemEntries.size() != prevSize) {
+                    isDirty = true;
+                }
+                if (ItemEntries.size() > 1) {
+                    ItemEntries.sort(TICKS_COMPARATOR);
+                }
             }
-            ItemEntries.sort(TICKS_COMPARATOR);
         }
 
         boolean active = !ItemEntries.isEmpty() || DrinkSlot != null;
@@ -585,6 +632,13 @@ public class ValheimFoodData implements INBTSerializable<CompoundTag> {
             hungerCountdown = getMaxHungerTimer();
             secondHungerCountdown = getMaxSecondHungerTimer();
             hungerExhaustion = 0f;
+        } else if (!pauseFoodTimers) {
+            // Drain leftover night time from hunger timers if foods expired mid-sleep or player slept without active foods
+            int unprotectedSleepTicks = hadActive ? Math.max(0, sleepTicks - maxRemainingTicks) : sleepTicks;
+            if (unprotectedSleepTicks > 0) {
+                drainHungerPoints(player, unprotectedSleepTicks);
+                isDirty = true;
+            }
         }
     }
 

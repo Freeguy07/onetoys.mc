@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "#c:unbreakable",
+      "required": false
+    },
+    {
+      "id": "nomansland:ancestral_oath_sword",
+      "required": false
+    },
+    {
+      "id": "nomansland:ancestral_oath_blade",
+      "required": false
+    }
+  ]
+}

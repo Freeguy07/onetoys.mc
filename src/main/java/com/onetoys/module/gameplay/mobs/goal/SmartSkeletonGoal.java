@@ -122,7 +122,7 @@ public class SmartSkeletonGoal extends Goal {
 
     private boolean isHoldingTemporaryBone() {
         ItemStack storedBow = this.skeleton.getData(OnetoysAttachments.SMART_SKELETON_STORED_BOW);
-        return !storedBow.isEmpty() && this.skeleton.getMainHandItem().is(Items.BONE);
+        return !storedBow.isEmpty() && !isRangedWeapon(this.skeleton.getMainHandItem());
     }
 
     private void switchToBone(LivingEntity target) {
